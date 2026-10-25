@@ -13,29 +13,31 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <style>
-/* 單欄手機 App：上方步驟條，中間是相機或作品，下方是工具列 */
+/* 單欄手機 App：步驟 1 版型 → 2 拍照（全螢幕補光機台）→ 3 挑照片 → 4 塗鴉裝飾 → 出紙 */
 :root {
   --bg: #fff4f8;
   --card: #ffffff;
   --ink: #3b1730;
-  --muted: #94677f;
+  --muted: #8f5f79;
   --line: #f2cadb;
   --accent: #ff3d8b;
   --accent-ink: #ffffff;
   --lilac: #a88bff;
   --soft: #ffe3ee;
+  --booth: #ffffff;
+  --booth-ink: #3b1730;
   --display: "Mochiy Pop One", "Noto Sans TC", system-ui, sans-serif;
   --body: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c49bb3;
+    --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c9a0b8;
     --line: #4a2b48; --accent: #ff5c9e; --accent-ink: #1b1120; --lilac: #b9a2ff; --soft: #3a2140;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c49bb3;
+  --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c9a0b8;
   --line: #4a2b48; --accent: #ff5c9e; --accent-ink: #1b1120; --lilac: #b9a2ff; --soft: #3a2140;
   color-scheme: dark;
 }
@@ -48,73 +50,125 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   -webkit-tap-highlight-color: transparent;
 }
+::selection { background: var(--accent); color: var(--accent-ink); }
 .app { max-width: 520px; margin: 0 auto; padding-block: 14px 28px; display: flex; flex-direction: column; gap: 16px; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.logo { font-family: var(--display); font-size: 22px; letter-spacing: .02em; color: var(--accent); margin: 0; }
+.logo { font-family: var(--display); font-weight: 400; font-size: 22px; letter-spacing: .02em; color: var(--accent); margin: 0; }
 .logo small { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); letter-spacing: .14em; font-weight: 500; }
-.steps { display: flex; gap: 6px; }
-.steps span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--soft); color: var(--muted); }
+.head-right { display: flex; align-items: center; gap: 10px; }
+.steps { display: flex; gap: 5px; }
+.steps span { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--soft); color: var(--muted); font-variant-numeric: tabular-nums; }
 .steps span.on { background: var(--accent); color: var(--accent-ink); }
+.sound { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.sound svg { width: 18px; height: 18px; }
 h2 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 0; text-wrap: balance; }
 .hint { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.6; }
 section { display: flex; flex-direction: column; gap: 14px; }
 
 /* 版型卡 */
-.layouts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.layout-card { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 14px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; font: inherit; color: inherit; }
-.layout-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
-.layout-card b { font-size: 14px; }
-.layout-card span { font-size: 12px; color: var(--muted); }
-.mini { display: grid; gap: 3px; padding: 5px; background: var(--soft); border-radius: 6px; height: 84px; }
+.layouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.layout-card { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 12px 6px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; font: inherit; color: inherit; min-width: 0; }
+.layout-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent); }
+.layout-card b { font-size: 13px; }
+.layout-card span { font-size: 11px; color: var(--muted); }
+.mini { display: grid; gap: 3px; padding: 4px; background: var(--soft); border-radius: 6px; height: 70px; }
 .mini i { background: var(--accent); opacity: .55; border-radius: 2px; }
-.mini.strip { grid-template-rows: repeat(4, 1fr); width: 34px; }
-.mini.grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; width: 76px; }
-.mini.duo { grid-template-columns: 1fr 1fr; width: 76px; }
-.mini.single { width: 70px; }
+.mini.strip { grid-template-rows: repeat(4, 1fr); width: 28px; }
+.mini.grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; width: 62px; }
+.mini.six { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); width: 52px; }
+.mini.hero { grid-template-columns: repeat(3, 1fr); grid-template-rows: 3fr 1fr; width: 60px; }
+.mini.hero i:first-child { grid-column: 1 / -1; }
+.mini.duo { grid-template-columns: 1fr 1fr; width: 62px; }
+.mini.single { width: 56px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .label { font-size: 12px; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
 .chip { border: 2px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; cursor: pointer; }
 .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
-.btn { border: 0; border-radius: 999px; padding: 15px 22px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
-.btn.ghost { background: var(--soft); color: var(--ink); }
+.chip:disabled { opacity: .4; cursor: default; }
+.btn { border: 0; border-radius: 999px; padding: 15px 22px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 30%, transparent); transition: transform .15s ease-out; }
+.btn:active { transform: scale(.97); }
+.btn.ghost { background: var(--soft); color: var(--ink); box-shadow: none; }
 .btn.wide { width: 100%; }
-.btn:disabled { opacity: .45; cursor: default; }
+.btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
 button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px solid var(--lilac); outline-offset: 2px; }
+.feature-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.feature-list li { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); font-weight: 500; }
 
 /* 拍照 */
 .viewfinder { position: relative; width: 100%; max-width: 100%; border-radius: 22px; overflow: hidden; background: #000; border: 4px solid var(--card); box-shadow: 0 8px 30px color-mix(in srgb, var(--accent) 22%, transparent); }
-.viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(1.08) contrast(.94) saturate(1.06); }
 .viewfinder video.mirror { transform: scaleX(-1); }
-.count { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: 120px; color: #fff; text-shadow: 0 4px 20px rgba(255, 61, 139, .9); pointer-events: none; }
-.count.pop { animation: pop .9s ease-out; }
-@keyframes pop { from { transform: scale(1.6); opacity: 0; } 30% { opacity: 1; } to { transform: scale(.9); opacity: .2; } }
-.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
-.flash.go { animation: flash .45s ease-out; }
-@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
-.badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.45); color: #fff; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+.freeze { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.count { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: 130px; color: #fff; text-shadow: 0 4px 24px rgba(255, 61, 139, .95); pointer-events: none; }
+.count.pop { animation: pop .9s cubic-bezier(.16, 1, .3, 1); }
+@keyframes pop { from { transform: scale(1.7); opacity: 0; } 25% { opacity: 1; } to { transform: scale(.9); opacity: .15; } }
+.badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.45); color: #fff; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
 .cam-off { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; color: #ffd6e7; font-size: 14px; line-height: 1.7; background: repeating-linear-gradient(45deg, #2a1530 0 14px, #301a37 14px 28px); }
 .thumbs { display: grid; gap: 8px; }
-.thumb { aspect-ratio: 4/3; max-width: 100%; border-radius: 10px; background: var(--soft); border: 2px dashed var(--line); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 12px; font-weight: 700; position: relative; padding: 0; cursor: pointer; font-family: inherit; }
+.thumb { max-width: 100%; border-radius: 10px; background: var(--soft); border: 2px dashed var(--line); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 12px; font-weight: 700; position: relative; padding: 0; cursor: pointer; font-family: inherit; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb.filled { border-style: solid; border-color: var(--accent); }
 .thumb .x { position: absolute; right: 4px; bottom: 4px; background: rgba(0,0,0,.5); color: #fff; font-size: 11px; border-radius: 999px; padding: 1px 7px; }
 .file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .file-btn { position: relative; }
+.actions { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+
+/* 機台模式：全螢幕亮白當補光燈 */
+#scr-shoot.booth {
+  position: fixed; inset: 0; z-index: 15; background: var(--booth); color: var(--booth-ink);
+  justify-content: center; align-items: center; gap: 18px;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px));
+}
+#scr-shoot.booth.dim { --booth: #16101c; --booth-ink: #fde9f3; }
+#scr-shoot.booth > :not(.bk) { display: none; }
+#scr-shoot:not(.booth) .booth-only { display: none; }
+#scr-shoot.booth .viewfinder { width: min(100%, calc(64vh * var(--ar, 1.33))); border: 8px solid #fff; box-shadow: 0 0 0 3px #ffc2da, 0 18px 50px rgba(255, 61, 139, .35); }
+.pose { font-family: var(--display); font-size: clamp(22px, 6.5vw, 34px); text-align: center; text-wrap: balance; margin: 0; color: var(--accent); min-height: 1.3em; }
+.pose.in { animation: rise .5s cubic-bezier(.16, 1, .3, 1); }
+@keyframes rise { from { transform: translateY(14px); opacity: 0; } }
+.booth-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: min(100%, 520px); }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); }
+.dots i.on { background: var(--accent); }
+.booth-btn { border: 2px solid currentColor; background: transparent; color: inherit; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.screen-flash { position: fixed; inset: 0; background: #fff; z-index: 40; pointer-events: none; opacity: 0; }
+.screen-flash.go { animation: flash .5s ease-out; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+
+/* 挑照片 */
+.slots { display: grid; gap: 8px; }
+.slot { aspect-ratio: 4 / 3; max-width: 100%; border-radius: 10px; border: 2px dashed var(--line); background: var(--soft); display: grid; place-items: center; overflow: hidden; color: var(--muted); font-weight: 700; padding: 0; cursor: pointer; font-family: inherit; position: relative; }
+.slot img { width: 100%; height: 100%; object-fit: cover; }
+.slot.filled { border: 2px solid var(--accent); }
+.pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pick { position: relative; border: 3px solid transparent; border-radius: 12px; overflow: hidden; padding: 0; cursor: pointer; background: var(--soft); aspect-ratio: 4 / 3; max-width: 100%; }
+.pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pick[aria-pressed="true"] { border-color: var(--accent); }
+.pick b { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 13px; display: grid; place-items: center; }
 
 /* 編輯 */
 .stage { background: var(--card); border-radius: 22px; padding: 12px; border: 2px solid var(--line); display: flex; justify-content: center; }
-.stage canvas { max-width: 100%; max-height: 62vh; height: auto; display: block; border-radius: 6px; touch-action: none; box-shadow: 0 4px 18px rgba(0,0,0,.12); }
-.tabs { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--soft); border-radius: 16px; padding: 4px; gap: 4px; }
-.tabs button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; padding: 9px 0; border-radius: 12px; cursor: pointer; }
-.tabs button[aria-selected="true"] { background: var(--card); color: var(--accent); }
+.stage canvas { max-width: 100%; max-height: 60vh; height: auto; display: block; border-radius: 6px; touch-action: none; box-shadow: 0 6px 20px rgba(0,0,0,.14); }
+.tabs { display: flex; gap: 4px; background: var(--soft); border-radius: 16px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: 1 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; padding: 9px 12px; border-radius: 12px; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { background: var(--card); color: var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
 .panel { display: flex; flex-direction: column; gap: 12px; min-height: 120px; }
+.levels { display: grid; grid-template-columns: 48px 1fr; gap: 10px 10px; align-items: center; }
+.levels > span { font-size: 14px; font-weight: 700; }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--soft); border-radius: 12px; padding: 3px; gap: 3px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; padding: 7px 0; border-radius: 9px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg button:disabled { opacity: .35; cursor: default; }
+.ai-note { font-size: 13px; padding: 10px 12px; border-radius: 12px; background: var(--soft); color: var(--muted); line-height: 1.6; margin: 0; }
 .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
 .swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; padding: 0; }
-.swatch i { width: 54px; height: 54px; border-radius: 14px; border: 3px solid var(--line); display: block; }
+.swatch i { width: 56px; height: 56px; border-radius: 14px; border: 3px solid var(--line); display: block; }
 .swatch[aria-pressed="true"] i { border-color: var(--accent); }
+.swatch:disabled { opacity: .35; cursor: default; }
 .stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 6px; }
 .stickers button { aspect-ratio: 1; max-width: 100%; border: 0; background: var(--card); border-radius: 12px; font-size: 26px; cursor: pointer; display: grid; place-items: center; padding: 0; color: var(--accent); }
-.stickers button.word { font-family: var(--display); font-size: 12px; }
+.stickers button.word { font-family: var(--display); font-size: 11px; line-height: 1.2; }
 .sel-tools { display: flex; flex-direction: column; gap: 8px; background: var(--card); padding: 12px; border-radius: 14px; }
 .slider { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
 .slider input { width: 100%; accent-color: var(--accent); }
@@ -122,20 +176,29 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 .pen { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); cursor: pointer; padding: 0; }
 .pen[aria-pressed="true"] { border-color: var(--ink); transform: scale(1.1); }
 .text-in { width: 100%; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 16px; }
-.actions { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
 
-/* 成品 */
-.result { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); z-index: 20; overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(16px, env(safe-area-inset-left, 0px)); }
-.result-inner { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; }
-.result img { max-width: 100%; max-height: 64vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); -webkit-touch-callout: default; }
-.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 30; max-width: calc(100% - 32px); text-align: center; }
-@media (prefers-reduced-motion: reduce) { .count.pop, .flash.go { animation: none; } }
+/* 分析中 & 出紙 */
+.overlay { position: fixed; inset: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(6px); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(16px, env(safe-area-inset-left, 0px)); display: flex; }
+.overlay-inner { max-width: 480px; margin: auto; display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; width: 100%; }
+.spinner { width: 54px; height: 54px; border-radius: 50%; border: 6px solid var(--soft); border-top-color: var(--accent); animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.printer { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.slot-bar { width: min(100%, 340px); height: 18px; border-radius: 9px; background: linear-gradient(#3b1730, #6d3a5c); box-shadow: inset 0 3px 6px rgba(0,0,0,.5); position: relative; z-index: 2; }
+.paper { overflow: hidden; margin-top: -9px; padding: 0 12px 16px; }
+.paper img { display: block; max-width: 100%; max-height: 62vh; border-radius: 4px; box-shadow: 0 12px 30px rgba(0,0,0,.25); -webkit-touch-callout: default; }
+.paper img.print { animation: print 2.4s cubic-bezier(.3, .7, .25, 1) both; }
+@keyframes print { from { transform: translateY(-101%); } 70% { transform: translateY(-4%); } to { transform: translateY(0); } }
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .count.pop, .screen-flash.go, .pose.in, .paper img.print, .spinner { animation: none; } }
 </style>
 
 <div class="app">
   <header>
     <h1 class="logo">口袋拍貼機<small>POCKET PURIKURA</small></h1>
-    <div class="steps" aria-label="步驟"><span id="st1" class="on">1</span><span id="st2">2</span><span id="st3">3</span></div>
+    <div class="head-right">
+      <div class="steps" aria-label="步驟"><span id="st1" class="on">1</span><span id="st2">2</span><span id="st3">3</span><span id="st4">4</span></div>
+      <button class="sound" id="sound" aria-pressed="true" aria-label="語音與音效"></button>
+    </div>
   </header>
 
   <!-- 1. 選版型 -->
@@ -143,7 +206,10 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
     <h2>選一個版型</h2>
     <div class="layouts" id="layouts"></div>
     <div class="row"><span class="label">倒數</span><div class="row" id="timers"></div></div>
-    <button class="btn wide" id="go-shoot">開始拍照</button>
+    <ul class="feature-list" aria-label="機台功能">
+      <li>多拍 2 張再挑</li><li>AI 大眼瘦臉</li><li>去背換背景</li><li>螢光亮片筆</li><li>補光燈</li>
+    </ul>
+    <button class="btn wide" id="go-shoot">進入拍照機台</button>
   </section>
 
   <!-- 2. 拍照 -->
@@ -152,14 +218,22 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
       <h2 id="shoot-title">看鏡頭！</h2>
       <button class="chip" id="flip">切換鏡頭</button>
     </div>
-    <div class="viewfinder" id="vf">
+    <p class="pose bk booth-only" id="pose"></p>
+    <div class="viewfinder bk" id="vf">
       <video id="video" playsinline muted autoplay class="mirror"></video>
+      <img class="freeze" id="freeze" alt="" hidden>
       <div class="cam-off" id="cam-off" hidden>
         <div>這個畫面無法直接開啟相機。<br>用下面的按鈕拍照或從相簿挑照片，<br>一張一張填進格子裡。</div>
       </div>
       <div class="badge" id="shot-badge">1 / 4</div>
       <div class="count" id="count"></div>
-      <div class="flash" id="flash"></div>
+    </div>
+    <div class="booth-bar bk booth-only">
+      <div class="dots" id="dots"></div>
+      <div class="row">
+        <button class="booth-btn" id="light">補光 開</button>
+        <button class="booth-btn" id="stop">暫停</button>
+      </div>
     </div>
     <div class="thumbs" id="thumbs"></div>
     <p class="hint" id="thumb-hint">點已拍好的格子可以重拍那一張。</p>
@@ -171,35 +245,62 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
       <label class="btn ghost file-btn">從相簿選<input type="file" id="pick-many" accept="image/*" multiple></label>
       <label class="btn file-btn">拍下一張<input type="file" id="pick-cam" accept="image/*" capture="user"></label>
     </div>
-    <button class="btn wide" id="go-edit" disabled>去裝飾 →</button>
+    <button class="btn wide" id="go-next" disabled>下一步 →</button>
   </section>
 
-  <!-- 3. 裝飾 -->
+  <!-- 3. 挑照片 -->
+  <section id="scr-pick" hidden>
+    <h2 id="pick-title">挑出最好看的 4 張</h2>
+    <p class="hint">依序點照片放進格子，再點一次可以拿掉。</p>
+    <div class="slots" id="slots"></div>
+    <div class="pick-grid" id="pick-grid"></div>
+    <div class="actions">
+      <button class="btn ghost" id="pick-back">重拍</button>
+      <button class="btn" id="pick-done">就用這幾張 →</button>
+    </div>
+  </section>
+
+  <!-- 4. 裝飾 -->
   <section id="scr-edit" hidden>
     <div class="stage"><canvas id="cv"></canvas></div>
-    <div class="tabs" role="tablist">
-      <button role="tab" data-tab="filter" aria-selected="true">濾鏡</button>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="beauty" aria-selected="true">美顏</button>
+      <button role="tab" data-tab="bg" aria-selected="false">背景</button>
+      <button role="tab" data-tab="filter" aria-selected="false">濾鏡</button>
       <button role="tab" data-tab="frame" aria-selected="false">邊框</button>
       <button role="tab" data-tab="sticker" aria-selected="false">貼圖</button>
       <button role="tab" data-tab="pen" aria-selected="false">塗鴉</button>
       <button role="tab" data-tab="text" aria-selected="false">文字</button>
     </div>
-    <div class="panel" id="p-filter"><div class="swatches" id="filters"></div></div>
+    <div class="panel" id="p-beauty">
+      <div class="row" id="presets"></div>
+      <div class="levels" id="levels"></div>
+      <p class="ai-note" id="ai-note" hidden></p>
+    </div>
+    <div class="panel" id="p-bg" hidden>
+      <p class="hint" id="bg-hint">AI 會把人物去背，換成機台的攝影棚背景。</p>
+      <div class="swatches" id="bgs"></div>
+    </div>
+    <div class="panel" id="p-filter" hidden>
+      <div class="swatches" id="filters"></div>
+      <span class="label">照片特效</span>
+      <div class="row" id="fxs"></div>
+    </div>
     <div class="panel" id="p-frame" hidden><div class="swatches" id="frames"></div></div>
     <div class="panel" id="p-sticker" hidden>
       <p class="hint">點貼圖加到照片上，拖曳移動位置。</p>
       <div class="stickers" id="stickers"></div>
       <div class="sel-tools" id="sel-tools" hidden>
-        <div class="slider"><span>大小</span><input type="range" id="st-size" min="40" max="400"></div>
+        <div class="slider"><span>大小</span><input type="range" id="st-size" min="40" max="500"></div>
         <div class="slider"><span>旋轉</span><input type="range" id="st-rot" min="-180" max="180"></div>
         <button class="chip" id="st-del">刪除這個貼圖</button>
       </div>
     </div>
     <div class="panel" id="p-pen" hidden>
-      <p class="hint">直接在照片上畫。螢光筆會有發光的白芯。</p>
+      <div class="row" id="pen-types"></div>
       <div class="pens" id="pens"></div>
       <div class="slider"><span>粗細</span><input type="range" id="pen-size" min="4" max="40" value="12"></div>
-      <div class="row"><button class="chip" id="pen-neon" aria-pressed="true">螢光筆</button><button class="chip" id="undo">復原上一筆</button></div>
+      <div class="row"><button class="chip" id="undo">復原上一步</button></div>
     </div>
     <div class="panel" id="p-text" hidden>
       <label class="label" for="foot-text">底部文字</label>
@@ -208,26 +309,39 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
     </div>
     <div class="actions">
       <button class="btn ghost" id="reshoot">重拍</button>
-      <button class="btn" id="save">完成，存成圖片</button>
+      <button class="btn" id="save">完成，列印出來</button>
     </div>
   </section>
 </div>
 
-<div class="result" id="result" hidden>
-  <div class="result-inner">
-    <h2>完成啦！</h2>
-    <img id="result-img" alt="拍貼成品">
+<div class="overlay" id="analyzing" hidden>
+  <div class="overlay-inner">
+    <div class="spinner" aria-hidden="true"></div>
+    <h2>AI 美顏準備中</h2>
+    <p class="hint" id="analyzing-msg">第一次要下載美顏模型，大約幾秒鐘。</p>
+  </div>
+</div>
+
+<div class="overlay" id="result" hidden>
+  <div class="overlay-inner">
+    <h2 id="result-title">列印中…</h2>
+    <div class="printer">
+      <div class="slot-bar" aria-hidden="true"></div>
+      <div class="paper"><img id="result-img" alt="拍貼成品"></div>
+    </div>
     <p class="hint">手機上可以長按圖片儲存或分享。</p>
     <button class="btn wide" id="dl">下載圖片</button>
-    <button class="btn ghost wide" id="share" hidden>分享</button>
+    <button class="btn ghost wide" id="share" hidden>分享給朋友</button>
     <button class="btn ghost wide" id="close-result">繼續裝飾</button>
     <button class="chip" id="restart">再拍一組</button>
   </div>
 </div>
+<div class="screen-flash" id="screen-flash"></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ---------- 設定資料 ----------
 const LAYOUTS = {
@@ -235,6 +349,10 @@ const LAYOUTS = {
             cells: [0,1,2,3].map(i => ({ x: 40, y: 40 + i * 414, w: 520, h: 390 })) },
   grid:   { name: "四宮格", sub: "2 × 2", W: 1200, H: 1100, foot: { y: 884, h: 216 },
             cells: [[40,40],[610,40],[40,472],[610,472]].map(([x,y]) => ({ x, y, w: 550, h: 412 })) },
+  six:    { name: "六格", sub: "2 × 3", W: 1200, H: 1500, foot: { y: 1316, h: 184 },
+            cells: [0,1,2].flatMap(r => [40, 610].map(x => ({ x, y: 40 + r * 432, w: 550, h: 412 }))) },
+  hero:   { name: "大圖＋3", sub: "主打一張", W: 1200, H: 1400, foot: { y: 1170, h: 230 },
+            cells: [{ x: 40, y: 40, w: 1120, h: 840 }, ...[40, 420, 800].map(x => ({ x, y: 900, w: 360, h: 270 }))] },
   duo:    { name: "雙人並排", sub: "2 張直式", W: 1200, H: 900, foot: { y: 728, h: 172 },
             cells: [[40,40],[610,40]].map(([x,y]) => ({ x, y, w: 550, h: 688 })) },
   single: { name: "大頭貼", sub: "1 張方形", W: 1000, H: 1200, foot: { y: 960, h: 240 },
@@ -246,36 +364,101 @@ const FRAMES = [
   { id: "night", name: "夜光派對", bg: "#1f1745", pat: "#ffe066", pattern: "stars",   ink: "#ff7ad9" },
   { id: "plaid", name: "奶油格紋", bg: "#fff1c2", pat: "#ffe08a", pattern: "checker", ink: "#b0601a" },
   { id: "lilac", name: "薰衣草",   bg: "#e3d8ff", pat: "#f5f0ff", pattern: "hearts",  ink: "#6b4fd8" },
-  { id: "white", name: "純白",     bg: "#ffffff", pat: "#ffffff", pattern: "none",    ink: "#2b2b2b" },
+  { id: "film",  name: "底片",     bg: "#161616", pat: "#f1ebe0", pattern: "film",    ink: "#ffb347", noStroke: true },
+  { id: "white", name: "純白",     bg: "#ffffff", pat: "#ffffff", pattern: "none",    ink: "#2b2b2b", noStroke: true },
+];
+const BGS = [
+  { id: "none",    name: "原背景" },
+  { id: "studio",  name: "白色棚" },
+  { id: "pink",    name: "粉紅光暈" },
+  { id: "dream",   name: "夢幻星空" },
+  { id: "rainbow", name: "彩虹糖" },
+  { id: "cloud",   name: "藍天白雲" },
+  { id: "heart",   name: "愛心牆" },
 ];
 const FILTERS = [
-  { id: "none",   name: "原色" },
-  { id: "beauty", name: "美肌" },
-  { id: "pink",   name: "粉嫩" },
-  { id: "retro",  name: "復古" },
-  { id: "bw",     name: "黑白" },
-  { id: "cool",   name: "冷光" },
+  { id: "none",  name: "原色" }, { id: "milk", name: "牛奶肌" }, { id: "pink", name: "粉嫩" },
+  { id: "retro", name: "復古" }, { id: "bw",   name: "黑白" },   { id: "cool", name: "冷光" },
 ];
+const FXS = [
+  { id: "none", name: "無" }, { id: "sparkle", name: "閃亮" }, { id: "bubble", name: "泡泡" }, { id: "hearts", name: "愛心雨" },
+];
+const BEAUTY = [
+  { key: "skin",   name: "美肌" },
+  { key: "eye",    name: "大眼", ai: true },
+  { key: "slim",   name: "瘦臉", ai: true },
+  { key: "makeup", name: "妝感", ai: true },
+];
+const PRESETS = [
+  { name: "素顏", v: { skin: 0, eye: 0, slim: 0, makeup: 0 } },
+  { name: "自然", v: { skin: 1, eye: 1, slim: 1, makeup: 1 } },
+  { name: "甜美", v: { skin: 2, eye: 2, slim: 2, makeup: 2 } },
+  { name: "機台級", v: { skin: 3, eye: 3, slim: 2, makeup: 2 } },
+];
+const LEVEL_NAMES = ["關", "輕", "中", "強"];
+const POSES = ["比個愛心 ♡", "嘟嘴裝可愛", "雙手捧臉", "歪頭比 YA", "一起大笑", "做個鬼臉", "假裝很驚訝", "臉貼近一點", "眨一隻眼", "雙手比讚"];
 const STICKERS = ["💖","✨","🎀","⭐","🌸","🐰","🍓","👑","💋","🦋","🐱","🌈","☁️","💫","🍰","🎵","🐻","🍒","🫧","🌷"];
-const WORDS = ["LOVE","BFF","CUTE","最可愛","好朋友","♡♡♡"];
+const WORDS = ["LOVE","BFF","CUTE","最可愛","好朋友","♡♡♡","YA!","今天超可愛"];
 const PENS = ["#ff3d8b","#ffffff","#ffe14d","#5ee0ff","#9b6bff","#2b2b2b"];
+const PEN_TYPES = [
+  { id: "neon", name: "螢光筆" }, { id: "glitter", name: "亮片筆" }, { id: "rainbow", name: "彩虹筆" },
+  { id: "hearts", name: "愛心印章" }, { id: "stars", name: "星星印章" },
+];
 
 const S = {
-  layout: "strip", timer: 3, facing: "user", shots: [], filter: "beauty", frame: "berry",
-  items: [], selected: -1, tab: "filter", pen: { color: "#ff3d8b", size: 12, neon: true },
-  footText: "BESTIE DAY ♡", showDate: true,
+  layout: "strip", timer: 3, facing: "user", shots: [], picks: [], filter: "milk", frame: "berry",
+  bg: "none", fx: "none", beauty: { skin: 2, eye: 1, slim: 1, makeup: 1 },
+  items: [], selected: -1, tab: "beauty", pen: { color: "#ff3d8b", size: 12, type: "neon" },
+  footText: "BESTIE DAY ♡", showDate: true, sound: true, light: true,
 };
-let stream = null, camOK = false, busy = false;
+let stream = null, camOK = false, busy = false, abort = false;
 
 function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.hidden = false;
-  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2400);
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600);
 }
-function setStep(n) { [1,2,3].forEach(i => $("st" + i).classList.toggle("on", i <= n)); }
 function show(id) {
-  ["scr-setup","scr-shoot","scr-edit"].forEach(s => ($(s).hidden = s !== id));
-  setStep(id === "scr-setup" ? 1 : id === "scr-shoot" ? 2 : 3);
+  const order = ["scr-setup","scr-shoot","scr-pick","scr-edit"];
+  order.forEach(s => ($(s).hidden = s !== id));
+  const n = order.indexOf(id) + 1;
+  [1,2,3,4].forEach(i => $("st" + i).classList.toggle("on", i <= n));
   window.scrollTo(0, 0);
+}
+function cells() { return LAYOUTS[S.layout].cells.length; }
+
+// ---------- 聲音 ----------
+const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+function syncSound() { $("sound").innerHTML = S.sound ? ICON_ON : ICON_OFF; $("sound").setAttribute("aria-pressed", S.sound); }
+$("sound").onclick = () => { S.sound = !S.sound; syncSound(); if (!S.sound) try { speechSynthesis.cancel(); } catch (e) {} };
+let audioCtx = null;
+function beep(freq, dur) {
+  if (!S.sound) return;
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = freq; g.gain.value = .08;
+    o.connect(g).connect(audioCtx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + dur); o.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+function shutter() {
+  if (!S.sound) return;
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    const len = audioCtx.sampleRate * .12, buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    const src = audioCtx.createBufferSource(), g = audioCtx.createGain(); g.gain.value = .35;
+    src.buffer = buf; src.connect(g).connect(audioCtx.destination); src.start();
+  } catch (e) {}
+}
+function say(text) {
+  if (!S.sound || !window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = "zh-TW"; u.rate = 1.08; u.pitch = 1.35;
+    speechSynthesis.speak(u);
+  } catch (e) {}
 }
 
 // ---------- 1. 版型 ----------
@@ -296,20 +479,25 @@ function buildSetup() {
     $("timers").append(b);
   }
 }
-$("go-shoot").onclick = () => {
-  const n = LAYOUTS[S.layout].cells.length;
-  if (S.shots.length !== n) S.shots = new Array(n).fill(null);
-  show("scr-shoot"); buildShoot(); startCamera();
+$("go-shoot").onclick = async () => {
+  S.shots = []; S.picks = [];
+  show("scr-shoot"); await startCamera();
+  const total = camOK ? Math.min(cells() + 2, 8) : cells();
+  S.shots = new Array(total).fill(null);
+  buildShoot();
+  loadAI(); // 先在背景下載美顏模型
 };
 
 // ---------- 2. 拍照 ----------
 function cellAspect() { const c = LAYOUTS[S.layout].cells[0]; return c.w / c.h; }
 function nextEmpty() { return S.shots.findIndex(s => !s); }
+function makeShot(cv) { return { cv, ai: null, cache: new Map(), thumb: cv.toDataURL("image/jpeg", .6) }; }
 
 function buildShoot() {
-  const L = LAYOUTS[S.layout];
+  const total = S.shots.length;
   $("vf").style.aspectRatio = cellAspect();
-  const cols = L.cells.length === 1 ? 1 : L.cells.length === 2 ? 2 : 4;
+  $("scr-shoot").style.setProperty("--ar", cellAspect());
+  const cols = total === 1 ? 1 : total === 2 ? 2 : 4;
   $("thumbs").style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
   $("thumbs").innerHTML = "";
   S.shots.forEach((shot, i) => {
@@ -317,19 +505,23 @@ function buildShoot() {
     b.className = "thumb" + (shot ? " filled" : "");
     b.style.aspectRatio = cellAspect();
     if (cols === 1) b.style.maxWidth = "120px";
-    b.innerHTML = shot ? `<img alt="第 ${i + 1} 張"><span class="x">重拍</span>` : `第 ${i + 1} 張`;
-    if (shot) b.querySelector("img").src = shot.toDataURL("image/jpeg", .6);
+    b.innerHTML = shot ? `<img alt="第 ${i + 1} 張" src="${shot.thumb}"><span class="x">重拍</span>` : `第 ${i + 1} 張`;
     b.onclick = () => { if (shot && !busy) { S.shots[i] = null; buildShoot(); } };
     $("thumbs").append(b);
   });
   const done = nextEmpty() === -1;
-  $("go-edit").disabled = !done;
-  $("thumb-hint").hidden = !S.shots.some(Boolean);
-  const k = done ? L.cells.length : nextEmpty() + 1;
-  $("shot-badge").textContent = `${k} / ${L.cells.length}`;
+  const extra = total > cells();
+  $("go-next").disabled = !done;
+  $("go-next").textContent = extra ? "挑照片 →" : "去裝飾 →";
+  $("thumb-hint").textContent = extra
+    ? `會拍 ${total} 張，最後挑出 ${cells()} 張。點已拍好的格子可以重拍那一張。`
+    : "點已拍好的格子可以重拍那一張。";
+  const k = done ? total : nextEmpty() + 1;
+  $("shot-badge").textContent = `${k} / ${total}`;
   $("snap").textContent = done ? "全部拍好了" : S.shots.some(Boolean) ? "繼續拍" : "開始連拍";
   $("snap").disabled = done;
   $("shoot-title").textContent = done ? "拍好囉！" : "看鏡頭！";
+  $("dots").innerHTML = S.shots.map(s => `<i class="${s ? "on" : ""}"></i>`).join("");
 }
 
 async function startCamera() {
@@ -355,21 +547,9 @@ function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); s
 $("flip").onclick = () => { S.facing = S.facing === "user" ? "environment" : "user"; startCamera(); };
 $("back-setup").onclick = () => { stopCamera(); show("scr-setup"); };
 
-let audioCtx = null;
-function beep(freq, dur) {
-  try {
-    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.frequency.value = freq; g.gain.value = .08;
-    o.connect(g).connect(audioCtx.destination); o.start();
-    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + dur); o.stop(audioCtx.currentTime + dur);
-  } catch (e) {}
-}
-const wait = (ms) => new Promise(r => setTimeout(r, ms));
-
 async function countdown(sec) {
   const c = $("count");
-  for (let n = sec; n > 0; n--) {
+  for (let n = sec; n > 0 && !abort; n--) {
     c.textContent = n; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop");
     beep(880, .12); await wait(1000);
   }
@@ -381,23 +561,42 @@ function grabFrame() {
   const ctx = cv.getContext("2d");
   if (S.facing === "user") { ctx.translate(cv.width, 0); ctx.scale(-1, 1); }
   ctx.drawImage(v, 0, 0);
-  const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
-  beep(1600, .25);
+  const f = $("screen-flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+  shutter();
   return cv;
 }
+function syncLight() {
+  $("scr-shoot").classList.toggle("dim", !S.light);
+  $("light").textContent = S.light ? "補光 開" : "補光 關";
+}
+$("light").onclick = () => { S.light = !S.light; syncLight(); };
+$("stop").onclick = () => { abort = true; };
+
 $("snap").onclick = async () => {
   if (busy || !camOK) return;
-  busy = true; $("snap").disabled = true; $("back-setup").disabled = true;
-  let i;
-  while ((i = nextEmpty()) !== -1) {
+  busy = true; abort = false;
+  $("scr-shoot").classList.add("booth"); syncLight();
+  try { await navigator.wakeLock?.request("screen"); } catch (e) {}
+  let i, n = 0;
+  while ((i = nextEmpty()) !== -1 && !abort) {
+    const pose = POSES[(i + Math.floor(Math.random() * POSES.length)) % POSES.length];
+    const p = $("pose"); p.textContent = `第 ${i + 1} 張：${pose}`; p.classList.remove("in"); void p.offsetWidth; p.classList.add("in");
     $("shot-badge").textContent = `${i + 1} / ${S.shots.length}`;
+    say(pose);
+    await wait(n === 0 ? 1400 : 900);
     await countdown(S.timer);
-    S.shots[i] = grabFrame();
+    if (abort) break;
+    const cv = grabFrame();
+    S.shots[i] = makeShot(cv);
+    $("freeze").src = S.shots[i].thumb; $("freeze").hidden = false;
     buildShoot();
-    await wait(700);
+    await wait(1100);
+    $("freeze").hidden = true;
+    n++;
   }
-  busy = false; $("back-setup").disabled = false;
-  buildShoot();
+  $("scr-shoot").classList.remove("booth");
+  busy = false; buildShoot();
+  if (nextEmpty() === -1) { say("拍完囉！來挑照片吧"); toast("拍完囉！"); }
 };
 
 // 無法用即時相機時：用檔案（手機會開相機 App）
@@ -415,41 +614,147 @@ async function fileToCanvas(file) {
 async function addFiles(files) {
   for (const f of files) {
     const i = nextEmpty(); if (i === -1) break;
-    try { S.shots[i] = await fileToCanvas(f); } catch (e) { toast("這張照片讀不出來，換一張試試"); }
+    try { S.shots[i] = makeShot(await fileToCanvas(f)); } catch (e) { toast("這張照片讀不出來，換一張試試"); }
   }
   buildShoot();
 }
 $("pick-many").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
 $("pick-cam").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
 
-$("go-edit").onclick = async () => {
-  stopCamera(); show("scr-edit");
-  S.items = []; S.selected = -1;
-  await fontsReady; invalidate(); render(); buildEditPanels();
+$("go-next").onclick = () => {
+  stopCamera();
+  if (S.shots.length > cells()) { S.picks = S.shots.map((_, i) => i).slice(0, cells()); show("scr-pick"); buildPick(); }
+  else { S.picks = S.shots.map((_, i) => i); goEdit(); }
 };
 
-// ---------- 3. 合成 ----------
+// ---------- 3. 挑照片 ----------
+function buildPick() {
+  const n = cells();
+  $("pick-title").textContent = `挑出最好看的 ${n} 張`;
+  $("slots").style.gridTemplateColumns = `repeat(${Math.min(n, 4)}, 1fr)`;
+  $("slots").innerHTML = "";
+  for (let k = 0; k < n; k++) {
+    const i = S.picks[k], b = document.createElement("button");
+    b.className = "slot" + (i != null ? " filled" : "");
+    b.style.aspectRatio = cellAspect();
+    b.innerHTML = i != null ? `<img alt="第 ${k + 1} 格" src="${S.shots[i].thumb}">` : `${k + 1}`;
+    b.onclick = () => { if (i != null) { S.picks.splice(k, 1); buildPick(); } };
+    $("slots").append(b);
+  }
+  $("pick-grid").innerHTML = "";
+  S.shots.forEach((shot, i) => {
+    const pos = S.picks.indexOf(i), b = document.createElement("button");
+    b.className = "pick"; b.setAttribute("aria-pressed", pos >= 0);
+    b.style.aspectRatio = cellAspect();
+    b.innerHTML = `<img alt="照片 ${i + 1}" src="${shot.thumb}">${pos >= 0 ? `<b>${pos + 1}</b>` : ""}`;
+    b.onclick = () => {
+      if (pos >= 0) S.picks.splice(pos, 1);
+      else if (S.picks.length < n) S.picks.push(i);
+      else toast(`格子滿了，先點上面的格子拿掉一張`);
+      buildPick();
+    };
+    $("pick-grid").append(b);
+  });
+  $("pick-done").disabled = S.picks.length !== n;
+}
+$("pick-back").onclick = async () => {
+  S.shots = S.shots.map(() => null); show("scr-shoot"); await startCamera(); buildShoot();
+};
+$("pick-done").onclick = () => goEdit();
+
+// ---------- AI 美顏（MediaPipe，需要能連到 CDN 的環境）----------
+const MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+const FACE_MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const SEG_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite";
+const AI = { ok: null, face: null, seg: null, promise: null };
+function loadAI() {
+  if (AI.promise) return AI.promise;
+  AI.promise = (async () => {
+    const mp = await import(`${MP}/vision_bundle.mjs`);
+    const fs = await mp.FilesetResolver.forVisionTasks(`${MP}/wasm`);
+    const make = (delegate) => Promise.all([
+      mp.FaceLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: FACE_MODEL, delegate }, runningMode: "IMAGE", numFaces: 4 }),
+      mp.ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL, delegate }, runningMode: "IMAGE", outputConfidenceMasks: true, outputCategoryMask: false }),
+    ]);
+    let r;
+    try { r = await make("GPU"); } catch (e) { r = await make("CPU"); }
+    [AI.face, AI.seg] = r;
+    return (AI.ok = true);
+  })().catch((e) => { console.warn("AI 美顏無法載入", e); return (AI.ok = false); });
+  return AI.promise;
+}
+function maskToCanvas(f, w, h) {
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d"), img = ctx.createImageData(w, h), d = img.data;
+  for (let i = 0; i < f.length; i++) {
+    let t = (f[i] - .25) / .5; t = t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+    d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = t * 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return cv;
+}
+function analyze(shot) {
+  if (shot.ai || !AI.ok) return shot.ai;
+  let faces = [], mask = null;
+  try { faces = AI.face.detect(shot.cv).faceLandmarks || []; } catch (e) { console.warn(e); }
+  try {
+    const res = AI.seg.segment(shot.cv), m = res?.confidenceMasks?.[0];
+    if (m) mask = maskToCanvas(m.getAsFloat32Array(), m.width, m.height);
+    res?.close?.();
+  } catch (e) { console.warn(e); }
+  return (shot.ai = { faces, mask });
+}
+
+async function goEdit() {
+  show("scr-edit");
+  $("analyzing").hidden = false;
+  $("analyzing-msg").textContent = "第一次要下載美顏模型，大約幾秒鐘。";
+  await fontsReady;
+  const ok = await Promise.race([loadAI(), wait(25000).then(() => false)]);
+  if (ok) {
+    for (let k = 0; k < S.picks.length; k++) {
+      $("analyzing-msg").textContent = `正在找臉… ${k + 1} / ${S.picks.length}`;
+      await wait(30);
+      analyze(S.shots[S.picks[k]]);
+    }
+  }
+  $("analyzing").hidden = true;
+  S.items = []; S.selected = -1;
+  invalidate(); render(); buildEditPanels();
+}
+
+// ---------- 合成 ----------
 const fontsReady = Promise.all([
   document.fonts.load('48px "Mochiy Pop One"'),
   document.fonts.load('700 48px "Noto Sans TC"'),
 ]).catch(() => {});
 
+function seeded(seed) { let s = seed * 9301 + 49297; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
 function rr(ctx, x, y, w, h, r) {
   ctx.beginPath(); ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
-function heart(ctx, x, y, s) {
+function heartPath(ctx, x, y, s) {
   ctx.beginPath(); ctx.moveTo(x, y + s * .3);
   ctx.bezierCurveTo(x, y, x - s * .5, y, x - s * .5, y + s * .3);
   ctx.bezierCurveTo(x - s * .5, y + s * .6, x, y + s * .8, x, y + s);
   ctx.bezierCurveTo(x, y + s * .8, x + s * .5, y + s * .6, x + s * .5, y + s * .3);
-  ctx.bezierCurveTo(x + s * .5, y, x, y, x, y + s * .3); ctx.fill();
+  ctx.bezierCurveTo(x + s * .5, y, x, y, x, y + s * .3); ctx.closePath();
 }
+function heart(ctx, x, y, s) { heartPath(ctx, x, y, s); ctx.fill(); }
 function sparkle(ctx, x, y, r) {
   ctx.beginPath(); ctx.moveTo(x, y - r);
   ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
   ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+}
+function starPath(ctx, x, y, r) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r * .45 : r;
+    ctx.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad);
+  }
+  ctx.closePath();
 }
 function drawPattern(ctx, W, H, F) {
   ctx.fillStyle = F.bg; ctx.fillRect(0, 0, W, H);
@@ -464,61 +769,238 @@ function drawPattern(ctx, W, H, F) {
   } else if (F.pattern === "checker") {
     for (let y = 0; y < H; y += 40) for (let x = (y / 40 % 2) * 40; x < W; x += 80) ctx.fillRect(x, y, 40, 40);
   } else if (F.pattern === "stars") {
-    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const rnd = seeded(7);
     for (let k = 0; k < W * H / 9000; k++) { ctx.globalAlpha = .4 + rnd() * .6; sparkle(ctx, rnd() * W, rnd() * H, 4 + rnd() * 12); }
     ctx.globalAlpha = 1;
   } else if (F.pattern === "hearts") {
     for (let y = 10, r = 0; y < H; y += 60, r++) for (let x = (r % 2) * 30; x < W + 30; x += 60) heart(ctx, x, y, 18);
+  } else if (F.pattern === "film") {
+    for (let y = 14; y < H; y += 56) { rr(ctx, 11, y, 18, 30, 5); ctx.fill(); rr(ctx, W - 29, y, 18, 30, 5); ctx.fill(); }
   }
 }
 
-// 每格照片：裁切成格子比例 + 濾鏡
-function processCell(src, w, h, filter) {
+// 機台背景（去背後換上）
+function drawBg(ctx, w, h, id) {
+  if (id === "studio") {
+    const g = ctx.createRadialGradient(w / 2, h * .4, 0, w / 2, h * .4, Math.max(w, h) * .8);
+    g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#ece6ee"); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  } else if (id === "pink") {
+    const g = ctx.createLinearGradient(0, 0, w, h); g.addColorStop(0, "#ffe1ee"); g.addColorStop(1, "#ff9ec7");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const rnd = seeded(3);
+    for (let k = 0; k < 14; k++) {
+      const x = rnd() * w, y = rnd() * h, r = (.05 + rnd() * .12) * w;
+      const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+      rg.addColorStop(0, "rgba(255,255,255,.75)"); rg.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = rg; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+  } else if (id === "dream") {
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#2a1b62"); g.addColorStop(.6, "#8a4fc9"); g.addColorStop(1, "#ff8cc6");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const rnd = seeded(11); ctx.fillStyle = "#fff6c9";
+    for (let k = 0; k < w * h / 2500; k++) { ctx.globalAlpha = .3 + rnd() * .7; sparkle(ctx, rnd() * w, rnd() * h * .8, 2 + rnd() * 7); }
+    ctx.globalAlpha = 1;
+  } else if (id === "rainbow") {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    ["#ffc4d6","#ffd9b3","#fff4b3","#c8f5c8","#bfe3ff","#dccbff"].forEach((c, i, a) => g.addColorStop(i / (a.length - 1), c));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  } else if (id === "cloud") {
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#7cc8ff"); g.addColorStop(1, "#d6efff");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const rnd = seeded(5); ctx.fillStyle = "rgba(255,255,255,.92)";
+    for (let k = 0; k < 6; k++) {
+      const x = rnd() * w, y = rnd() * h, s = (.06 + rnd() * .07) * w;
+      [[0, 0, 1], [s * .9, s * .1, .8], [-s * .9, s * .15, .75], [s * .4, -s * .45, .8]].forEach(([dx, dy, k2]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, s * k2, 0, 7); ctx.fill(); });
+    }
+  } else if (id === "heart") {
+    ctx.fillStyle = "#ffd6e6"; ctx.fillRect(0, 0, w, h);
+    const s = w / 9; ctx.fillStyle = "#ff8fb8";
+    for (let y = -s / 2, r = 0; y < h; y += s, r++) for (let x = (r % 2) * s / 2; x < w + s; x += s) heart(ctx, x, y, s * .5);
+  }
+}
+
+function lm(P, i) { return P[i] || P[0]; }
+function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+function bilinear(src, W, H, x, y, out, o) {
+  if (x < 0) x = 0; if (y < 0) y = 0; if (x > W - 1.001) x = W - 1.001; if (y > H - 1.001) y = H - 1.001;
+  const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i00 = (y0 * W + x0) * 4, i10 = i00 + 4, i01 = i00 + W * 4, i11 = i01 + 4;
+  for (let c = 0; c < 3; c++)
+    out[o + c] = (src[i00 + c] * (1 - fx) + src[i10 + c] * fx) * (1 - fy) + (src[i01 + c] * (1 - fx) + src[i11 + c] * fx) * fy;
+}
+// 局部放大（大眼）
+function warpBulge(img, c, r, k) {
+  const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
+  const x0 = Math.max(0, Math.floor(c[0] - r)), x1 = Math.min(W - 1, Math.ceil(c[0] + r));
+  const y0 = Math.max(0, Math.floor(c[1] - r)), y1 = Math.min(H - 1, Math.ceil(c[1] + r)), r2 = r * r;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const dx = x - c[0], dy = y - c[1], d2 = dx * dx + dy * dy;
+    if (d2 >= r2) continue;
+    const s = 1 - k * (1 - d2 / r2);
+    bilinear(src, W, H, c[0] + dx * s, c[1] + dy * s, data, (y * W + x) * 4);
+  }
+}
+// 局部推移（瘦臉）
+function warpShift(img, c, m, r) {
+  const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
+  const mx = m[0] - c[0], my = m[1] - c[1], mc2 = mx * mx + my * my, r2 = r * r;
+  const x0 = Math.max(0, Math.floor(c[0] - r)), x1 = Math.min(W - 1, Math.ceil(c[0] + r));
+  const y0 = Math.max(0, Math.floor(c[1] - r)), y1 = Math.min(H - 1, Math.ceil(c[1] + r));
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const dx = x - c[0], dy = y - c[1], d2 = dx * dx + dy * dy;
+    if (d2 >= r2) continue;
+    let t = (r2 - d2) / (r2 - d2 + mc2); t *= t;
+    bilinear(src, W, H, x - t * mx, y - t * my, data, (y * W + x) * 4);
+  }
+}
+const LIPS_OUT = [61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
+const LIPS_IN = [78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95];
+const JAW_L = [132,58,172,136,150], JAW_R = [361,288,397,365,379];
+
+function processCell(shot, w, h, opt) {
+  const key = [w, h, opt.filter, opt.bg, opt.skin, opt.eye, opt.slim, opt.makeup, opt.fx, opt.seed].join("|");
+  if (shot.cache.has(key)) return shot.cache.get(key);
+  if (shot.cache.size > 24) shot.cache.clear();
+  const src = shot.cv, ai = shot.ai;
   const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
   const ctx = cv.getContext("2d");
-  const s = Math.max(w / src.width, h / src.height);
-  const sw = w / s, sh = h / s;
-  ctx.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, w, h);
-  if (filter === "none") return cv;
-  if (filter === "beauty") {
-    // 柔膚：縮小再放大的模糊圖疊在原圖上
-    const sm = document.createElement("canvas"); sm.width = Math.ceil(w / 6); sm.height = Math.ceil(h / 6);
-    sm.getContext("2d").drawImage(cv, 0, 0, sm.width, sm.height);
-    ctx.globalAlpha = .38; ctx.imageSmoothingQuality = "high"; ctx.drawImage(sm, 0, 0, w, h); ctx.globalAlpha = 1;
+  const s = Math.max(w / src.width, h / src.height), sw = w / s, sh = h / s;
+  let sx = (src.width - sw) / 2, sy = (src.height - sh) / 2;
+  // 有偵測到臉就把臉放在格子中間偏上
+  if (ai?.faces?.length) {
+    let x0 = 1, x1 = 0, y0 = 1, y1 = 0;
+    ai.faces.forEach(f => f.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }));
+    const fx = (x0 + x1) / 2 * src.width, fy = (y0 + y1) / 2 * src.height;
+    sx = Math.min(Math.max(fx - sw / 2, 0), src.width - sw);
+    sy = Math.min(Math.max(fy - sh * .45, 0), src.height - sh);
   }
-  const img = ctx.getImageData(0, 0, w, h), d = img.data;
-  const cl = (v) => v < 0 ? 0 : v > 255 ? 255 : v;
-  for (let i = 0; i < d.length; i += 4) {
-    let r = d[i], g = d[i + 1], b = d[i + 2];
-    if (filter === "beauty") { r = r * 1.06 + 16; g = g * 1.05 + 12; b = b * 1.05 + 14; }
-    else if (filter === "pink") { r = r * 1.04 + 22; g = g * .98 + 6; b = b * 1.02 + 18; }
-    else if (filter === "retro") {
-      const tr = .393 * r + .769 * g + .189 * b, tg = .349 * r + .686 * g + .168 * b, tb = .272 * r + .534 * g + .131 * b;
-      r = (r * .35 + tr * .65) * .9 + 20; g = (g * .35 + tg * .65) * .9 + 16; b = (b * .35 + tb * .65) * .85 + 10;
-    } else if (filter === "bw") { const l = (.299 * r + .587 * g + .114 * b - 128) * 1.15 + 138; r = g = b = l; }
-    else if (filter === "cool") { r = r * .95 + 4; g = g * 1.02 + 10; b = b * 1.08 + 22; }
-    d[i] = cl(r); d[i + 1] = cl(g); d[i + 2] = cl(b);
+  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, w, h);
+
+  // 去背換背景
+  if (opt.bg !== "none" && ai?.mask) {
+    const person = document.createElement("canvas"); person.width = w; person.height = h;
+    const pc = person.getContext("2d");
+    pc.drawImage(cv, 0, 0);
+    pc.globalCompositeOperation = "destination-in";
+    const mk = ai.mask, kx = mk.width / src.width, ky = mk.height / src.height;
+    pc.drawImage(mk, sx * kx, sy * ky, sw * kx, sh * ky, 0, 0, w, h);
+    ctx.clearRect(0, 0, w, h); drawBg(ctx, w, h, opt.bg); ctx.drawImage(person, 0, 0);
   }
+
+  const faces = (ai?.faces || []).map(f => f.map(p => [(p.x * src.width - sx) * w / sw, (p.y * src.height - sy) * h / sh]));
+
+  // 妝感：腮紅 + 唇彩
+  if (opt.makeup > 0) faces.forEach(P => {
+    const fw = dist(lm(P, 234), lm(P, 454)), a = [0, .22, .34, .46][opt.makeup];
+    [50, 280].forEach(i => {
+      const c = lm(P, i), r = fw * .17, g = ctx.createRadialGradient(c[0], c[1], 0, c[0], c[1], r);
+      g.addColorStop(0, `rgba(255,105,150,${a})`); g.addColorStop(1, "rgba(255,105,150,0)");
+      ctx.fillStyle = g; ctx.fillRect(c[0] - r, c[1] - r, r * 2, r * 2);
+    });
+    ctx.save(); ctx.beginPath();
+    LIPS_OUT.forEach((i, k) => ctx[k ? "lineTo" : "moveTo"](...lm(P, i))); ctx.closePath();
+    LIPS_IN.forEach((i, k) => ctx[k ? "lineTo" : "moveTo"](...lm(P, i))); ctx.closePath();
+    ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = `rgba(255,70,120,${a * 1.2})`; ctx.fill("evenodd");
+    ctx.restore();
+  });
+
+  const img = ctx.getImageData(0, 0, w, h);
+  // 大眼、瘦臉
+  faces.forEach(P => {
+    const fw = dist(lm(P, 234), lm(P, 454));
+    if (opt.eye > 0) {
+      const k = [0, .12, .19, .26][opt.eye];
+      [[468, 33, 133], [473, 362, 263]].forEach(([iris, a, b]) => {
+        const c = P[iris] || [(lm(P, a)[0] + lm(P, b)[0]) / 2, (lm(P, a)[1] + lm(P, b)[1]) / 2];
+        warpBulge(img, c, dist(lm(P, a), lm(P, b)) * 1.15, k);
+      });
+    }
+    if (opt.slim > 0) {
+      const amt = [0, .035, .06, .085][opt.slim], target = lm(P, 4);
+      [...JAW_L, ...JAW_R].forEach(i => {
+        const c = lm(P, i);
+        warpShift(img, c, [c[0] + (target[0] - c[0]) * amt, c[1] + (target[1] - c[1]) * amt * .5], fw * .3);
+      });
+    }
+  });
   ctx.putImageData(img, 0, 0);
-  if (filter === "retro") {
+
+  // 美肌：柔焦 + 提亮
+  if (opt.skin > 0) {
+    const sm = document.createElement("canvas"); sm.width = Math.ceil(w / 7); sm.height = Math.ceil(h / 7);
+    sm.getContext("2d").drawImage(cv, 0, 0, sm.width, sm.height);
+    ctx.globalAlpha = [0, .22, .34, .46][opt.skin]; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(sm, 0, 0, w, h); ctx.globalAlpha = 1;
+  }
+  const lift = [0, 8, 16, 24][opt.skin];
+  if (opt.filter !== "none" || lift) {
+    const im = ctx.getImageData(0, 0, w, h), d = im.data, f = opt.filter;
+    for (let i = 0; i < d.length; i += 4) {
+      let r = d[i] + lift, g = d[i + 1] + lift * .85, b = d[i + 2] + lift * .9;
+      if (f === "milk") { r = r * 1.04 + 10; g = g * 1.03 + 8; b = b * 1.04 + 12; }
+      else if (f === "pink") { r = r * 1.04 + 22; g = g * .98 + 6; b = b * 1.02 + 18; }
+      else if (f === "retro") {
+        const tr = .393 * r + .769 * g + .189 * b, tg = .349 * r + .686 * g + .168 * b, tb = .272 * r + .534 * g + .131 * b;
+        r = (r * .35 + tr * .65) * .9 + 20; g = (g * .35 + tg * .65) * .9 + 16; b = (b * .35 + tb * .65) * .85 + 10;
+      } else if (f === "bw") { const l = (.299 * r + .587 * g + .114 * b - 128) * 1.15 + 138; r = g = b = l; }
+      else if (f === "cool") { r = r * .95 + 4; g = g * 1.02 + 10; b = b * 1.08 + 22; }
+      d[i] = r; d[i + 1] = g; d[i + 2] = b;
+    }
+    ctx.putImageData(im, 0, 0);
+  }
+  if (opt.filter === "retro") {
     const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .35, w / 2, h / 2, Math.max(w, h) * .75);
     gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(40,20,0,.45)");
     ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
   }
+  drawFx(ctx, w, h, opt.fx, opt.seed);
+  shot.cache.set(key, cv);
   return cv;
+}
+
+function drawFx(ctx, w, h, fx, seed) {
+  if (fx === "none") return;
+  const rnd = seeded(seed + 1), u = Math.min(w, h);
+  ctx.save();
+  if (fx === "sparkle") {
+    for (let k = 0; k < 16; k++) {
+      const edge = rnd() < .5, x = edge ? (rnd() < .5 ? rnd() * .22 : 1 - rnd() * .22) * w : rnd() * w;
+      const y = edge ? rnd() * h : (rnd() < .5 ? rnd() * .2 : 1 - rnd() * .2) * h, r = u * (.015 + rnd() * .045);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r * 1.8);
+      g.addColorStop(0, "rgba(255,255,255,.8)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g; ctx.fillRect(x - r * 2, y - r * 2, r * 4, r * 4);
+      ctx.fillStyle = "#fff"; sparkle(ctx, x, y, r);
+    }
+  } else if (fx === "bubble") {
+    for (let k = 0; k < 12; k++) {
+      const x = rnd() * w, y = rnd() * h, r = u * (.03 + rnd() * .07);
+      if (Math.abs(x - w / 2) < w * .22 && Math.abs(y - h / 2) < h * .3) continue;
+      ctx.fillStyle = "rgba(255,255,255,.14)"; ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = Math.max(2, r * .07);
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.ellipse(x - r * .4, y - r * .4, r * .22, r * .12, -.7, 0, 7); ctx.fill();
+    }
+  } else if (fx === "hearts") {
+    for (let k = 0; k < 18; k++) {
+      const x = rnd() * w, y = rnd() * h * .45, s = u * (.03 + rnd() * .05);
+      ctx.globalAlpha = .55 + rnd() * .45; ctx.fillStyle = rnd() < .5 ? "#ff5c9e" : "#ffb3d1";
+      heart(ctx, x, y - s / 2, s);
+    }
+  }
+  ctx.restore();
 }
 
 let base = null;
 function invalidate() { base = null; }
+function cellOpt(k) { return { filter: S.filter, bg: S.bg, fx: S.fx, seed: k, ...S.beauty }; }
 function buildBase() {
   const L = LAYOUTS[S.layout], F = FRAMES.find(f => f.id === S.frame);
   base = document.createElement("canvas"); base.width = L.W; base.height = L.H;
   const ctx = base.getContext("2d");
   drawPattern(ctx, L.W, L.H, F);
-  L.cells.forEach((c, i) => {
-    ctx.fillStyle = "#ffffff"; rr(ctx, c.x - 8, c.y - 8, c.w + 16, c.h + 16, 22); ctx.fill();
+  L.cells.forEach((c, k) => {
+    const shot = S.shots[S.picks[k]];
+    ctx.fillStyle = F.id === "film" ? "#000" : "#ffffff"; rr(ctx, c.x - 8, c.y - 8, c.w + 16, c.h + 16, 22); ctx.fill();
     ctx.save(); rr(ctx, c.x, c.y, c.w, c.h, 16); ctx.clip();
-    if (S.shots[i]) ctx.drawImage(processCell(S.shots[i], c.w, c.h, S.filter), c.x, c.y);
+    if (shot) ctx.drawImage(processCell(shot, c.w, c.h, cellOpt(k)), c.x, c.y);
     ctx.restore();
   });
   const fy = L.foot.y, fh = L.foot.h, cx = L.W / 2;
@@ -527,12 +1009,18 @@ function buildBase() {
   ctx.font = `${big}px "Mochiy Pop One", "Noto Sans TC", sans-serif`;
   const ty = S.showDate ? fy + fh * .42 : fy + fh * .5;
   ctx.lineJoin = "round"; ctx.lineWidth = big * .28; ctx.strokeStyle = "#ffffff";
-  if (F.id !== "white") ctx.strokeText(S.footText, cx, ty);
+  if (!F.noStroke) ctx.strokeText(S.footText, cx, ty);
   ctx.fillStyle = F.ink; ctx.fillText(S.footText, cx, ty);
+  const tw = Math.min(ctx.measureText(S.footText).width, L.W * .8);
+  if (S.footText.trim()) {
+    ctx.fillStyle = F.ink;
+    sparkle(ctx, cx - tw / 2 - big * .7, ty - big * .15, big * .32);
+    sparkle(ctx, cx + tw / 2 + big * .7, ty + big * .1, big * .26);
+  }
   if (S.showDate) {
     const d = new Date(), p = (n) => String(n).padStart(2, "0");
     ctx.font = `700 ${big * .42}px "Noto Sans TC", sans-serif`;
-    ctx.fillStyle = F.ink; ctx.globalAlpha = .8;
+    ctx.fillStyle = F.ink; ctx.globalAlpha = .85;
     ctx.fillText(`${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`, cx, ty + big * .95);
     ctx.globalAlpha = 1;
   }
@@ -543,30 +1031,67 @@ function stickerFont(it) {
   return it.word ? `${it.size * .5}px "Mochiy Pop One", "Noto Sans TC", sans-serif`
                  : `${it.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
 }
+// 沿著筆跡每隔 gap 放一個點
+function along(pts, gap, fn) {
+  let carry = 0, n = 0;
+  fn(pts[0][0], pts[0][1], n++);
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], seg = Math.hypot(x1 - x0, y1 - y0);
+    let t = gap - carry;
+    while (t <= seg) { fn(x0 + (x1 - x0) * t / seg, y0 + (y1 - y0) * t / seg, n++); t += gap; }
+    carry = seg - (t - gap);
+  }
+}
+function drawStroke(ctx, it) {
+  const pts = it.pts; if (!pts.length) return;
+  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const path = () => { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); pts.forEach(p => ctx.lineTo(p[0], p[1])); if (pts.length === 1) ctx.lineTo(pts[0][0] + .1, pts[0][1]); };
+  if (it.pen === "neon") {
+    ctx.shadowColor = it.color; ctx.shadowBlur = it.size * 1.4;
+    path(); ctx.strokeStyle = it.color; ctx.lineWidth = it.size; ctx.stroke();
+    ctx.shadowBlur = 0; path(); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = it.size * .38; ctx.stroke();
+  } else if (it.pen === "glitter") {
+    path(); ctx.strokeStyle = it.color; ctx.globalAlpha = .85; ctx.lineWidth = it.size; ctx.stroke(); ctx.globalAlpha = 1;
+    const rnd = seeded(it.seed);
+    along(pts, it.size * .35, (x, y) => {
+      for (let k = 0; k < 2; k++) {
+        ctx.fillStyle = rnd() < .5 ? "#ffffff" : "#fff2a8";
+        ctx.beginPath(); ctx.arc(x + (rnd() - .5) * it.size, y + (rnd() - .5) * it.size, it.size * (.06 + rnd() * .12), 0, 7); ctx.fill();
+      }
+      if (rnd() < .12) { ctx.fillStyle = "#fff"; sparkle(ctx, x + (rnd() - .5) * it.size * 1.6, y + (rnd() - .5) * it.size * 1.6, it.size * .6); }
+    });
+  } else if (it.pen === "rainbow") {
+    for (let i = 1; i < pts.length; i++) {
+      ctx.beginPath(); ctx.moveTo(...pts[i - 1]); ctx.lineTo(...pts[i]);
+      ctx.strokeStyle = `hsl(${(i * 7 + it.seed) % 360} 95% 65%)`; ctx.lineWidth = it.size; ctx.stroke();
+    }
+    path(); ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = it.size * .3; ctx.stroke();
+  } else {
+    const s = it.size * 1.6;
+    along(pts, s * 1.15, (x, y, n) => {
+      ctx.fillStyle = it.color; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = s * .14;
+      if (it.pen === "hearts") heartPath(ctx, x, y - s / 2, s);
+      else starPath(ctx, x, y, s * .6);
+      ctx.stroke(); ctx.fill();
+    });
+  }
+  ctx.restore();
+}
 function drawItems(ctx, showSel) {
   S.items.forEach((it, idx) => {
-    if (it.type === "stroke") {
-      if (it.pts.length < 1) return;
-      ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-      const path = () => { ctx.beginPath(); ctx.moveTo(it.pts[0][0], it.pts[0][1]); it.pts.forEach(p => ctx.lineTo(p[0], p[1])); };
-      if (it.neon) { ctx.shadowColor = it.color; ctx.shadowBlur = it.size * 1.4; }
-      path(); ctx.strokeStyle = it.color; ctx.lineWidth = it.size; ctx.stroke();
-      if (it.neon) { ctx.shadowBlur = 0; path(); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = it.size * .38; ctx.stroke(); }
-      ctx.restore();
-    } else {
-      ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(it.rot * Math.PI / 180);
-      ctx.font = stickerFont(it); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      if (it.word) {
-        ctx.lineJoin = "round"; ctx.lineWidth = it.size * .12; ctx.strokeStyle = "#ffffff"; ctx.strokeText(it.text, 0, 0);
-        ctx.fillStyle = "#ff3d8b"; ctx.fillText(it.text, 0, 0);
-      } else ctx.fillText(it.text, 0, 0);
-      if (showSel && idx === S.selected) {
-        const r = hitRadius(ctx, it);
-        ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeStyle = "#a88bff";
-        ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
-      }
-      ctx.restore();
+    if (it.type === "stroke") return drawStroke(ctx, it);
+    ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(it.rot * Math.PI / 180);
+    ctx.font = stickerFont(it); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    if (it.word) {
+      ctx.lineJoin = "round"; ctx.lineWidth = it.size * .12; ctx.strokeStyle = "#ffffff"; ctx.strokeText(it.text, 0, 0);
+      ctx.fillStyle = "#ff3d8b"; ctx.fillText(it.text, 0, 0);
+    } else ctx.fillText(it.text, 0, 0);
+    if (showSel && idx === S.selected) {
+      const r = hitRadius(ctx, it);
+      ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeStyle = "#a88bff";
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
     }
+    ctx.restore();
   });
 }
 function hitRadius(ctx, it) {
@@ -574,13 +1099,15 @@ function hitRadius(ctx, it) {
   const w = ctx.measureText(it.text).width; ctx.restore();
   return Math.max(it.size * .6, w / 2 + 10);
 }
+let raf = 0;
 function render() {
   if (!base) buildBase();
-  if (cv.width !== base.width) { cv.width = base.width; cv.height = base.height; }
+  if (cv.width !== base.width || cv.height !== base.height) { cv.width = base.width; cv.height = base.height; }
   cx2.clearRect(0, 0, cv.width, cv.height);
   cx2.drawImage(base, 0, 0);
   drawItems(cx2, true);
 }
+function renderSoon() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 function exportCanvas() {
   if (!base) buildBase();
   const out = document.createElement("canvas"); out.width = base.width; out.height = base.height;
@@ -589,15 +1116,67 @@ function exportCanvas() {
 }
 
 // ---------- 編輯面板 ----------
+function aiReady() { return AI.ok && S.picks.some(i => S.shots[i]?.ai); }
+function faceCount() { return S.picks.reduce((n, i) => n + (S.shots[i]?.ai?.faces.length || 0), 0); }
+function hasMask() { return S.picks.some(i => S.shots[i]?.ai?.mask); }
+
+function buildBeauty() {
+  $("presets").innerHTML = "";
+  PRESETS.forEach(p => {
+    const b = document.createElement("button"); b.className = "chip"; b.textContent = p.name;
+    b.setAttribute("aria-pressed", BEAUTY.every(x => S.beauty[x.key] === p.v[x.key]));
+    b.onclick = () => { Object.assign(S.beauty, p.v); invalidate(); render(); buildBeauty(); };
+    $("presets").append(b);
+  });
+  $("levels").innerHTML = "";
+  const ai = aiReady() && faceCount() > 0;
+  BEAUTY.forEach(x => {
+    const label = document.createElement("span"); label.textContent = x.name;
+    const seg = document.createElement("div"); seg.className = "seg";
+    LEVEL_NAMES.forEach((n, v) => {
+      const b = document.createElement("button"); b.textContent = n;
+      b.setAttribute("aria-pressed", S.beauty[x.key] === v);
+      b.disabled = x.ai && !ai && v > 0;
+      b.onclick = () => { S.beauty[x.key] = v; invalidate(); render(); buildBeauty(); };
+      seg.append(b);
+    });
+    $("levels").append(label, seg);
+  });
+  const note = $("ai-note");
+  if (AI.ok === false || AI.ok === null) { note.hidden = false; note.textContent = "AI 美顏在這裡無法載入，大眼、瘦臉、妝感和換背景暫時不能用。用手機打開 GitHub Pages 網址就有完整功能。"; }
+  else if (!faceCount()) { note.hidden = false; note.textContent = "照片裡沒找到臉，大眼、瘦臉和妝感不會作用。拍的時候臉靠近鏡頭一點、光線亮一點。"; }
+  else { note.hidden = false; note.textContent = `AI 找到 ${faceCount()} 張臉，美顏只會套在臉上。`; }
+}
 function buildEditPanels() {
-  // 濾鏡：用第一張照片做縮圖
+  if (!aiReady() || !faceCount()) { S.beauty.eye = S.beauty.slim = S.beauty.makeup = 0; invalidate(); render(); }
+  if (!hasMask()) S.bg = "none";
+  buildBeauty();
+  const first = S.shots[S.picks[0]];
+  $("bgs").innerHTML = "";
+  $("bg-hint").textContent = hasMask() ? "AI 會把人物去背，換成機台的攝影棚背景。" : "這裡無法使用 AI 去背，所以不能換背景。";
+  BGS.forEach(B => {
+    const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.bg === B.id);
+    b.disabled = B.id !== "none" && !hasMask();
+    const p = document.createElement("canvas"); p.width = p.height = 108;
+    if (B.id === "none") p.getContext("2d").drawImage(processCell(first, 108, 108, { ...cellOpt(0), bg: "none", fx: "none" }), 0, 0);
+    else drawBg(p.getContext("2d"), 108, 108, B.id);
+    b.innerHTML = `<i style="background:url(${p.toDataURL("image/jpeg", .8)}) center/cover"></i>${B.name}`;
+    b.onclick = () => { S.bg = B.id; invalidate(); render(); setPressed("bgs", b); };
+    $("bgs").append(b);
+  });
   $("filters").innerHTML = "";
   FILTERS.forEach(f => {
     const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.filter === f.id);
-    const prev = processCell(S.shots[0], 108, 108, f.id);
+    const prev = processCell(first, 108, 108, { ...cellOpt(0), filter: f.id, fx: "none" });
     b.innerHTML = `<i style="background:url(${prev.toDataURL("image/jpeg", .7)}) center/cover"></i>${f.name}`;
     b.onclick = () => { S.filter = f.id; invalidate(); render(); setPressed("filters", b); };
     $("filters").append(b);
+  });
+  $("fxs").innerHTML = "";
+  FXS.forEach(f => {
+    const b = document.createElement("button"); b.className = "chip"; b.textContent = f.name; b.setAttribute("aria-pressed", S.fx === f.id);
+    b.onclick = () => { S.fx = f.id; invalidate(); render(); setPressed("fxs", b); };
+    $("fxs").append(b);
   });
   $("frames").innerHTML = "";
   FRAMES.forEach(F => {
@@ -615,6 +1194,12 @@ function buildEditPanels() {
     b.onclick = () => addSticker(t, word);
     $("stickers").append(b);
   });
+  $("pen-types").innerHTML = "";
+  PEN_TYPES.forEach(p => {
+    const b = document.createElement("button"); b.className = "chip"; b.textContent = p.name; b.setAttribute("aria-pressed", S.pen.type === p.id);
+    b.onclick = () => { S.pen.type = p.id; setPressed("pen-types", b); };
+    $("pen-types").append(b);
+  });
   $("pens").innerHTML = "";
   PENS.forEach(c => {
     const b = document.createElement("button"); b.className = "pen"; b.style.background = c;
@@ -627,35 +1212,31 @@ function buildEditPanels() {
 function setPressed(containerId, on) {
   [...$(containerId).children].forEach(el => el.setAttribute("aria-pressed", el === on));
 }
-document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => {
   S.tab = b.dataset.tab;
-  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
-  ["filter","frame","sticker","pen","text"].forEach(t => ($("p-" + t).hidden = t !== S.tab));
+  document.querySelectorAll("#tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  ["beauty","bg","filter","frame","sticker","pen","text"].forEach(t => ($("p-" + t).hidden = t !== S.tab));
   if (S.tab !== "sticker") { S.selected = -1; syncSel(); render(); }
 });
 
 function addSticker(text, word) {
   const L = LAYOUTS[S.layout];
-  const size = Math.round(L.W * (word ? .3 : .16));
+  const size = Math.round(Math.min(L.W, L.H) * (word ? .3 : .16));
   const jitter = () => (Math.random() - .5) * L.W * .2;
   S.items.push({ type: "sticker", text, word, x: L.W / 2 + jitter(), y: L.H / 2 + jitter(), size, rot: Math.round((Math.random() - .5) * 30) });
   S.selected = S.items.length - 1; syncSel(); render();
 }
 function syncSel() {
   const it = S.items[S.selected];
-  $("sel-tools").hidden = !it;
-  if (it) { $("st-size").value = it.size; $("st-rot").value = it.rot; }
+  $("sel-tools").hidden = !it || it.type !== "sticker";
+  if (it?.type === "sticker") { $("st-size").value = it.size; $("st-rot").value = it.rot; }
 }
-$("st-size").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.size = +e.target.value; render(); } };
-$("st-rot").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.rot = +e.target.value; render(); } };
+$("st-size").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.size = +e.target.value; renderSoon(); } };
+$("st-rot").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.rot = +e.target.value; renderSoon(); } };
 $("st-del").onclick = () => { if (S.selected >= 0) { S.items.splice(S.selected, 1); S.selected = -1; syncSel(); render(); } };
 $("pen-size").oninput = (e) => (S.pen.size = +e.target.value);
-$("pen-neon").onclick = (e) => { S.pen.neon = !S.pen.neon; e.target.setAttribute("aria-pressed", S.pen.neon); };
-$("undo").onclick = () => {
-  for (let i = S.items.length - 1; i >= 0; i--) if (S.items[i].type === "stroke") { S.items.splice(i, 1); break; }
-  S.selected = -1; render();
-};
-$("foot-text").oninput = (e) => { S.footText = e.target.value; invalidate(); render(); };
+$("undo").onclick = () => { S.items.pop(); S.selected = -1; syncSel(); render(); };
+$("foot-text").oninput = (e) => { S.footText = e.target.value; invalidate(); renderSoon(); };
 $("show-date").onclick = (e) => { S.showDate = !S.showDate; e.target.setAttribute("aria-pressed", S.showDate); invalidate(); render(); };
 
 // 畫布上的觸控：貼圖拖曳 / 塗鴉
@@ -668,18 +1249,20 @@ cv.addEventListener("pointerdown", (e) => {
   const [x, y] = toCanvas(e);
   if (S.tab === "pen") {
     const scale = cv.width / cv.getBoundingClientRect().width;
-    S.items.push({ type: "stroke", color: S.pen.color, size: S.pen.size * scale, neon: S.pen.neon, pts: [[x, y]] });
+    S.items.push({ type: "stroke", pen: S.pen.type, color: S.pen.color, size: S.pen.size * scale, seed: Math.floor(Math.random() * 1e6), pts: [[x, y]] });
     drag = { stroke: S.items[S.items.length - 1] };
-  } else if (S.tab === "sticker") {
+  } else {
     let hit = -1;
     for (let i = S.items.length - 1; i >= 0; i--) {
       const it = S.items[i];
       if (it.type === "sticker" && Math.hypot(it.x - x, it.y - y) < hitRadius(cx2, it)) { hit = i; break; }
     }
+    if (hit < 0 && S.tab !== "sticker") return;
+    if (hit >= 0 && S.tab !== "sticker") document.querySelector('#tabs [data-tab="sticker"]').click();
     S.selected = hit; syncSel();
     if (hit >= 0) drag = { it: S.items[hit], dx: x - S.items[hit].x, dy: y - S.items[hit].y };
     render();
-  } else return;
+  }
   cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener("pointermove", (e) => {
@@ -687,26 +1270,30 @@ cv.addEventListener("pointermove", (e) => {
   const [x, y] = toCanvas(e);
   if (drag.stroke) drag.stroke.pts.push([x, y]);
   else { drag.it.x = x - drag.dx; drag.it.y = y - drag.dy; }
-  render();
+  renderSoon();
 });
 const endDrag = () => (drag = null);
 cv.addEventListener("pointerup", endDrag);
 cv.addEventListener("pointercancel", endDrag);
 
-$("reshoot").onclick = () => {
-  S.shots = S.shots.map(() => null); show("scr-shoot"); buildShoot(); startCamera();
+$("reshoot").onclick = async () => {
+  S.shots = S.shots.map(() => null); S.picks = []; show("scr-shoot"); await startCamera(); buildShoot();
 };
 
-// ---------- 儲存 ----------
+// ---------- 列印 & 儲存 ----------
 let lastBlob = null;
 $("save").onclick = async () => {
   S.selected = -1; syncSel(); render();
   const out = exportCanvas();
   lastBlob = await new Promise(r => out.toBlob(r, "image/png"));
-  const img = $("result-img"); if (img.src) URL.revokeObjectURL(img.src);
+  const img = $("result-img"); if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
   img.src = URL.createObjectURL(lastBlob);
   $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [new File([lastBlob], "p.png", { type: "image/png" })] }));
+  $("result-title").textContent = "列印中…";
+  img.classList.remove("print"); void img.offsetWidth; img.classList.add("print");
   $("result").hidden = false;
+  say("列印中，請稍等");
+  setTimeout(() => { $("result-title").textContent = "列印完成！"; beep(1320, .18); }, 2400);
 };
 function fileName() {
   const d = new Date(), p = (n) => String(n).padStart(2, "0");
@@ -729,9 +1316,10 @@ $("share").onclick = async () => {
 };
 $("close-result").onclick = () => ($("result").hidden = true);
 $("restart").onclick = () => {
-  $("result").hidden = true; S.shots = []; S.items = []; show("scr-setup"); buildSetup();
+  $("result").hidden = true; S.shots = []; S.picks = []; S.items = []; show("scr-setup"); buildSetup();
 };
 
+syncSound();
 buildSetup();
 </script>
 
