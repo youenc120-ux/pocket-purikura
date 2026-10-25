@@ -901,6 +901,51 @@ async function reshoot() {
 $("pick-back").onclick = reshoot;
 $("pick-done").onclick = () => goEdit();
 
+// ---------- Rust 影像核心（px.wasm，原始碼在 px/src/lib.rs）----------
+// 載入成功就用 Rust 版運算；失敗（例如環境不允許 WebAssembly）就繼續用下面的 JavaScript 版。
+let PX = null;
+const EMPTY_F32 = new Float32Array(0);
+const TONE_CODE = { milk: 1, pink: 2, retro: 3, bw: 4, cool: 5 };
+function makePx(e) {
+  // 把 JS 陣列複製進 wasm 記憶體、呼叫、需要的話再複製回來
+  const run = (bufs, fn) => {
+    const ps = bufs.map(([ta]) => {
+      const n = ta.byteLength, p = e.px_alloc(n);
+      new Uint8Array(e.memory.buffer, p, n).set(new Uint8Array(ta.buffer, ta.byteOffset, n));
+      return [p, n];
+    });
+    try { return fn(...ps.map(x => x[0])); }
+    finally {
+      bufs.forEach(([ta, mut], k) => {
+        const [p, n] = ps[k];
+        if (mut) new Uint8Array(ta.buffer, ta.byteOffset, n).set(new Uint8Array(e.memory.buffer, p, n));
+        e.px_free(p, n);
+      });
+    }
+  };
+  return {
+    bulge: (d, w, h, cx, cy, r, k) => run([[d, 1]], p => e.bulge(p, w, h, cx, cy, r, k)),
+    slim: (d, w, h, pts, chin, r, fade) => run([[d, 1], [pts, 0]], (p, q) => e.slim(p, w, h, q, pts.length, chin, r, fade)),
+    smoothSkin: (d, w, h, mask, x0, y0, x1, y1, r, eps, amt, lift) =>
+      run([[d, 1], [mask, 0]], (p, m) => e.smooth_skin(p, w, h, m, mask.length, x0, y0, x1, y1, r, eps, amt, lift)),
+    sharpen: (d, w, h, mask, amount) => run([[d, 1], [mask, 0]], (p, m) => e.sharpen(p, w, h, m, mask.length, amount)),
+    refineAlpha: (img, mask, w, h, r, eps) => run([[img, 0], [mask, 1]], (p, m) => e.refine_alpha(p, m, w, h, r, eps)),
+    upsampleMask: (small, sw, sh, w, h, s) => {
+      const out = new Float32Array(w * h);
+      run([[small, 0], [out, 1]], (a, b) => e.upsample_mask(a, sw, sh, b, w, h, s));
+      return out;
+    },
+    tone: (d, code, seed) => run([[d, 1]], p => e.tone(p, d.length, code, seed)),
+  };
+}
+const pxReady = (async () => {
+  try {
+    const buf = await (await fetch("px.wasm")).arrayBuffer();
+    const { instance } = await WebAssembly.instantiate(buf, {});
+    PX = makePx(instance.exports);
+  } catch (e) { console.warn("Rust 影像核心無法載入，改用 JavaScript 版", e); }
+})();
+
 // ---------- AI 美顏（MediaPipe，需要能連到 CDN 的環境）----------
 const MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 const FACE_MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -1069,6 +1114,7 @@ function bilinear(src, W, H, x, y, out, o) {
 }
 // 局部放大（大眼）：邊緣用平滑衰減，不會出現一圈變形
 function warpBulge(img, c, r, k) {
+  if (PX) return PX.bulge(img.data, img.width, img.height, c[0], c[1], r, k);
   const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
   const x0 = Math.max(0, Math.floor(c[0] - r)), x1 = Math.min(W - 1, Math.ceil(c[0] + r));
   const y0 = Math.max(0, Math.floor(c[1] - r)), y1 = Math.min(H - 1, Math.ceil(c[1] + r)), r2 = r * r;
@@ -1098,6 +1144,7 @@ function slimFace(img, P, amt, fw) {
   const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
   const mid = lm(P, 1)[0], chinY = lm(P, 152)[1], r = fw * .26, r2 = r * r, fade = fw * .1;
   const pts = [...JAW_L, ...JAW_R].map(i => { const c = lm(P, i); return [c[0], c[1], Math.sign(mid - c[0]) * amt]; });
+  if (PX) return PX.slim(data, W, H, new Float32Array(pts.flat()), chinY, r, fade);
   const x0 = Math.max(0, Math.floor(Math.min(...pts.map(p => p[0])) - r)), x1 = Math.min(W - 1, Math.ceil(Math.max(...pts.map(p => p[0])) + r));
   const y0 = Math.max(0, Math.floor(Math.min(...pts.map(p => p[1])) - r)), y1 = Math.min(H - 1, Math.ceil(chinY + fade));
   for (let y = y0; y <= y1; y++) {
@@ -1174,6 +1221,7 @@ function skinMask(faces, w, h) {
   const fw = faces.length ? dist(lm(faces[0], 234), lm(faces[0], 454)) / s : 20;
   const soft = boxBlur(boxBlur(m, c.width, c.height, Math.max(1, Math.round(fw * .04))), c.width, c.height, Math.max(1, Math.round(fw * .04)));
   // 放回原尺寸
+  if (PX) return PX.upsampleMask(soft, c.width, c.height, w, h, s);
   const out = new Float32Array(w * h);
   for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
     const gx = Math.min(c.width - 1.001, xx / s), gy = Math.min(c.height - 1.001, y / s), x0 = gx | 0, y0 = gy | 0, fx = gx - x0, fy = gy - y0, i = y0 * c.width + x0;
@@ -1191,6 +1239,7 @@ function smoothSkin(img, faces, mask, level) {
   const fw = dist(lm(faces[0], 234), lm(faces[0], 454));
   const r = Math.max(2, Math.round(fw * .02)), eps = [0, .0012, .0022, .0038][level];
   const amt = [0, .45, .62, .78][level], lift = [0, .04, .07, .1][level];
+  if (PX) return PX.smoothSkin(data, W, H, mask, x0, y0, x1, y1, r, eps, amt, lift);
   for (let c = 0; c < 3; c++) {
     const p = new Float32Array(w * h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) p[y * w + x] = data[((y + y0) * W + x + x0) * 4 + c] / 255;
@@ -1205,6 +1254,7 @@ function smoothSkin(img, faces, mask, level) {
 }
 // 銳利化：只加在皮膚以外（眼睛、頭髮、衣服），讓照片清楚
 function sharpen(img, mask, amount) {
+  if (PX) return PX.sharpen(img.data, img.width, img.height, mask || EMPTY_F32, amount);
   const { width: W, height: H, data } = img, n = W * H;
   for (let c = 0; c < 3; c++) {
     const p = new Float32Array(n);
@@ -1254,6 +1304,7 @@ function applyMakeup(ctx, faces, lv, w, h) {
 // 色調：只做柔和的曲線調整，不整張洗白
 function tone(img, f) {
   if (f === "none") return;
+  if (PX) return PX.tone(img.data, TONE_CODE[f] || 0, 7);
   const d = img.data, grain = f === "bw" || f === "retro";
   for (let i = 0; i < d.length; i += 4) {
     let r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
@@ -1305,7 +1356,11 @@ function processCell(shot, w, h, opt) {
     const mc = document.createElement("canvas"); mc.width = w; mc.height = h;
     const mx = mc.getContext("2d"); mx.imageSmoothingQuality = "high";
     mx.drawImage(mk, sx * kx, sy * ky, sw * kx, sh * ky, 0, 0, w, h);
-    if (!small) {
+    if (!small && PX) {
+      const md = mx.getImageData(0, 0, w, h);
+      PX.refineAlpha(ctx.getImageData(0, 0, w, h).data, md.data, w, h, Math.max(2, Math.round(w / 90)), .0008);
+      mx.putImageData(md, 0, 0);
+    } else if (!small) {
       const md = mx.getImageData(0, 0, w, h), px = ctx.getImageData(0, 0, w, h).data, n = w * h;
       const p = new Float32Array(n), I = new Float32Array(n);
       for (let i = 0; i < n; i++) { p[i] = md.data[i * 4 + 3] / 255; I[i] = (.299 * px[i * 4] + .587 * px[i * 4 + 1] + .114 * px[i * 4 + 2]) / 255; }

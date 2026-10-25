@@ -1,0 +1,19 @@
+[package]
+name = "booth-px"
+version = "0.1.0"
+edition = "2021"
+description = "口袋拍貼機的影像運算核心：美肌、大眼、瘦臉、去背修邊、銳利化與濾鏡"
+license = "MIT"
+repository = "https://github.com/youenc120-ux/pocket-purikura"
+
+# 刻意不加任何依賴：這台電腦的 Windows 應用程式控制原則會擋下編譯時執行的 build script，
+# 零依賴就只需要 rustc 和 rust-lld。
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
