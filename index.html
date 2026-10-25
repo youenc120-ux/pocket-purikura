@@ -132,6 +132,13 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
 .toggle { width: 62px; height: 30px; border: 0; background: var(--panel); position: relative; cursor: pointer; padding: 0; --r: 999px; }
 .toggle i { position: absolute; top: 5px; left: 6px; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--ink); background: var(--panel); transition: left .25s cubic-bezier(.16, 1, .3, 1); }
 .toggle[aria-pressed="true"] i { left: 36px; background: var(--ink); }
+.settings { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.films { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.chip { font: inherit; font-size: 15px; color: var(--ink); background: var(--panel); border: 0; padding: 7px 14px; cursor: pointer; --r: 999px; display: inline-flex; align-items: center; gap: 7px; }
+.chip i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--sw); }
+.chip[aria-checked="true"] { background: var(--ink); color: var(--paper); }
+.chip[aria-checked="true"] i { border-color: var(--paper); }
+.films-label { font-size: 14px; color: var(--muted); }
 .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .thumb { aspect-ratio: 4 / 3; max-width: 100%; background: var(--panel); border: 2px dashed var(--faint); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-family: var(--hand); font-size: 18px; padding: 0; font-weight: 400; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -294,7 +301,12 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
       <div class="price sk round" aria-label="免費，一次 4 張">$0<br>=<br>4 張</div>
     </div>
     <button class="link back-link" id="back" hidden>← 換相框</button>
-    <div class="switch" id="color-switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
+    <div class="settings" id="color-switch">
+      <div class="switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
+      <span class="films-label" id="films-label">底片</span>
+      <div class="films" id="films" role="radiogroup" aria-labelledby="films-label"></div>
+      <div class="switch"><span>輕微磨皮</span><button class="toggle sk" id="smooth-toggle" aria-pressed="true" aria-label="輕微磨皮"><i></i></button></div>
+    </div>
     <div class="thumbs" id="thumbs" hidden></div>
     <div class="console">
       <ol class="howto sk" id="howto">
@@ -383,7 +395,16 @@ const FRAMES = [
   { id: "newyear",   name: "新年快樂" },
 ];
 
-const S = { color: true, frame: 0, shots: [null, null, null, null], mode: "choose" };
+// 底片風格：都是自己調的色調，名稱只是形容那種感覺。
+// css 是拍照時預覽畫面的近似效果，真正的處理在 filmTone()。
+const FILMS = [
+  { id: "plain",    name: "原色",          sw: "#d9d6cf", css: "none" },
+  { id: "warm",     name: "暖陽・柯達風",  sw: "#e9b25a", css: "sepia(.16) saturate(1.12) contrast(.96) brightness(1.04)" },
+  { id: "fresh",    name: "清新・富士風",  sw: "#7fbf9e", css: "saturate(1.06) hue-rotate(-8deg) contrast(1.04) brightness(1.02)" },
+  { id: "instant",  name: "拍立得",        sw: "#e8dcc6", css: "contrast(.84) brightness(1.07) saturate(.82) sepia(.1)" },
+  { id: "expired",  name: "過期底片",      sw: "#c7795f", css: "sepia(.28) hue-rotate(-14deg) saturate(1.18) contrast(.9)" },
+];
+const S = { color: true, film: "plain", smooth: true, frame: 0, shots: [null, null, null, null], mode: "choose" };
 let stream = null, busy = false;
 
 function toast(msg) {
@@ -587,26 +608,133 @@ function drawPhoto(ctx, src, c) {
   const s = Math.max(c.w / src.width, c.h / src.height), sw = c.w / s, sh = c.h / s;
   ctx.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, c.x, c.y, c.w, c.h);
 }
-function toBW(canvas) {
-  const ctx = canvas.getContext("2d"), img = ctx.getImageData(0, 0, canvas.width, canvas.height), d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    let l = .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2];
-    l = (l - 128) * 1.18 + 134;
-    d[i] = d[i + 1] = d[i + 2] = l;
+// ---------- 照片處理：輕微磨皮 → 底片色調 → 顆粒、暗角 ----------
+// Rust 核心（px.wasm，原始碼在 px/src/lib.rs）負責磨皮；載入失敗就用下面的 JavaScript 版
+let PX = null;
+(async () => {
+  try {
+    const { instance } = await WebAssembly.instantiate(await (await fetch("px.wasm")).arrayBuffer(), {});
+    const e = instance.exports;
+    const put = (ta) => { const n = ta.byteLength, p = e.px_alloc(n); new Uint8Array(e.memory.buffer, p, n).set(new Uint8Array(ta.buffer, ta.byteOffset, n)); return [p, n]; };
+    PX = {
+      smoothSkin(d, w, h, mask, r, eps, amt, lift) {
+        const [pd, nd] = put(d), [pm, nm] = put(mask);
+        try { e.smooth_skin(pd, w, h, pm, mask.length, 0, 0, w, h, r, eps, amt, lift); new Uint8Array(d.buffer, d.byteOffset, nd).set(new Uint8Array(e.memory.buffer, pd, nd)); }
+        finally { e.px_free(pd, nd); e.px_free(pm, nm); }
+      },
+    };
+  } catch (err) { console.warn("Rust 影像核心無法載入，改用 JavaScript 版", err); }
+})();
+
+function boxBlur(src, w, h, r) {
+  const tmp = new Float32Array(w * h), out = new Float32Array(w * h), k = 1 / (2 * r + 1);
+  for (let y = 0; y < h; y++) {
+    const o = y * w; let s = 0;
+    for (let x = -r; x <= r; x++) s += src[o + Math.min(w - 1, Math.max(0, x))];
+    for (let x = 0; x < w; x++) { tmp[o + x] = s * k; s += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)]; }
   }
+  for (let x = 0; x < w; x++) {
+    let s = 0;
+    for (let y = -r; y <= r; y++) s += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+    for (let y = 0; y < h; y++) { out[y * w + x] = s * k; s += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; }
+  }
+  return out;
+}
+// 皮膚遮罩：用 YCbCr 色彩範圍找膚色，邊緣柔化，避免一顆一顆的雜點
+function skinMask(d, w, h) {
+  const m = new Float32Array(w * h);
+  const soft = (v, lo, hi, f) => Math.max(0, Math.min(1, (v - lo) / f, (hi - v) / f));
+  for (let i = 0, j = 0; j < m.length; i += 4, j++) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const y = .299 * r + .587 * g + .114 * b, cb = 128 - .1687 * r - .3313 * g + .5 * b, cr = 128 + .5 * r - .4187 * g - .0813 * b;
+    m[j] = soft(cr, 133, 175, 6) * soft(cb, 75, 128, 6) * soft(y, 45, 252, 18);
+  }
+  const r = Math.max(2, Math.round(w / 160));
+  return boxBlur(boxBlur(m, w, h, r), w, h, r);
+}
+// 輕微磨皮：導向濾波（平滑但保留邊緣），只作用在皮膚，保留一半以上的原本質感
+function smoothLight(img) {
+  const { width: w, height: h, data: d } = img, mask = skinMask(d, w, h);
+  const r = Math.max(2, Math.round(w * .006)), eps = .0015, amt = .5, lift = .03;
+  if (PX) return PX.smoothSkin(d, w, h, mask, r, eps, amt, lift);
+  const n = w * h;
+  for (let c = 0; c < 3; c++) {
+    const p = new Float32Array(n), pp = new Float32Array(n);
+    for (let i = 0; i < n; i++) { p[i] = d[i * 4 + c] / 255; pp[i] = p[i] * p[i]; }
+    const mp = boxBlur(p, w, h, r), mpp = boxBlur(pp, w, h, r), a = new Float32Array(n), b = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const v = mpp[i] - mp[i] * mp[i]; a[i] = v / (v + eps); b[i] = (1 - a[i]) * mp[i]; }
+    const ma = boxBlur(a, w, h, r), mb = boxBlur(b, w, h, r);
+    for (let i = 0; i < n; i++) {
+      if (mask[i] < .01) continue;
+      let v = p[i]; v += (ma[i] * v + mb[i] - v) * amt * mask[i]; v += lift * mask[i] * v * (1 - v) * 2;
+      d[i * 4 + c] = v * 255;
+    }
+  }
+}
+// 底片色調：每款是一組曲線 + 偏色 + 飽和度，最後加顆粒
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const sCurve = (v, k) => v + k * (v - .5) * (1 - Math.abs(2 * v - 1)) * 2; // k > 0 加對比，k < 0 降對比
+const FILM_TONE = {
+  // 暖陽：暖黃亮部、金色膚色、柔和對比、暗部微微浮起
+  warm:    { curve: .06, lift: .03, sat: 1.06, mul: [1.04, 1.0, .9], add: [.02, .012, 0], shadow: [.01, 0, -.01], grain: .028 },
+  // 清新：偏冷乾淨、暗部帶青綠、綠色飽和、對比稍高
+  fresh:   { curve: .12, lift: .02, sat: 1.04, mul: [.97, 1.01, 1.02], add: [0, .008, .012], shadow: [-.012, .018, .02], grain: .024 },
+  // 拍立得：褪色、低對比、暗部偏冷、亮部偏暖、暗角明顯
+  instant: { curve: -.12, lift: .09, sat: .82, mul: [1.02, 1.0, .95], add: [.015, .01, .005], shadow: [-.01, .005, .03], grain: .03, vignette: .32 },
+  // 過期底片：洋紅黃偏移、顆粒粗、一側有暖色漏光
+  expired: { curve: .02, lift: .06, sat: 1.1, mul: [1.06, .95, .86], add: [.03, 0, .02], shadow: [.03, -.01, .02], grain: .05, vignette: .22, leak: true },
+  // 黑白：中等對比、暗部微浮、細顆粒
+  bw:      { bw: true, curve: .14, lift: .035, grain: .035, vignette: .2 },
+};
+function filmTone(img, id, seed) {
+  const t = FILM_TONE[id]; if (!t) return;
+  const { width: w, height: h, data: d } = img;
+  let s = seed * 2654435761 >>> 0 || 1;
+  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; };
+  const cx = w / 2, cy = h / 2, maxD = Math.hypot(cx, cy);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    let r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    const l0 = .299 * r + .587 * g + .114 * b;
+    if (t.bw) { r = g = b = l0; }
+    r = sCurve(r, t.curve); g = sCurve(g, t.curve); b = sCurve(b, t.curve);
+    if (!t.bw) {
+      const sh = (1 - l0) * (1 - l0);
+      r = r * t.mul[0] + t.add[0] + t.shadow[0] * sh;
+      g = g * t.mul[1] + t.add[1] + t.shadow[1] * sh;
+      b = b * t.mul[2] + t.add[2] + t.shadow[2] * sh;
+      const L = .299 * r + .587 * g + .114 * b;
+      r = L + (r - L) * t.sat; g = L + (g - L) * t.sat; b = L + (b - L) * t.sat;
+    }
+    r = t.lift + (1 - t.lift) * r; g = t.lift + (1 - t.lift) * g; b = t.lift + (1 - t.lift) * b;
+    if (t.vignette) { const v = 1 - t.vignette * Math.pow(Math.hypot(x - cx, y - cy) / maxD, 2.2); r *= v; g *= v; b *= v; }
+    if (t.leak) { const k = Math.max(0, 1 - x / (w * .35)) * Math.max(0, 1 - Math.abs(y / h - .3) * 1.6) * .35; r += k; g += k * .45; b += k * .1; }
+    const n = (rnd() - .5) * t.grain * 2; r += n; g += n; b += n;
+    d[i] = clamp01(r) * 255; d[i + 1] = clamp01(g) * 255; d[i + 2] = clamp01(b) * 255;
+  }
+}
+// 一格照片：裁成格子比例 → 磨皮 → 色調
+function processPhoto(src, w, h, seed) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d"); ctx.imageSmoothingQuality = "high";
+  drawPhoto(ctx, src, { x: 0, y: 0, w, h });
+  const film = S.color ? S.film : "bw";
+  if (!S.smooth && film === "plain") return c;
+  const img = ctx.getImageData(0, 0, w, h);
+  if (S.smooth) smoothLight(img);
+  filmTone(img, film, seed);
   ctx.putImageData(img, 0, 0);
+  return c;
 }
 function buildStrip() {
   const id = FRAMES[S.frame].id, out = document.createElement("canvas");
   out.width = STRIP.W * Q; out.height = STRIP.H * Q;
   const ctx = out.getContext("2d"); ctx.scale(Q, Q); ctx.imageSmoothingQuality = "high";
   drawFrameBack(ctx, id);
-  // 照片先畫在獨立的圖層，黑白模式只處理照片
-  const ph = document.createElement("canvas"); ph.width = out.width; ph.height = out.height;
-  const pc = ph.getContext("2d"); pc.scale(Q, Q); pc.imageSmoothingQuality = "high";
-  STRIP.cells.forEach((c, k) => { pc.save(); cellClip(pc, id, c); pc.clip(); drawPhoto(pc, S.shots[k], c); pc.restore(); });
-  if (!S.color) toBW(ph);
-  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(ph, 0, 0); ctx.restore();
+  STRIP.cells.forEach((c, k) => {
+    const photo = processPhoto(S.shots[k], c.w * Q, c.h * Q, k + 1);
+    ctx.save(); cellClip(ctx, id, c); ctx.clip(); ctx.drawImage(photo, c.x, c.y, c.w, c.h); ctx.restore();
+  });
   drawFrameFront(ctx, id);
   return out;
 }
@@ -626,8 +754,20 @@ function syncColor() {
   $("color-toggle").setAttribute("aria-pressed", S.color);
   $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
   $("vf").classList.toggle("bw", !S.color);
+  $("films").hidden = $("films-label").hidden = !S.color;
+  $("video").style.filter = S.color ? FILMS.find(f => f.id === S.film).css : "";
+  $("smooth-toggle").setAttribute("aria-pressed", S.smooth);
+  $("films").innerHTML = "";
+  FILMS.forEach(f => {
+    const b = document.createElement("button");
+    b.className = "chip sk"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", S.film === f.id);
+    b.style.setProperty("--sw", f.sw); b.innerHTML = `<i></i>${f.name}`;
+    b.onclick = () => { S.film = f.id; beep(600, .04); syncColor(); };
+    $("films").append(b);
+  });
 }
 $("color-toggle").onclick = () => { S.color = !S.color; beep(400, .05); syncColor(); };
+$("smooth-toggle").onclick = () => { S.smooth = !S.smooth; beep(400, .05); syncColor(); };
 $("prev").onclick = () => { S.frame = (S.frame + FRAMES.length - 1) % FRAMES.length; beep(660, .05); drawFramePreview(); };
 $("next").onclick = () => { S.frame = (S.frame + 1) % FRAMES.length; beep(660, .05); drawFramePreview(); };
 
