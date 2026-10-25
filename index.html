@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#ff3d8b">
+<meta name="theme-color" content="#f4f3ef">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
 </head>
 <body>
@@ -11,241 +11,338 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=LXGW+WenKai+TC:wght@400;700&family=Mochiy+Pop+One&display=swap">
 <style>
-/* 單欄手機 App：步驟 1 版型 → 2 拍照（全螢幕補光機台）→ 3 挑照片 → 4 塗鴉裝飾 → 出紙 */
+/* 手繪線稿拍貼機：紙張底色、墨線外框、實體按鈕。照片是唯一的彩色。刻意只做亮色版（紙張世界）。 */
 :root {
-  --bg: #fff4f8;
-  --card: #ffffff;
-  --ink: #3b1730;
-  --muted: #8f5f79;
-  --line: #f2cadb;
-  --accent: #ff3d8b;
-  --accent-ink: #ffffff;
-  --lilac: #a88bff;
-  --soft: #ffe3ee;
-  --booth: #ffffff;
-  --booth-ink: #3b1730;
-  --display: "Mochiy Pop One", "Noto Sans TC", system-ui, sans-serif;
-  --body: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c9a0b8;
-    --line: #4a2b48; --accent: #ff5c9e; --accent-ink: #1b1120; --lilac: #b9a2ff; --soft: #3a2140;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c9a0b8;
-  --line: #4a2b48; --accent: #ff5c9e; --accent-ink: #1b1120; --lilac: #b9a2ff; --soft: #3a2140;
-  color-scheme: dark;
+  --paper: #f4f3ef;
+  --panel: #fbfaf7;
+  --ink: #1f1e1c;
+  --muted: #6b6862;
+  --faint: #c9c6be;
+  --go: #2fb350;
+  --stop: #e0413a;
+  --pink: #ff4f93;
+  --hand: "Gochi Hand", "LXGW WenKai TC", cursive;
+  --zh: "LXGW WenKai TC", "Gochi Hand", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
-  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px;
+  background: var(--paper); color: var(--ink); font-family: var(--zh); font-size: 16px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   -webkit-tap-highlight-color: transparent;
 }
-::selection { background: var(--accent); color: var(--accent-ink); }
-.app { max-width: 520px; margin: 0 auto; padding-block: 14px 28px; display: flex; flex-direction: column; gap: 16px; }
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.logo { font-family: var(--display); font-weight: 400; font-size: 22px; letter-spacing: .02em; color: var(--accent); margin: 0; }
-.logo small { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); letter-spacing: .14em; font-weight: 500; }
-.head-right { display: flex; align-items: center; gap: 10px; }
-.steps { display: flex; gap: 5px; }
-.steps span { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--soft); color: var(--muted); font-variant-numeric: tabular-nums; }
-.steps span.on { background: var(--accent); color: var(--accent-ink); }
-.sound { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
-.sound svg { width: 18px; height: 18px; }
-h2 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 0; text-wrap: balance; }
-.hint { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.6; }
-section { display: flex; flex-direction: column; gap: 14px; }
-
-/* 版型卡 */
-.layouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.layout-card { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 12px 6px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; font: inherit; color: inherit; min-width: 0; }
-.layout-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 28%, transparent); }
-.layout-card b { font-size: 13px; }
-.layout-card span { font-size: 11px; color: var(--muted); }
-.mini { display: grid; gap: 3px; padding: 4px; background: var(--soft); border-radius: 6px; height: 70px; }
-.mini i { background: var(--accent); opacity: .55; border-radius: 2px; }
-.mini.strip { grid-template-rows: repeat(4, 1fr); width: 28px; }
-.mini.grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; width: 62px; }
-.mini.six { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); width: 52px; }
-.mini.hero { grid-template-columns: repeat(3, 1fr); grid-template-rows: 3fr 1fr; width: 60px; }
-.mini.hero i:first-child { grid-column: 1 / -1; }
-.mini.duo { grid-template-columns: 1fr 1fr; width: 62px; }
-.mini.single { width: 56px; }
+::selection { background: var(--ink); color: var(--paper); }
+.defs { position: absolute; width: 0; height: 0; }
+.app { max-width: 520px; margin: 0 auto; padding-block: 14px 32px; display: flex; flex-direction: column; gap: 16px; }
+section { display: flex; flex-direction: column; gap: 16px; }
+h2 { font-family: var(--zh); font-weight: 700; font-size: 20px; margin: 0; text-wrap: balance; }
+.hint { color: var(--muted); font-size: 14px; margin: 0; line-height: 1.6; }
+.label { font-size: 14px; color: var(--muted); font-weight: 700; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.label { font-size: 12px; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
-.chip { border: 2px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; cursor: pointer; }
-.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
-.chip:disabled { opacity: .4; cursor: default; }
-.btn { border: 0; border-radius: 999px; padding: 15px 22px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 30%, transparent); transition: transform .15s ease-out; }
-.btn:active { transform: scale(.97); }
-.btn.ghost { background: var(--soft); color: var(--ink); box-shadow: none; }
-.btn.wide { width: 100%; }
-.btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
-button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px solid var(--lilac); outline-offset: 2px; }
-.feature-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.feature-list li { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); font-weight: 500; }
 
-/* 拍照 */
-.viewfinder { position: relative; width: 100%; max-width: 100%; border-radius: 22px; overflow: hidden; background: #000; border: 4px solid var(--card); box-shadow: 0 8px 30px color-mix(in srgb, var(--accent) 22%, transparent); }
-.viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(1.08) contrast(.94) saturate(1.06); }
+/* 手繪外框：偽元素帶抖動濾鏡，文字不受影響 */
+.sk { position: relative; isolation: isolate; }
+.sk::before { content: ""; position: absolute; inset: 0; border: 2.5px solid var(--ink); border-radius: var(--r, 6px); filter: url(#rough); pointer-events: none; z-index: 2; }
+.sk.dbl::after { content: ""; position: absolute; inset: 9px; border: 2.5px solid var(--ink); border-radius: var(--r, 4px); filter: url(#rough); pointer-events: none; z-index: 2; }
+.sk.thick::before { border-width: 3.5px; }
+.sk.round { --r: 50%; }
+
+.btn { font: inherit; font-weight: 700; font-size: 17px; color: var(--ink); background: var(--panel); border: 0; padding: 13px 20px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; transition: transform .15s ease-out; }
+.btn:active { transform: translateY(2px); }
+.btn.dark { background: var(--ink); color: var(--paper); }
+.btn.wide { width: 100%; }
+.btn:disabled { opacity: .4; cursor: default; }
+.chip { font: inherit; font-size: 15px; color: var(--ink); background: var(--panel); border: 0; padding: 7px 14px; cursor: pointer; --r: 999px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.chip:disabled { opacity: .35; cursor: default; }
+button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px dashed var(--pink); outline-offset: 3px; }
+.link { background: none; border: 0; font: inherit; color: var(--ink); cursor: pointer; padding: 6px 0; font-size: 16px; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--faint); }
+
+/* ---------- 外觀（大廳） ---------- */
+.sign { background: var(--panel); padding: 18px 16px 14px; text-align: center; margin: 4px 6px 0; }
+.sign-en { display: block; font-family: "Gochi Hand", cursive; font-size: clamp(34px, 11vw, 52px); letter-spacing: .08em; line-height: 1; }
+.sign-zh { display: block; font-size: 15px; letter-spacing: .4em; margin-top: 4px; color: var(--muted); }
+.posts { display: flex; justify-content: space-between; padding: 0 22%; height: 12px; margin: -16px 0 -16px; }
+.posts i { width: 12px; border-left: 2.5px solid var(--ink); border-right: 2.5px solid var(--ink); filter: url(#rough); }
+.booth { background: var(--panel); display: grid; grid-template-columns: 1fr 1.05fr; min-height: 440px; }
+.booth-left { padding: 16px 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; border-right: 2.5px solid var(--ink); }
+.window { width: 100%; background: #fff; padding: 16px 14px; display: flex; justify-content: center; gap: 6px; min-height: 150px; align-items: center; }
+.window button { padding: 0; border: 0; background: none; cursor: pointer; height: 112px; flex: 0 1 auto; min-width: 0; }
+.window img { height: 100%; width: auto; max-width: 100%; display: block; box-shadow: 0 2px 4px rgba(0,0,0,.25); transform: rotate(var(--tilt, 0deg)); }
+.window .ghost-strip { width: 20px; height: 108px; background: repeating-linear-gradient(#8a8781 0 23px, #f2f1ec 23px 27px); border: 2px solid #8a8781; flex: 0 0 auto; }
+.note { font-family: var(--hand); font-size: 20px; line-height: 1.05; margin: 2px 0 0; text-align: center; }
+.note svg { width: 28px; height: 22px; display: block; margin: 0 auto -2px; }
+.coin { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.coin .face { width: 46px; height: 40px; background: var(--panel); display: grid; place-items: center; }
+.coin .face i { width: 16px; height: 4px; border-radius: 2px; background: var(--ink); }
+.coin .slotbox { width: 46px; height: 78px; background: var(--panel); display: grid; place-items: center; }
+.coin .slotbox i { width: 14px; height: 50px; border: 2.5px solid var(--ink); border-radius: 2px; }
+.booth-right { position: relative; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+.curtain { position: absolute; inset: 0 8px 70px 8px; transform-origin: right center; transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
+.curtain svg { width: 100%; height: 100%; display: block; }
+.booth-right.open .curtain { transform: scaleX(.12); }
+.stool { position: absolute; bottom: 0; width: 70%; height: 130px; }
+.enter { white-space: nowrap; position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%); z-index: 3; font-size: 19px; padding: 12px 22px; }
+.enter:active { transform: translate(-50%, calc(-50% + 2px)); }
+.credit { text-align: center; color: var(--muted); font-size: 14px; margin: 0; }
+
+/* ---------- 機台內部 ---------- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.steps { display: flex; gap: 6px; }
+.steps span { width: 26px; height: 26px; display: grid; place-items: center; font-family: var(--hand); font-size: 17px; color: var(--muted); --r: 50%; }
+.steps span.on { color: var(--paper); background: var(--ink); border-radius: 50%; }
+.sound { width: 40px; height: 40px; border: 0; background: var(--panel); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; --r: 50%; }
+.sound svg { width: 20px; height: 20px; }
+.marquee { background: var(--panel); min-height: 74px; padding: 18px 22px; display: grid; place-items: center; text-align: center; font-size: clamp(19px, 5.4vw, 24px); font-weight: 700; text-wrap: balance; }
+.marquee.in { animation: rise .45s cubic-bezier(.16, 1, .3, 1); }
+@keyframes rise { from { transform: translateY(8px); opacity: 0; } }
+.screen-row { position: relative; display: flex; justify-content: center; align-items: center; gap: 12px; }
+.eye-note { font-family: var(--hand); font-size: 20px; line-height: 1; text-align: center; }
+.eye-note svg { width: 54px; height: 16px; display: block; }
+.screen { background: var(--panel); padding: 22px; width: min(100%, 330px); }
+.screen-in { position: relative; display: grid; place-items: center; min-height: 250px; }
+.arrow { position: absolute; top: 42%; transform: translateY(-50%); background: none; border: 0; font-size: 30px; font-family: var(--hand); cursor: pointer; color: var(--ink); width: 40px; height: 48px; z-index: 3; }
+.arrow.prev { left: -6px; } .arrow.next { right: -6px; }
+.layout-prev { position: relative; height: 200px; background: var(--faint); box-shadow: 0 6px 12px rgba(0,0,0,.18); max-width: 70%; }
+.layout-prev i { position: absolute; background: #6f6c66; outline: 1.5px solid #4a4843; }
+#layout-pick { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.layout-name { text-align: center; font-weight: 700; margin: 0; font-size: 16px; }
+@media (max-width: 459px) { .eye-note { display: none; } }
+.price { position: absolute; right: -6px; bottom: -30px; width: 76px; height: 76px; background: var(--panel); display: grid; place-items: center; text-align: center; font-family: var(--hand); font-size: 19px; line-height: .95; transform: rotate(-8deg); z-index: 4; }
+.viewfinder { position: relative; width: 100%; max-width: 100%; overflow: hidden; background: #111; }
+.viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(1.06) contrast(.96); }
 .viewfinder video.mirror { transform: scaleX(-1); }
+.viewfinder.bw video, .viewfinder.bw .freeze { filter: grayscale(1) contrast(1.1); }
 .freeze { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.count { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: 130px; color: #fff; text-shadow: 0 4px 24px rgba(255, 61, 139, .95); pointer-events: none; }
+.count { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Gochi Hand", cursive; font-size: 140px; color: #fff; text-shadow: 0 4px 18px rgba(0,0,0,.55); pointer-events: none; }
 .count.pop { animation: pop .9s cubic-bezier(.16, 1, .3, 1); }
 @keyframes pop { from { transform: scale(1.7); opacity: 0; } 25% { opacity: 1; } to { transform: scale(.9); opacity: .15; } }
-.badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.45); color: #fff; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; }
-.cam-off { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; color: #ffd6e7; font-size: 14px; line-height: 1.7; background: repeating-linear-gradient(45deg, #2a1530 0 14px, #301a37 14px 28px); }
+.badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.cam-off { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; color: #e9e6df; font-size: 14px; line-height: 1.7; background: repeating-linear-gradient(45deg, #26241f 0 12px, #2e2c27 12px 24px); }
+.back-choose { align-self: center; }
+.switches { display: flex; justify-content: center; align-items: center; gap: 18px 26px; flex-wrap: wrap; }
+.switch { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+.switch span { color: var(--muted); }
+.switch span.on { color: var(--ink); font-weight: 700; }
+.toggle { width: 62px; height: 30px; border: 0; background: var(--panel); position: relative; cursor: pointer; padding: 0; --r: 999px; }
+.toggle i { position: absolute; top: 5px; left: 6px; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--ink); background: var(--panel); transition: left .25s cubic-bezier(.16, 1, .3, 1); }
+.toggle[aria-pressed="true"] i { left: 36px; background: var(--ink); }
 .thumbs { display: grid; gap: 8px; }
-.thumb { max-width: 100%; border-radius: 10px; background: var(--soft); border: 2px dashed var(--line); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 12px; font-weight: 700; position: relative; padding: 0; cursor: pointer; font-family: inherit; }
+.thumb { max-width: 100%; background: var(--panel); border: 2px dashed var(--faint); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 13px; position: relative; padding: 0; cursor: pointer; font-family: inherit; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.thumb.filled { border-style: solid; border-color: var(--accent); }
-.thumb .x { position: absolute; right: 4px; bottom: 4px; background: rgba(0,0,0,.5); color: #fff; font-size: 11px; border-radius: 999px; padding: 1px 7px; }
+.thumb.filled { border: 2px solid var(--ink); }
+.thumb .x { position: absolute; right: 3px; bottom: 3px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; border-radius: 999px; padding: 1px 7px; }
+.file-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.file-btn { position: relative; }
-.actions { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.console { display: grid; grid-template-columns: 1fr 84px; margin-top: 8px; gap: 12px; align-items: stretch; }
+.howto { background: var(--panel); margin: 0; padding: 14px 12px; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; --r: 14px; }
+.howto li { padding: 0 7px; font-size: 13px; line-height: 1.45; text-align: center; }
+.howto li + li { border-left: 2.5px solid var(--ink); }
+.howto b { display: block; font-family: var(--hand); font-size: 26px; line-height: 1; text-align: left; }
+.howto li.now b { color: var(--pink); }
+.control { background: var(--panel); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 8px 12px; }
+.control .label { font-family: var(--hand); font-size: 18px; color: var(--ink); font-weight: 400; margin-top: -40px; background: var(--paper); padding: 0 4px; }
+.go { width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--ink); background: var(--go); cursor: pointer; box-shadow: 0 4px 0 #1a6b30, inset 0 -4px 0 rgba(0,0,0,.15); transition: transform .1s, box-shadow .1s; }
+.go:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a6b30; }
+.go.busy { background: var(--stop); box-shadow: 0 4px 0 #8e1f1a; }
+.go:disabled { filter: grayscale(.8); opacity: .55; cursor: default; }
+.go.pulse { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 4px 0 #1a6b30, 0 0 0 10px rgba(47, 179, 80, .22); } }
+.control .slit { width: 10px; height: 34px; border: 2.5px solid var(--ink); border-radius: 3px; }
+.control .tray { width: 46px; height: 40px; border: 2.5px solid var(--ink); }
 
-/* 機台模式：全螢幕亮白當補光燈 */
-#scr-shoot.booth {
-  position: fixed; inset: 0; z-index: 15; background: var(--booth); color: var(--booth-ink);
-  justify-content: center; align-items: center; gap: 18px;
-  padding: calc(env(safe-area-inset-top, 0px) + 16px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px));
+/* 拍照中：全螢幕亮白，當作補光燈 */
+#scr-machine.booth {
+  position: fixed; inset: 0; z-index: 15; background: #fff; justify-content: center; align-items: center; gap: 16px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 14px) max(16px, env(safe-area-inset-left, 0px));
 }
-#scr-shoot.booth.dim { --booth: #16101c; --booth-ink: #fde9f3; }
-#scr-shoot.booth > :not(.bk) { display: none; }
-#scr-shoot:not(.booth) .booth-only { display: none; }
-#scr-shoot.booth .viewfinder { width: min(100%, calc(64vh * var(--ar, 1.33))); border: 8px solid #fff; box-shadow: 0 0 0 3px #ffc2da, 0 18px 50px rgba(255, 61, 139, .35); }
-.pose { font-family: var(--display); font-size: clamp(22px, 6.5vw, 34px); text-align: center; text-wrap: balance; margin: 0; color: var(--accent); min-height: 1.3em; }
-.pose.in { animation: rise .5s cubic-bezier(.16, 1, .3, 1); }
-@keyframes rise { from { transform: translateY(14px); opacity: 0; } }
+#scr-machine.booth.dim { background: #1b1a18; color: #f4f3ef; --ink: #f4f3ef; --panel: #26241f; }
+#scr-machine.booth > :not(.bk) { display: none; }
+#scr-machine:not(.booth) .booth-only { display: none; }
+#scr-machine.booth .marquee { width: min(100%, 520px); }
+#scr-machine.booth .screen { width: min(100%, calc(60vh * var(--ar, 1.33) + 44px)); }
+#scr-machine.booth .price, #scr-machine.booth .eye-note { display: none; }
 .booth-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: min(100%, 520px); }
 .dots { display: flex; gap: 6px; }
-.dots i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); }
-.dots i.on { background: var(--accent); }
-.booth-btn { border: 2px solid currentColor; background: transparent; color: inherit; border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.dots i { width: 13px; height: 13px; border-radius: 50%; border: 2.5px solid currentColor; }
+.dots i.on { background: currentColor; }
 .screen-flash { position: fixed; inset: 0; background: #fff; z-index: 40; pointer-events: none; opacity: 0; }
 .screen-flash.go { animation: flash .5s ease-out; }
 @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
 
-/* 挑照片 */
+/* ---------- 挑照片 ---------- */
 .slots { display: grid; gap: 8px; }
-.slot { aspect-ratio: 4 / 3; max-width: 100%; border-radius: 10px; border: 2px dashed var(--line); background: var(--soft); display: grid; place-items: center; overflow: hidden; color: var(--muted); font-weight: 700; padding: 0; cursor: pointer; font-family: inherit; position: relative; }
+.slot { max-width: 100%; border: 2px dashed var(--faint); background: var(--panel); display: grid; place-items: center; overflow: hidden; color: var(--muted); font-family: var(--hand); font-size: 22px; padding: 0; cursor: pointer; }
 .slot img { width: 100%; height: 100%; object-fit: cover; }
-.slot.filled { border: 2px solid var(--accent); }
+.slot.filled { border: 2px solid var(--ink); }
 .pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.pick { position: relative; border: 3px solid transparent; border-radius: 12px; overflow: hidden; padding: 0; cursor: pointer; background: var(--soft); aspect-ratio: 4 / 3; max-width: 100%; }
+.pick { position: relative; border: 3px solid transparent; overflow: hidden; padding: 0; cursor: pointer; background: var(--panel); max-width: 100%; }
 .pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.pick[aria-pressed="true"] { border-color: var(--accent); }
-.pick b { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 13px; display: grid; place-items: center; }
+.pick[aria-pressed="true"] { border-color: var(--ink); }
+.pick b { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--paper); font-family: var(--hand); font-size: 17px; display: grid; place-items: center; }
+.pair { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
 
-/* 編輯 */
-.stage { background: var(--card); border-radius: 22px; padding: 12px; border: 2px solid var(--line); display: flex; justify-content: center; }
-.stage canvas { max-width: 100%; max-height: 60vh; height: auto; display: block; border-radius: 6px; touch-action: none; box-shadow: 0 6px 20px rgba(0,0,0,.14); }
-.tabs { display: flex; gap: 4px; background: var(--soft); border-radius: 16px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
+/* ---------- 裝飾 ---------- */
+.stage { background: #fff; padding: 16px; display: flex; justify-content: center; }
+.stage canvas { max-width: 100%; max-height: 60vh; height: auto; display: block; touch-action: none; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; border-bottom: 2.5px solid var(--ink); }
 .tabs::-webkit-scrollbar { display: none; }
-.tabs button { flex: 1 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; padding: 9px 12px; border-radius: 12px; cursor: pointer; white-space: nowrap; }
-.tabs button[aria-selected="true"] { background: var(--card); color: var(--accent); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.tabs button { flex: 1 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 16px; padding: 9px 12px; cursor: pointer; white-space: nowrap; border-radius: 8px 8px 0 0; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
 .panel { display: flex; flex-direction: column; gap: 12px; min-height: 120px; }
-.levels { display: grid; grid-template-columns: 48px 1fr; gap: 10px 10px; align-items: center; }
-.levels > span { font-size: 14px; font-weight: 700; }
-.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--soft); border-radius: 12px; padding: 3px; gap: 3px; }
-.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; padding: 7px 0; border-radius: 9px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-.seg button:disabled { opacity: .35; cursor: default; }
-.ai-note { font-size: 13px; padding: 10px 12px; border-radius: 12px; background: var(--soft); color: var(--muted); line-height: 1.6; margin: 0; }
-.swatches { display: flex; gap: 10px; flex-wrap: wrap; }
-.swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; padding: 0; }
-.swatch i { width: 56px; height: 56px; border-radius: 14px; border: 3px solid var(--line); display: block; }
-.swatch[aria-pressed="true"] i { border-color: var(--accent); }
-.swatch:disabled { opacity: .35; cursor: default; }
+.levels { display: grid; grid-template-columns: 48px 1fr; gap: 10px; align-items: center; }
+.levels > span { font-size: 16px; font-weight: 700; }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--panel); padding: 4px; gap: 4px; --r: 10px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; padding: 6px 0; border-radius: 7px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.seg button:disabled { opacity: .3; cursor: default; }
+.ai-note { font-size: 14px; padding: 10px 14px; background: var(--panel); color: var(--muted); line-height: 1.6; margin: 0; --r: 10px; }
+.swatches { display: flex; gap: 12px; flex-wrap: wrap; }
+.swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; padding: 0; }
+.swatch i { width: 58px; height: 58px; display: block; border: 2.5px solid var(--faint); }
+.swatch[aria-pressed="true"] i { border-color: var(--ink); box-shadow: 3px 4px 0 -1px rgba(0,0,0,.18); }
+.swatch[aria-pressed="true"] { font-weight: 700; }
+.swatch:disabled { opacity: .3; cursor: default; }
 .stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 6px; }
-.stickers button { aspect-ratio: 1; max-width: 100%; border: 0; background: var(--card); border-radius: 12px; font-size: 26px; cursor: pointer; display: grid; place-items: center; padding: 0; color: var(--accent); }
-.stickers button.word { font-family: var(--display); font-size: 11px; line-height: 1.2; }
-.sel-tools { display: flex; flex-direction: column; gap: 8px; background: var(--card); padding: 12px; border-radius: 14px; }
-.slider { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
-.slider input { width: 100%; accent-color: var(--accent); }
+.stickers button { aspect-ratio: 1; max-width: 100%; border: 2px solid var(--faint); background: var(--panel); border-radius: 10px; font-size: 26px; cursor: pointer; display: grid; place-items: center; padding: 0; color: var(--pink); }
+.stickers button.word { font-family: "Mochiy Pop One", var(--zh); font-size: 11px; line-height: 1.2; }
+.sel-tools { display: flex; flex-direction: column; gap: 8px; background: var(--panel); padding: 12px; --r: 10px; }
+.slider { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.slider input { width: 100%; accent-color: var(--ink); }
 .pens { display: flex; gap: 10px; flex-wrap: wrap; }
-.pen { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); cursor: pointer; padding: 0; }
-.pen[aria-pressed="true"] { border-color: var(--ink); transform: scale(1.1); }
-.text-in { width: 100%; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 16px; }
+.pen { width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid var(--ink); cursor: pointer; padding: 0; }
+.pen[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--paper), 0 0 0 5.5px var(--ink); }
+.text-in { width: 100%; padding: 12px 14px; border: 2.5px solid var(--ink); border-radius: 6px; background: var(--panel); color: var(--ink); font: inherit; font-size: 17px; }
 
-/* 分析中 & 出紙 */
-.overlay { position: fixed; inset: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(6px); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(16px, env(safe-area-inset-left, 0px)); display: flex; }
+/* ---------- 分析中 & 出紙 ---------- */
+.overlay { position: fixed; inset: 0; z-index: 20; background: var(--paper); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(16px, env(safe-area-inset-left, 0px)); display: flex; }
 .overlay-inner { max-width: 480px; margin: auto; display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; width: 100%; }
-.spinner { width: 54px; height: 54px; border-radius: 50%; border: 6px solid var(--soft); border-top-color: var(--accent); animation: spin 1s linear infinite; }
+.spinner { width: 54px; height: 54px; border-radius: 50%; border: 4px dashed var(--ink); animation: spin 2.4s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .printer { display: flex; flex-direction: column; align-items: center; width: 100%; }
-.slot-bar { width: min(100%, 340px); height: 18px; border-radius: 9px; background: linear-gradient(#3b1730, #6d3a5c); box-shadow: inset 0 3px 6px rgba(0,0,0,.5); position: relative; z-index: 2; }
-.paper { overflow: hidden; margin-top: -9px; padding: 0 12px 16px; }
-.paper img { display: block; max-width: 100%; max-height: 62vh; border-radius: 4px; box-shadow: 0 12px 30px rgba(0,0,0,.25); -webkit-touch-callout: default; }
-.paper img.print { animation: print 2.4s cubic-bezier(.3, .7, .25, 1) both; }
-@keyframes print { from { transform: translateY(-101%); } 70% { transform: translateY(-4%); } to { transform: translateY(0); } }
-.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
-@media (prefers-reduced-motion: reduce) { .count.pop, .screen-flash.go, .pose.in, .paper img.print, .spinner { animation: none; } }
+.printer-box { width: min(100%, 300px); background: var(--panel); padding: 16px 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.printer-box span { font-family: var(--hand); font-size: 18px; }
+.printer-box i { display: block; width: 86%; height: 14px; border: 2.5px solid var(--ink); border-radius: 3px; background: #2a2825; }
+.paper { overflow: hidden; margin-top: -24px; padding: 0 14px 18px; position: relative; z-index: 3; }
+.paper img { display: block; max-width: 100%; max-height: 60vh; box-shadow: 0 10px 24px rgba(0,0,0,.25); -webkit-touch-callout: default; }
+.paper img.print { animation: print 2.6s cubic-bezier(.3, .7, .25, 1) both; }
+@keyframes print { from { transform: translateY(-101%); } 70% { transform: translateY(-5%); } to { transform: translateY(0); } }
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: 999px; font-size: 15px; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  .count.pop, .screen-flash.go, .marquee.in, .paper img.print, .spinner, .go.pulse { animation: none; }
+  .curtain, .toggle i { transition: none; }
+}
 </style>
 
-<div class="app">
-  <header>
-    <h1 class="logo">口袋拍貼機<small>POCKET PURIKURA</small></h1>
-    <div class="head-right">
-      <div class="steps" aria-label="步驟"><span id="st1" class="on">1</span><span id="st2">2</span><span id="st3">3</span><span id="st4">4</span></div>
-      <button class="sound" id="sound" aria-pressed="true" aria-label="語音與音效"></button>
-    </div>
-  </header>
+<svg class="defs" aria-hidden="true">
+  <filter id="rough" x="-3%" y="-3%" width="106%" height="106%">
+    <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="5" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 
-  <!-- 1. 選版型 -->
-  <section id="scr-setup">
-    <h2>選一個版型</h2>
-    <div class="layouts" id="layouts"></div>
-    <div class="row"><span class="label">倒數</span><div class="row" id="timers"></div></div>
-    <ul class="feature-list" aria-label="機台功能">
-      <li>多拍 2 張再挑</li><li>AI 大眼瘦臉</li><li>去背換背景</li><li>螢光亮片筆</li><li>補光燈</li>
-    </ul>
-    <button class="btn wide" id="go-shoot">進入拍照機台</button>
+<div class="app">
+  <!-- 0. 外觀 -->
+  <section id="scr-lobby">
+    <div class="sign sk dbl thick"><span class="sign-en">PHOTOBOOTH</span><span class="sign-zh">口袋拍貼機</span></div>
+    <div class="posts" aria-hidden="true"><i></i><i></i></div>
+    <div class="booth sk thick">
+      <div class="booth-left">
+        <div class="window sk dbl" id="gallery"></div>
+        <p class="note"><svg viewBox="0 0 28 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 20 C 14 16, 10 12, 9 3"/><path d="M4 8 L9 2 L13 8"/></svg><span id="gallery-note">拍好的會<br>掛在這裡</span></p>
+        <div class="coin" aria-hidden="true">
+          <div class="face sk"><i></i></div>
+          <div class="slotbox sk"><i></i></div>
+        </div>
+      </div>
+      <div class="booth-right" id="booth-door">
+        <div class="curtain" aria-hidden="true">
+          <svg viewBox="0 0 100 230" preserveAspectRatio="none" fill="none" stroke="#1f1e1c" stroke-width="2.4" stroke-linecap="round" style="filter:url(#rough)">
+            <path d="M4 0 C 10 50, 0 100, 8 150 S 4 210, 10 230" />
+            <path d="M24 0 C 30 40, 18 90, 26 140 S 20 200, 28 230" />
+            <path d="M44 0 C 50 60, 38 110, 46 160 S 40 205, 47 230" />
+            <path d="M64 0 C 58 50, 70 95, 62 145 S 68 200, 63 230" />
+            <path d="M84 0 C 90 45, 78 100, 86 150 S 80 210, 88 230" />
+            <path d="M98 0 L98 230" />
+            <path d="M2 228 C 30 220, 70 236, 99 226" />
+          </svg>
+        </div>
+        <svg class="stool" viewBox="0 0 100 130" fill="none" stroke="#1f1e1c" stroke-width="2.6" style="filter:url(#rough)" aria-hidden="true">
+          <ellipse cx="50" cy="16" rx="34" ry="11" fill="#fbfaf7"/>
+          <path d="M16 16 v10 c 0 8 68 8 68 0 v-10"/>
+          <path d="M44 34 v76 M56 34 v76"/>
+          <ellipse cx="50" cy="116" rx="26" ry="8" fill="#fbfaf7"/>
+        </svg>
+        <button class="btn sk enter" id="enter">進入 →</button>
+      </div>
+    </div>
+    <p class="credit">免費 · 手機就能拍 · 照片只留在你的手機裡</p>
   </section>
 
-  <!-- 2. 拍照 -->
-  <section id="scr-shoot" hidden>
-    <div class="row" style="justify-content:space-between">
-      <h2 id="shoot-title">看鏡頭！</h2>
-      <button class="chip" id="flip">切換鏡頭</button>
+  <!-- 1–2. 機台內部 -->
+  <section id="scr-machine" hidden>
+    <div class="topbar">
+      <button class="link" id="exit">← 離開機台</button>
+      <div class="steps" aria-label="步驟"><span id="st1">1</span><span id="st2">2</span><span id="st3">3</span><span id="st4">4</span></div>
+      <button class="sound sk" id="sound" aria-pressed="true" aria-label="語音與音效"></button>
     </div>
-    <p class="pose bk booth-only" id="pose"></p>
-    <div class="viewfinder bk" id="vf">
-      <video id="video" playsinline muted autoplay class="mirror"></video>
-      <img class="freeze" id="freeze" alt="" hidden>
-      <div class="cam-off" id="cam-off" hidden>
-        <div>這個畫面無法直接開啟相機。<br>用下面的按鈕拍照或從相簿挑照片，<br>一張一張填進格子裡。</div>
+    <div class="marquee sk dbl thick bk" id="marquee">用箭頭選一個版型</div>
+    <div class="screen-row bk">
+      <div class="eye-note" aria-hidden="true">眼睛<br>看這裡<svg viewBox="0 0 54 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 8 H50 M42 2 L51 8 L42 14"/></svg></div>
+      <div class="screen sk dbl thick">
+        <div class="screen-in">
+          <div id="layout-pick">
+            <button class="arrow prev" id="prev" aria-label="上一個版型">‹</button>
+            <div class="layout-prev" id="layout-prev"></div>
+            <p class="layout-name" id="layout-name"></p>
+            <button class="arrow next" id="next" aria-label="下一個版型">›</button>
+          </div>
+          <div class="viewfinder" id="vf" hidden>
+            <video id="video" playsinline muted autoplay class="mirror"></video>
+            <img class="freeze" id="freeze" alt="" hidden>
+            <div class="cam-off" id="cam-off" hidden><div>這個畫面無法直接開啟相機。<br>用下面的按鈕拍照或從相簿挑照片。</div></div>
+            <div class="badge" id="shot-badge">1 / 4</div>
+            <div class="count" id="count"></div>
+          </div>
+        </div>
       </div>
-      <div class="badge" id="shot-badge">1 / 4</div>
-      <div class="count" id="count"></div>
+      <div class="price sk round" id="price">$0<br>=<br>4 張</div>
+    </div>
+    <button class="link back-choose" id="back-choose" hidden>← 換版型</button>
+    <div class="switches" id="switches">
+      <div class="switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
+      <div class="row" id="timers" aria-label="倒數秒數"></div>
+    </div>
+    <div class="thumbs" id="thumbs" hidden></div>
+    <div class="file-actions" id="file-actions" hidden>
+      <label class="btn sk file-btn">從相簿選<input type="file" id="pick-many" accept="image/*" multiple></label>
+      <label class="btn sk dark file-btn">拍下一張<input type="file" id="pick-cam" accept="image/*" capture="user"></label>
+    </div>
+    <div class="console" id="console">
+      <ol class="howto sk" id="howto">
+        <li><b>1</b>撥桿選黑白或彩色</li>
+        <li><b>2</b>箭頭選版型，按綠鈕</li>
+        <li><b>3</b>再按綠鈕開拍，等照片印出來</li>
+      </ol>
+      <div class="control sk">
+        <span class="label">按我</span>
+        <button class="go pulse" id="go" aria-label="綠色按鈕"></button>
+        <i class="slit" aria-hidden="true"></i>
+        <i class="tray" aria-hidden="true"></i>
+      </div>
     </div>
     <div class="booth-bar bk booth-only">
       <div class="dots" id="dots"></div>
       <div class="row">
-        <button class="booth-btn" id="light">補光 開</button>
-        <button class="booth-btn" id="stop">暫停</button>
+        <button class="chip sk" id="light">補光 開</button>
+        <button class="chip sk" id="stop">暫停</button>
       </div>
     </div>
-    <div class="thumbs" id="thumbs"></div>
-    <p class="hint" id="thumb-hint">點已拍好的格子可以重拍那一張。</p>
-    <div id="live-actions" class="actions">
-      <button class="btn ghost" id="back-setup">上一步</button>
-      <button class="btn" id="snap">開始連拍</button>
-    </div>
-    <div id="file-actions" class="actions" hidden>
-      <label class="btn ghost file-btn">從相簿選<input type="file" id="pick-many" accept="image/*" multiple></label>
-      <label class="btn file-btn">拍下一張<input type="file" id="pick-cam" accept="image/*" capture="user"></label>
-    </div>
-    <button class="btn wide" id="go-next" disabled>下一步 →</button>
   </section>
 
   <!-- 3. 挑照片 -->
@@ -254,15 +351,15 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
     <p class="hint">依序點照片放進格子，再點一次可以拿掉。</p>
     <div class="slots" id="slots"></div>
     <div class="pick-grid" id="pick-grid"></div>
-    <div class="actions">
-      <button class="btn ghost" id="pick-back">重拍</button>
-      <button class="btn" id="pick-done">就用這幾張 →</button>
+    <div class="pair">
+      <button class="btn sk" id="pick-back">重拍</button>
+      <button class="btn sk dark" id="pick-done">就用這幾張 →</button>
     </div>
   </section>
 
   <!-- 4. 裝飾 -->
   <section id="scr-edit" hidden>
-    <div class="stage"><canvas id="cv"></canvas></div>
+    <div class="stage sk"><canvas id="cv"></canvas></div>
     <div class="tabs" role="tablist" id="tabs">
       <button role="tab" data-tab="beauty" aria-selected="true">美顏</button>
       <button role="tab" data-tab="bg" aria-selected="false">背景</button>
@@ -275,10 +372,10 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
     <div class="panel" id="p-beauty">
       <div class="row" id="presets"></div>
       <div class="levels" id="levels"></div>
-      <p class="ai-note" id="ai-note" hidden></p>
+      <p class="ai-note sk" id="ai-note" hidden></p>
     </div>
     <div class="panel" id="p-bg" hidden>
-      <p class="hint" id="bg-hint">AI 會把人物去背，換成機台的攝影棚背景。</p>
+      <p class="hint" id="bg-hint">AI 會把人物去背，換成攝影棚背景。</p>
       <div class="swatches" id="bgs"></div>
     </div>
     <div class="panel" id="p-filter" hidden>
@@ -290,26 +387,26 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
     <div class="panel" id="p-sticker" hidden>
       <p class="hint">點貼圖加到照片上，拖曳移動位置。</p>
       <div class="stickers" id="stickers"></div>
-      <div class="sel-tools" id="sel-tools" hidden>
+      <div class="sel-tools sk" id="sel-tools" hidden>
         <div class="slider"><span>大小</span><input type="range" id="st-size" min="40" max="500"></div>
         <div class="slider"><span>旋轉</span><input type="range" id="st-rot" min="-180" max="180"></div>
-        <button class="chip" id="st-del">刪除這個貼圖</button>
+        <button class="chip sk" id="st-del">刪除這個貼圖</button>
       </div>
     </div>
     <div class="panel" id="p-pen" hidden>
       <div class="row" id="pen-types"></div>
       <div class="pens" id="pens"></div>
       <div class="slider"><span>粗細</span><input type="range" id="pen-size" min="4" max="40" value="12"></div>
-      <div class="row"><button class="chip" id="undo">復原上一步</button></div>
+      <div class="row"><button class="chip sk" id="undo">復原上一步</button></div>
     </div>
     <div class="panel" id="p-text" hidden>
       <label class="label" for="foot-text">底部文字</label>
       <input class="text-in" id="foot-text" maxlength="24" value="BESTIE DAY ♡">
-      <div class="row"><button class="chip" id="show-date" aria-pressed="true">加上日期</button></div>
+      <div class="row"><button class="chip sk" id="show-date" aria-pressed="true">加上日期</button></div>
     </div>
-    <div class="actions">
-      <button class="btn ghost" id="reshoot">重拍</button>
-      <button class="btn" id="save">完成，列印出來</button>
+    <div class="pair">
+      <button class="btn sk" id="reshoot">重拍</button>
+      <button class="btn sk dark" id="save">完成，印出來</button>
     </div>
   </section>
 </div>
@@ -326,14 +423,14 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
   <div class="overlay-inner">
     <h2 id="result-title">列印中…</h2>
     <div class="printer">
-      <div class="slot-bar" aria-hidden="true"></div>
+      <div class="printer-box sk thick"><span>出紙口</span><i></i></div>
       <div class="paper"><img id="result-img" alt="拍貼成品"></div>
     </div>
     <p class="hint">手機上可以長按圖片儲存或分享。</p>
-    <button class="btn wide" id="dl">下載圖片</button>
-    <button class="btn ghost wide" id="share" hidden>分享給朋友</button>
-    <button class="btn ghost wide" id="close-result">繼續裝飾</button>
-    <button class="chip" id="restart">再拍一組</button>
+    <button class="btn sk dark wide" id="dl">下載圖片</button>
+    <button class="btn sk wide" id="share" hidden>分享給朋友</button>
+    <button class="btn sk wide" id="close-result">繼續裝飾</button>
+    <button class="link" id="restart">走出機台</button>
   </div>
 </div>
 <div class="screen-flash" id="screen-flash"></div>
@@ -345,27 +442,29 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
 // ---------- 設定資料 ----------
 const LAYOUTS = {
-  strip:  { name: "4格直條", sub: "經典拍貼條", W: 600, H: 1800, foot: { y: 1672, h: 128 },
+  strip:  { name: "4格直條", W: 600, H: 1800, foot: { y: 1672, h: 128 },
             cells: [0,1,2,3].map(i => ({ x: 40, y: 40 + i * 414, w: 520, h: 390 })) },
-  grid:   { name: "四宮格", sub: "2 × 2", W: 1200, H: 1100, foot: { y: 884, h: 216 },
+  grid:   { name: "四宮格", W: 1200, H: 1100, foot: { y: 884, h: 216 },
             cells: [[40,40],[610,40],[40,472],[610,472]].map(([x,y]) => ({ x, y, w: 550, h: 412 })) },
-  six:    { name: "六格", sub: "2 × 3", W: 1200, H: 1500, foot: { y: 1316, h: 184 },
+  six:    { name: "六格", W: 1200, H: 1500, foot: { y: 1316, h: 184 },
             cells: [0,1,2].flatMap(r => [40, 610].map(x => ({ x, y: 40 + r * 432, w: 550, h: 412 }))) },
-  hero:   { name: "大圖＋3", sub: "主打一張", W: 1200, H: 1400, foot: { y: 1170, h: 230 },
+  hero:   { name: "大圖＋3小", W: 1200, H: 1400, foot: { y: 1170, h: 230 },
             cells: [{ x: 40, y: 40, w: 1120, h: 840 }, ...[40, 420, 800].map(x => ({ x, y: 900, w: 360, h: 270 }))] },
-  duo:    { name: "雙人並排", sub: "2 張直式", W: 1200, H: 900, foot: { y: 728, h: 172 },
+  duo:    { name: "雙人並排", W: 1200, H: 900, foot: { y: 728, h: 172 },
             cells: [[40,40],[610,40]].map(([x,y]) => ({ x, y, w: 550, h: 688 })) },
-  single: { name: "大頭貼", sub: "1 張方形", W: 1000, H: 1200, foot: { y: 960, h: 240 },
+  single: { name: "大頭貼", W: 1000, H: 1200, foot: { y: 960, h: 240 },
             cells: [{ x: 40, y: 40, w: 920, h: 920 }] },
 };
+const LAYOUT_IDS = Object.keys(LAYOUTS);
 const FRAMES = [
+  { id: "classic", name: "復古白條", bg: "#fbfaf6", pat: "#fbfaf6", pattern: "none", ink: "#222222", noStroke: true, hand: true, square: true },
+  { id: "black",   name: "黑色條",   bg: "#151515", pat: "#151515", pattern: "none", ink: "#f2f0ea", noStroke: true, hand: true, square: true },
   { id: "berry", name: "草莓牛奶", bg: "#ffd3e3", pat: "#ffffff", pattern: "dots",    ink: "#e2457a" },
   { id: "mint",  name: "薄荷汽水", bg: "#c6f1e1", pat: "#ffffff", pattern: "stripes", ink: "#178062" },
   { id: "night", name: "夜光派對", bg: "#1f1745", pat: "#ffe066", pattern: "stars",   ink: "#ff7ad9" },
   { id: "plaid", name: "奶油格紋", bg: "#fff1c2", pat: "#ffe08a", pattern: "checker", ink: "#b0601a" },
   { id: "lilac", name: "薰衣草",   bg: "#e3d8ff", pat: "#f5f0ff", pattern: "hearts",  ink: "#6b4fd8" },
   { id: "film",  name: "底片",     bg: "#161616", pat: "#f1ebe0", pattern: "film",    ink: "#ffb347", noStroke: true },
-  { id: "white", name: "純白",     bg: "#ffffff", pat: "#ffffff", pattern: "none",    ink: "#2b2b2b", noStroke: true },
 ];
 const BGS = [
   { id: "none",    name: "原背景" },
@@ -406,25 +505,28 @@ const PEN_TYPES = [
 ];
 
 const S = {
-  layout: "strip", timer: 3, facing: "user", shots: [], picks: [], filter: "milk", frame: "berry",
+  layout: "strip", timer: 3, facing: "user", shots: [], picks: [], filter: "milk", frame: "classic",
   bg: "none", fx: "none", beauty: { skin: 2, eye: 1, slim: 1, makeup: 1 },
   items: [], selected: -1, tab: "beauty", pen: { color: "#ff3d8b", size: 12, type: "neon" },
-  footText: "BESTIE DAY ♡", showDate: true, sound: true, light: true,
+  footText: "BESTIE DAY ♡", showDate: true, sound: true, light: true, color: true,
 };
-let stream = null, camOK = false, busy = false, abort = false;
+let stream = null, camOK = false, busy = false, abort = false, M = "choose";
 
 function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.hidden = false;
   clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600);
 }
 function show(id) {
-  const order = ["scr-setup","scr-shoot","scr-pick","scr-edit"];
-  order.forEach(s => ($(s).hidden = s !== id));
-  const n = order.indexOf(id) + 1;
-  [1,2,3,4].forEach(i => $("st" + i).classList.toggle("on", i <= n));
+  ["scr-lobby","scr-machine","scr-pick","scr-edit"].forEach(s => ($(s).hidden = s !== id));
+  const step = id === "scr-machine" ? (M === "choose" ? 1 : 2) : id === "scr-pick" ? 3 : id === "scr-edit" ? 4 : 0;
+  [1,2,3,4].forEach(i => $("st" + i).classList.toggle("on", i === step));
   window.scrollTo(0, 0);
 }
 function cells() { return LAYOUTS[S.layout].cells.length; }
+function setMarquee(text) {
+  const m = $("marquee"); if (m.textContent === text) return;
+  m.textContent = text; m.classList.remove("in"); void m.offsetWidth; m.classList.add("in");
+}
 
 // ---------- 聲音 ----------
 const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
@@ -452,6 +554,16 @@ function shutter() {
     src.buffer = buf; src.connect(g).connect(audioCtx.destination); src.start();
   } catch (e) {}
 }
+function whirr() {
+  if (!S.sound) return;
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime;
+    o.type = "sawtooth"; o.frequency.setValueAtTime(70, t); o.frequency.linearRampToValueAtTime(95, t + 2.2);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.03, t + .2); g.gain.setValueAtTime(.03, t + 2.1); g.gain.linearRampToValueAtTime(.0001, t + 2.4);
+    o.connect(g).connect(audioCtx.destination); o.start(); o.stop(t + 2.5);
+  } catch (e) {}
+}
 function say(text) {
   if (!S.sound || !window.speechSynthesis) return;
   try {
@@ -461,32 +573,120 @@ function say(text) {
   } catch (e) {}
 }
 
-// ---------- 1. 版型 ----------
-function buildSetup() {
-  $("layouts").innerHTML = "";
-  for (const [id, L] of Object.entries(LAYOUTS)) {
-    const b = document.createElement("button");
-    b.className = "layout-card"; b.setAttribute("aria-pressed", S.layout === id);
-    b.innerHTML = `<div class="mini ${id}">${"<i></i>".repeat(L.cells.length)}</div><b>${L.name}</b><span>${L.sub}</span>`;
-    b.onclick = () => { S.layout = id; buildSetup(); };
-    $("layouts").append(b);
+// ---------- 0. 外觀 & 我的拍貼 ----------
+function loadGallery() { try { return JSON.parse(localStorage.getItem("booth-gallery") || "[]"); } catch (e) { return []; } }
+function saveToGallery(canvas) {
+  const t = document.createElement("canvas"), w = Math.min(300, canvas.width);
+  t.width = w; t.height = Math.round(canvas.height * w / canvas.width);
+  t.getContext("2d").drawImage(canvas, 0, 0, t.width, t.height);
+  const g = [t.toDataURL("image/jpeg", .78), ...loadGallery()].slice(0, 4);
+  try { localStorage.setItem("booth-gallery", JSON.stringify(g)); } catch (e) {}
+}
+function buildGallery() {
+  const g = loadGallery(), el = $("gallery");
+  el.innerHTML = "";
+  if (!g.length) {
+    for (let k = 0; k < 4; k++) { const i = document.createElement("i"); i.className = "ghost-strip"; el.append(i); }
+    $("gallery-note").innerHTML = "拍好的會<br>掛在這裡";
+    return;
   }
+  g.forEach((url, k) => {
+    const b = document.createElement("button");
+    b.style.setProperty("--tilt", `${[-3, 2, -1, 3][k]}deg`);
+    b.setAttribute("aria-label", `打開第 ${k + 1} 張拍貼`);
+    b.innerHTML = `<img alt="" src="${url}" style="--tilt:${[-3, 2, -1, 3][k]}deg">`;
+    b.onclick = () => openFromGallery(url);
+    el.append(b);
+  });
+  $("gallery-note").innerHTML = "我的<br>拍貼";
+}
+async function openFromGallery(url) {
+  lastBlob = await (await fetch(url)).blob();
+  showResult(URL.createObjectURL(lastBlob), false);
+  $("close-result").hidden = true;
+}
+$("enter").onclick = async () => {
+  $("booth-door").classList.add("open");
+  beep(520, .08);
+  await wait(matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 650);
+  M = "choose"; show("scr-machine"); syncMachine();
+  $("booth-door").classList.remove("open");
+};
+$("exit").onclick = () => {
+  if (busy) return;
+  stopCamera(); show("scr-lobby"); buildGallery();
+};
+
+// ---------- 1. 選版型 ----------
+function buildLayoutPick() {
+  const L = LAYOUTS[S.layout], el = $("layout-prev");
+  el.style.aspectRatio = `${L.W} / ${L.H}`;
+  el.style.height = L.H > L.W * 1.6 ? "220px" : "170px";
+  el.innerHTML = L.cells.map(c => `<i style="left:${c.x / L.W * 100}%;top:${c.y / L.H * 100}%;width:${c.w / L.W * 100}%;height:${c.h / L.H * 100}%"></i>`).join("");
+  $("layout-name").textContent = L.name;
   $("timers").innerHTML = "";
   for (const t of [3, 5, 10]) {
     const b = document.createElement("button");
-    b.className = "chip"; b.textContent = t + " 秒"; b.setAttribute("aria-pressed", S.timer === t);
-    b.onclick = () => { S.timer = t; buildSetup(); };
+    b.className = "chip sk"; b.textContent = `倒數 ${t} 秒`; b.setAttribute("aria-pressed", S.timer === t);
+    b.onclick = () => { S.timer = t; buildLayoutPick(); };
     $("timers").append(b);
   }
 }
-$("go-shoot").onclick = async () => {
-  S.shots = []; S.picks = [];
-  show("scr-shoot"); await startCamera();
+function cycleLayout(d) {
+  const i = LAYOUT_IDS.indexOf(S.layout);
+  S.layout = LAYOUT_IDS[(i + d + LAYOUT_IDS.length) % LAYOUT_IDS.length];
+  beep(660, .05); syncMachine();
+}
+$("prev").onclick = () => cycleLayout(-1);
+$("next").onclick = () => cycleLayout(1);
+function syncColor() {
+  $("color-toggle").setAttribute("aria-pressed", S.color);
+  $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
+  $("vf").classList.toggle("bw", !S.color);
+}
+$("color-toggle").onclick = () => {
+  S.color = !S.color; S.filter = S.color ? "milk" : "bw";
+  if (!S.color && S.frame !== "black") S.frame = "classic";
+  beep(400, .05); syncColor();
+};
+
+// 機台狀態：choose 選版型 → shoot 拍照
+function syncMachine() {
+  const choosing = M === "choose";
+  $("layout-pick").hidden = !choosing; $("vf").hidden = choosing;
+  $("back-choose").hidden = choosing || busy;
+  $("switches").hidden = !choosing;
+  $("thumbs").hidden = choosing;
+  $("file-actions").hidden = choosing || camOK;
+  $("price").innerHTML = `$0<br>=<br>${choosing ? cells() : S.shots.length || cells()} 張`;
+  const done = !choosing && S.shots.length && nextEmpty() === -1;
+  const go = $("go");
+  go.disabled = busy ? false : (!choosing && !camOK && !done);
+  go.classList.toggle("busy", busy);
+  go.classList.toggle("pulse", !busy && !go.disabled);
+  go.setAttribute("aria-label", choosing ? "選這個版型" : busy ? "暫停拍照" : done ? "下一步" : "開始拍照");
+  [...$("howto").children].forEach((li, k) => li.classList.toggle("now", choosing ? k === 1 : k === 2));
+  if (choosing) { setMarquee("用箭頭選一個版型"); buildLayoutPick(); syncColor(); }
+  else if (!busy) setMarquee(done ? (S.shots.length > cells() ? "拍好了！按綠色按鈕挑照片" : "拍好了！按綠色按鈕去裝飾")
+    : camOK ? "坐好、看鏡頭，按綠色按鈕開始" : "用下面的按鈕加入照片");
+  [1,2,3,4].forEach(i => $("st" + i).classList.toggle("on", i === (choosing ? 1 : 2)));
+}
+$("go").onclick = async () => {
+  if (busy) { abort = true; return; }
+  if (M === "choose") return enterShoot();
+  if (S.shots.length && nextEmpty() === -1) return goNext();
+  if (camOK) runBooth();
+};
+async function enterShoot() {
+  M = "shoot"; S.shots = []; S.picks = [];
+  syncMachine(); await startCamera();
   const total = camOK ? Math.min(cells() + 2, 8) : cells();
   S.shots = new Array(total).fill(null);
-  buildShoot();
+  buildShoot(); syncMachine();
+  say(camOK ? "準備好就按綠色按鈕" : "");
   loadAI(); // 先在背景下載美顏模型
-};
+}
+$("back-choose").onclick = () => { stopCamera(); M = "choose"; syncMachine(); };
 
 // ---------- 2. 拍照 ----------
 function cellAspect() { const c = LAYOUTS[S.layout].cells[0]; return c.w / c.h; }
@@ -496,7 +696,7 @@ function makeShot(cv) { return { cv, ai: null, cache: new Map(), thumb: cv.toDat
 function buildShoot() {
   const total = S.shots.length;
   $("vf").style.aspectRatio = cellAspect();
-  $("scr-shoot").style.setProperty("--ar", cellAspect());
+  $("scr-machine").style.setProperty("--ar", cellAspect());
   const cols = total === 1 ? 1 : total === 2 ? 2 : 4;
   $("thumbs").style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
   $("thumbs").innerHTML = "";
@@ -505,22 +705,12 @@ function buildShoot() {
     b.className = "thumb" + (shot ? " filled" : "");
     b.style.aspectRatio = cellAspect();
     if (cols === 1) b.style.maxWidth = "120px";
-    b.innerHTML = shot ? `<img alt="第 ${i + 1} 張" src="${shot.thumb}"><span class="x">重拍</span>` : `第 ${i + 1} 張`;
-    b.onclick = () => { if (shot && !busy) { S.shots[i] = null; buildShoot(); } };
+    b.innerHTML = shot ? `<img alt="第 ${i + 1} 張" src="${shot.thumb}"><span class="x">重拍</span>` : `${i + 1}`;
+    b.onclick = () => { if (shot && !busy) { S.shots[i] = null; buildShoot(); syncMachine(); } };
     $("thumbs").append(b);
   });
   const done = nextEmpty() === -1;
-  const extra = total > cells();
-  $("go-next").disabled = !done;
-  $("go-next").textContent = extra ? "挑照片 →" : "去裝飾 →";
-  $("thumb-hint").textContent = extra
-    ? `會拍 ${total} 張，最後挑出 ${cells()} 張。點已拍好的格子可以重拍那一張。`
-    : "點已拍好的格子可以重拍那一張。";
-  const k = done ? total : nextEmpty() + 1;
-  $("shot-badge").textContent = `${k} / ${total}`;
-  $("snap").textContent = done ? "全部拍好了" : S.shots.some(Boolean) ? "繼續拍" : "開始連拍";
-  $("snap").disabled = done;
-  $("shoot-title").textContent = done ? "拍好囉！" : "看鏡頭！";
+  $("shot-badge").textContent = `${done ? total : nextEmpty() + 1} / ${total}`;
   $("dots").innerHTML = S.shots.map(s => `<i class="${s ? "on" : ""}"></i>`).join("");
 }
 
@@ -539,13 +729,8 @@ async function startCamera() {
     camOK = false;
   }
   $("cam-off").hidden = camOK;
-  $("live-actions").hidden = !camOK;
-  $("file-actions").hidden = camOK;
-  $("flip").hidden = !camOK;
 }
 function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
-$("flip").onclick = () => { S.facing = S.facing === "user" ? "environment" : "user"; startCamera(); };
-$("back-setup").onclick = () => { stopCamera(); show("scr-setup"); };
 
 async function countdown(sec) {
   const c = $("count");
@@ -566,38 +751,37 @@ function grabFrame() {
   return cv;
 }
 function syncLight() {
-  $("scr-shoot").classList.toggle("dim", !S.light);
+  $("scr-machine").classList.toggle("dim", !S.light);
   $("light").textContent = S.light ? "補光 開" : "補光 關";
 }
 $("light").onclick = () => { S.light = !S.light; syncLight(); };
 $("stop").onclick = () => { abort = true; };
 
-$("snap").onclick = async () => {
+async function runBooth() {
   if (busy || !camOK) return;
   busy = true; abort = false;
-  $("scr-shoot").classList.add("booth"); syncLight();
+  $("scr-machine").classList.add("booth"); syncLight(); syncMachine();
   try { await navigator.wakeLock?.request("screen"); } catch (e) {}
   let i, n = 0;
   while ((i = nextEmpty()) !== -1 && !abort) {
     const pose = POSES[(i + Math.floor(Math.random() * POSES.length)) % POSES.length];
-    const p = $("pose"); p.textContent = `第 ${i + 1} 張：${pose}`; p.classList.remove("in"); void p.offsetWidth; p.classList.add("in");
+    setMarquee(`第 ${i + 1} 張：${pose}`);
     $("shot-badge").textContent = `${i + 1} / ${S.shots.length}`;
     say(pose);
     await wait(n === 0 ? 1400 : 900);
     await countdown(S.timer);
     if (abort) break;
-    const cv = grabFrame();
-    S.shots[i] = makeShot(cv);
+    S.shots[i] = makeShot(grabFrame());
     $("freeze").src = S.shots[i].thumb; $("freeze").hidden = false;
     buildShoot();
     await wait(1100);
     $("freeze").hidden = true;
     n++;
   }
-  $("scr-shoot").classList.remove("booth");
-  busy = false; buildShoot();
-  if (nextEmpty() === -1) { say("拍完囉！來挑照片吧"); toast("拍完囉！"); }
-};
+  $("scr-machine").classList.remove("booth");
+  busy = false; buildShoot(); syncMachine();
+  if (nextEmpty() === -1) say("拍完囉！");
+}
 
 // 無法用即時相機時：用檔案（手機會開相機 App）
 async function fileToCanvas(file) {
@@ -616,16 +800,16 @@ async function addFiles(files) {
     const i = nextEmpty(); if (i === -1) break;
     try { S.shots[i] = makeShot(await fileToCanvas(f)); } catch (e) { toast("這張照片讀不出來，換一張試試"); }
   }
-  buildShoot();
+  buildShoot(); syncMachine();
 }
 $("pick-many").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
 $("pick-cam").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
 
-$("go-next").onclick = () => {
+function goNext() {
   stopCamera();
   if (S.shots.length > cells()) { S.picks = S.shots.map((_, i) => i).slice(0, cells()); show("scr-pick"); buildPick(); }
   else { S.picks = S.shots.map((_, i) => i); goEdit(); }
-};
+}
 
 // ---------- 3. 挑照片 ----------
 function buildPick() {
@@ -650,16 +834,18 @@ function buildPick() {
     b.onclick = () => {
       if (pos >= 0) S.picks.splice(pos, 1);
       else if (S.picks.length < n) S.picks.push(i);
-      else toast(`格子滿了，先點上面的格子拿掉一張`);
+      else toast("格子滿了，先點上面的格子拿掉一張");
       buildPick();
     };
     $("pick-grid").append(b);
   });
   $("pick-done").disabled = S.picks.length !== n;
 }
-$("pick-back").onclick = async () => {
-  S.shots = S.shots.map(() => null); show("scr-shoot"); await startCamera(); buildShoot();
-};
+async function reshoot() {
+  S.shots = S.shots.map(() => null); S.picks = []; M = "shoot";
+  show("scr-machine"); await startCamera(); buildShoot(); syncMachine();
+}
+$("pick-back").onclick = reshoot;
 $("pick-done").onclick = () => goEdit();
 
 // ---------- AI 美顏（MediaPipe，需要能連到 CDN 的環境）----------
@@ -726,7 +912,8 @@ async function goEdit() {
 // ---------- 合成 ----------
 const fontsReady = Promise.all([
   document.fonts.load('48px "Mochiy Pop One"'),
-  document.fonts.load('700 48px "Noto Sans TC"'),
+  document.fonts.load('48px "Gochi Hand"'),
+  document.fonts.load('700 48px "LXGW WenKai TC"', "拍貼"),
 ]).catch(() => {});
 
 function seeded(seed) { let s = seed * 9301 + 49297; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
@@ -779,7 +966,7 @@ function drawPattern(ctx, W, H, F) {
   }
 }
 
-// 機台背景（去背後換上）
+// 攝影棚背景（去背後換上）
 function drawBg(ctx, w, h, id) {
   if (id === "studio") {
     const g = ctx.createRadialGradient(w / 2, h * .4, 0, w / 2, h * .4, Math.max(w, h) * .8);
@@ -941,15 +1128,15 @@ function processCell(shot, w, h, opt) {
       else if (f === "retro") {
         const tr = .393 * r + .769 * g + .189 * b, tg = .349 * r + .686 * g + .168 * b, tb = .272 * r + .534 * g + .131 * b;
         r = (r * .35 + tr * .65) * .9 + 20; g = (g * .35 + tg * .65) * .9 + 16; b = (b * .35 + tb * .65) * .85 + 10;
-      } else if (f === "bw") { const l = (.299 * r + .587 * g + .114 * b - 128) * 1.15 + 138; r = g = b = l; }
+      } else if (f === "bw") { const l = (.299 * r + .587 * g + .114 * b - 128) * 1.18 + 132; r = g = b = l; }
       else if (f === "cool") { r = r * .95 + 4; g = g * 1.02 + 10; b = b * 1.08 + 22; }
       d[i] = r; d[i + 1] = g; d[i + 2] = b;
     }
     ctx.putImageData(im, 0, 0);
   }
-  if (opt.filter === "retro") {
+  if (opt.filter === "retro" || opt.filter === "bw") {
     const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .35, w / 2, h / 2, Math.max(w, h) * .75);
-    gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(40,20,0,.45)");
+    gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, opt.filter === "bw" ? "rgba(0,0,0,.3)" : "rgba(40,20,0,.45)");
     ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
   }
   drawFx(ctx, w, h, opt.fx, opt.seed);
@@ -998,37 +1185,38 @@ function buildBase() {
   drawPattern(ctx, L.W, L.H, F);
   L.cells.forEach((c, k) => {
     const shot = S.shots[S.picks[k]];
-    ctx.fillStyle = F.id === "film" ? "#000" : "#ffffff"; rr(ctx, c.x - 8, c.y - 8, c.w + 16, c.h + 16, 22); ctx.fill();
-    ctx.save(); rr(ctx, c.x, c.y, c.w, c.h, 16); ctx.clip();
+    if (!F.square) { ctx.fillStyle = F.id === "film" ? "#000" : "#ffffff"; rr(ctx, c.x - 8, c.y - 8, c.w + 16, c.h + 16, 22); ctx.fill(); }
+    ctx.save(); rr(ctx, c.x, c.y, c.w, c.h, F.square ? 2 : 16); ctx.clip();
     if (shot) ctx.drawImage(processCell(shot, c.w, c.h, cellOpt(k)), c.x, c.y);
     ctx.restore();
   });
   const fy = L.foot.y, fh = L.foot.h, cx = L.W / 2;
-  const big = Math.min(fh * .36, L.W * .075);
+  const big = Math.min(fh * (F.hand ? .42 : .36), L.W * (F.hand ? .085 : .075));
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.font = `${big}px "Mochiy Pop One", "Noto Sans TC", sans-serif`;
+  ctx.font = F.hand ? `${big}px "Gochi Hand", "LXGW WenKai TC", cursive` : `${big}px "Mochiy Pop One", "Noto Sans TC", sans-serif`;
   const ty = S.showDate ? fy + fh * .42 : fy + fh * .5;
   ctx.lineJoin = "round"; ctx.lineWidth = big * .28; ctx.strokeStyle = "#ffffff";
   if (!F.noStroke) ctx.strokeText(S.footText, cx, ty);
   ctx.fillStyle = F.ink; ctx.fillText(S.footText, cx, ty);
   const tw = Math.min(ctx.measureText(S.footText).width, L.W * .8);
-  if (S.footText.trim()) {
+  if (S.footText.trim() && !F.hand) {
     ctx.fillStyle = F.ink;
     sparkle(ctx, cx - tw / 2 - big * .7, ty - big * .15, big * .32);
     sparkle(ctx, cx + tw / 2 + big * .7, ty + big * .1, big * .26);
   }
   if (S.showDate) {
     const d = new Date(), p = (n) => String(n).padStart(2, "0");
-    ctx.font = `700 ${big * .42}px "Noto Sans TC", sans-serif`;
+    ctx.font = F.hand ? `${big * .5}px "Gochi Hand", cursive` : `700 ${big * .42}px "Noto Sans TC", sans-serif`;
     ctx.fillStyle = F.ink; ctx.globalAlpha = .85;
-    ctx.fillText(`${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`, cx, ty + big * .95);
+    const date = F.hand ? `${p(d.getMonth() + 1)}.${p(d.getDate())}.${String(d.getFullYear()).slice(2)}` : `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+    ctx.fillText(date, cx, ty + big * .95);
     ctx.globalAlpha = 1;
   }
 }
 
 const cv = $("cv"), cx2 = cv.getContext("2d");
 function stickerFont(it) {
-  return it.word ? `${it.size * .5}px "Mochiy Pop One", "Noto Sans TC", sans-serif`
+  return it.word ? `${it.size * .5}px "Mochiy Pop One", "LXGW WenKai TC", sans-serif`
                  : `${it.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
 }
 // 沿著筆跡每隔 gap 放一個點
@@ -1068,7 +1256,7 @@ function drawStroke(ctx, it) {
     path(); ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = it.size * .3; ctx.stroke();
   } else {
     const s = it.size * 1.6;
-    along(pts, s * 1.15, (x, y, n) => {
+    along(pts, s * 1.15, (x, y) => {
       ctx.fillStyle = it.color; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = s * .14;
       if (it.pen === "hearts") heartPath(ctx, x, y - s / 2, s);
       else starPath(ctx, x, y, s * .6);
@@ -1088,7 +1276,7 @@ function drawItems(ctx, showSel) {
     } else ctx.fillText(it.text, 0, 0);
     if (showSel && idx === S.selected) {
       const r = hitRadius(ctx, it);
-      ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeStyle = "#a88bff";
+      ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeStyle = "#1f1e1c";
       ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
     }
     ctx.restore();
@@ -1123,7 +1311,7 @@ function hasMask() { return S.picks.some(i => S.shots[i]?.ai?.mask); }
 function buildBeauty() {
   $("presets").innerHTML = "";
   PRESETS.forEach(p => {
-    const b = document.createElement("button"); b.className = "chip"; b.textContent = p.name;
+    const b = document.createElement("button"); b.className = "chip sk"; b.textContent = p.name;
     b.setAttribute("aria-pressed", BEAUTY.every(x => S.beauty[x.key] === p.v[x.key]));
     b.onclick = () => { Object.assign(S.beauty, p.v); invalidate(); render(); buildBeauty(); };
     $("presets").append(b);
@@ -1132,7 +1320,7 @@ function buildBeauty() {
   const ai = aiReady() && faceCount() > 0;
   BEAUTY.forEach(x => {
     const label = document.createElement("span"); label.textContent = x.name;
-    const seg = document.createElement("div"); seg.className = "seg";
+    const seg = document.createElement("div"); seg.className = "seg sk";
     LEVEL_NAMES.forEach((n, v) => {
       const b = document.createElement("button"); b.textContent = n;
       b.setAttribute("aria-pressed", S.beauty[x.key] === v);
@@ -1143,9 +1331,10 @@ function buildBeauty() {
     $("levels").append(label, seg);
   });
   const note = $("ai-note");
-  if (AI.ok === false || AI.ok === null) { note.hidden = false; note.textContent = "AI 美顏在這裡無法載入，大眼、瘦臉、妝感和換背景暫時不能用。用手機打開 GitHub Pages 網址就有完整功能。"; }
-  else if (!faceCount()) { note.hidden = false; note.textContent = "照片裡沒找到臉，大眼、瘦臉和妝感不會作用。拍的時候臉靠近鏡頭一點、光線亮一點。"; }
-  else { note.hidden = false; note.textContent = `AI 找到 ${faceCount()} 張臉，美顏只會套在臉上。`; }
+  note.hidden = false;
+  if (!AI.ok) note.textContent = "AI 美顏在這裡無法載入，大眼、瘦臉、妝感和換背景暫時不能用。用手機打開 GitHub Pages 網址就有完整功能。";
+  else if (!faceCount()) note.textContent = "照片裡沒找到臉，大眼、瘦臉和妝感不會作用。拍的時候臉靠近鏡頭一點、光線亮一點。";
+  else note.textContent = `AI 找到 ${faceCount()} 張臉，美顏只會套在臉上。`;
 }
 function buildEditPanels() {
   if (!aiReady() || !faceCount()) { S.beauty.eye = S.beauty.slim = S.beauty.makeup = 0; invalidate(); render(); }
@@ -1153,7 +1342,7 @@ function buildEditPanels() {
   buildBeauty();
   const first = S.shots[S.picks[0]];
   $("bgs").innerHTML = "";
-  $("bg-hint").textContent = hasMask() ? "AI 會把人物去背，換成機台的攝影棚背景。" : "這裡無法使用 AI 去背，所以不能換背景。";
+  $("bg-hint").textContent = hasMask() ? "AI 會把人物去背，換成攝影棚背景。" : "這裡無法使用 AI 去背，所以不能換背景。";
   BGS.forEach(B => {
     const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.bg === B.id);
     b.disabled = B.id !== "none" && !hasMask();
@@ -1174,7 +1363,7 @@ function buildEditPanels() {
   });
   $("fxs").innerHTML = "";
   FXS.forEach(f => {
-    const b = document.createElement("button"); b.className = "chip"; b.textContent = f.name; b.setAttribute("aria-pressed", S.fx === f.id);
+    const b = document.createElement("button"); b.className = "chip sk"; b.textContent = f.name; b.setAttribute("aria-pressed", S.fx === f.id);
     b.onclick = () => { S.fx = f.id; invalidate(); render(); setPressed("fxs", b); };
     $("fxs").append(b);
   });
@@ -1182,6 +1371,7 @@ function buildEditPanels() {
   FRAMES.forEach(F => {
     const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.frame === F.id);
     const p = document.createElement("canvas"); p.width = p.height = 108; drawPattern(p.getContext("2d"), 108, 108, F);
+    if (F.square) { const c = p.getContext("2d"); c.fillStyle = "#8a8781"; c.fillRect(30, 14, 48, 36); c.fillRect(30, 58, 48, 36); }
     b.innerHTML = `<i style="background:url(${p.toDataURL()}) center/cover"></i>${F.name}`;
     b.onclick = () => { S.frame = F.id; invalidate(); render(); setPressed("frames", b); };
     $("frames").append(b);
@@ -1196,7 +1386,7 @@ function buildEditPanels() {
   });
   $("pen-types").innerHTML = "";
   PEN_TYPES.forEach(p => {
-    const b = document.createElement("button"); b.className = "chip"; b.textContent = p.name; b.setAttribute("aria-pressed", S.pen.type === p.id);
+    const b = document.createElement("button"); b.className = "chip sk"; b.textContent = p.name; b.setAttribute("aria-pressed", S.pen.type === p.id);
     b.onclick = () => { S.pen.type = p.id; setPressed("pen-types", b); };
     $("pen-types").append(b);
   });
@@ -1276,28 +1466,33 @@ const endDrag = () => (drag = null);
 cv.addEventListener("pointerup", endDrag);
 cv.addEventListener("pointercancel", endDrag);
 
-$("reshoot").onclick = async () => {
-  S.shots = S.shots.map(() => null); S.picks = []; show("scr-shoot"); await startCamera(); buildShoot();
-};
+$("reshoot").onclick = reshoot;
 
 // ---------- 列印 & 儲存 ----------
 let lastBlob = null;
+function showResult(url, animate) {
+  const img = $("result-img");
+  if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
+  img.src = url;
+  $("share").hidden = !(lastBlob && navigator.canShare && navigator.canShare({ files: [new File([lastBlob], "p.png", { type: "image/png" })] }));
+  $("close-result").hidden = false;
+  img.classList.remove("print");
+  $("result-title").textContent = animate ? "列印中…" : "我的拍貼";
+  if (animate) { void img.offsetWidth; img.classList.add("print"); }
+  $("result").hidden = false;
+}
 $("save").onclick = async () => {
   S.selected = -1; syncSel(); render();
   const out = exportCanvas();
   lastBlob = await new Promise(r => out.toBlob(r, "image/png"));
-  const img = $("result-img"); if (img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
-  img.src = URL.createObjectURL(lastBlob);
-  $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [new File([lastBlob], "p.png", { type: "image/png" })] }));
-  $("result-title").textContent = "列印中…";
-  img.classList.remove("print"); void img.offsetWidth; img.classList.add("print");
-  $("result").hidden = false;
-  say("列印中，請稍等");
-  setTimeout(() => { $("result-title").textContent = "列印完成！"; beep(1320, .18); }, 2400);
+  saveToGallery(out);
+  showResult(URL.createObjectURL(lastBlob), true);
+  say("列印中，請稍等"); whirr();
+  setTimeout(() => { $("result-title").textContent = "列印完成！"; beep(1320, .18); }, 2600);
 };
 function fileName() {
   const d = new Date(), p = (n) => String(n).padStart(2, "0");
-  return `拍貼_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.png`;
+  return `拍貼_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.${lastBlob?.type === "image/jpeg" ? "jpg" : "png"}`;
 }
 $("dl").onclick = async () => {
   if (!lastBlob) return;
@@ -1311,16 +1506,18 @@ $("dl").onclick = async () => {
   document.body.append(a); a.click(); a.remove();
 };
 $("share").onclick = async () => {
-  try { await navigator.share({ files: [new File([lastBlob], fileName(), { type: "image/png" })], title: "我的拍貼" }); }
+  try { await navigator.share({ files: [new File([lastBlob], fileName(), { type: lastBlob.type })], title: "我的拍貼" }); }
   catch (e) { if (e?.name !== "AbortError") toast("分享失敗，請長按圖片儲存"); }
 };
 $("close-result").onclick = () => ($("result").hidden = true);
 $("restart").onclick = () => {
-  $("result").hidden = true; S.shots = []; S.picks = []; S.items = []; show("scr-setup"); buildSetup();
+  $("result").hidden = true; stopCamera();
+  S.shots = []; S.picks = []; S.items = []; M = "choose";
+  show("scr-lobby"); buildGallery();
 };
 
 syncSound();
-buildSetup();
+buildGallery();
 </script>
 
 </body>
