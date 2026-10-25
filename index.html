@@ -11,9 +11,10 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=LXGW+WenKai+TC:wght@400;700&family=Mochiy+Pop+One&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=LXGW+WenKai+TC:wght@400;700&display=swap">
 <style>
-/* 手繪線稿拍貼機：紙張底色、墨線外框、實體按鈕。照片是唯一的彩色。刻意只做亮色版（紙張世界）。 */
+/* 手繪線稿拍貼機：紙張底色、墨線外框、實體按鈕。刻意只做亮色版（紙張世界）。
+   流程：外觀 → 選相框（黑白／彩色）→ 拍照或上傳（可裁切）→ 列印 → 取件 */
 :root {
   --paper: #f4f3ef;
   --panel: #fbfaf7;
@@ -22,7 +23,7 @@
   --faint: #c9c6be;
   --go: #2fb350;
   --stop: #e0413a;
-  --pink: #ff4f93;
+  --accent: #e2457a;
   --hand: "Gochi Hand", "LXGW WenKai TC", cursive;
   --zh: "LXGW WenKai TC", "Gochi Hand", "PingFang TC", "Microsoft JhengHei", sans-serif;
   color-scheme: light;
@@ -41,8 +42,8 @@ body {
 .app { max-width: 520px; margin: 0 auto; padding-block: 14px 32px; display: flex; flex-direction: column; gap: 16px; }
 section { display: flex; flex-direction: column; gap: 16px; }
 h2 { font-family: var(--zh); font-weight: 700; font-size: 20px; margin: 0; text-wrap: balance; }
+h3 { font-size: 17px; margin: 0; }
 .hint { color: var(--muted); font-size: 14px; margin: 0; line-height: 1.6; }
-.label { font-size: 14px; color: var(--muted); font-weight: 700; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
 /* 手繪外框：偽元素帶抖動濾鏡，文字不受影響 */
@@ -57,22 +58,19 @@ h2 { font-family: var(--zh); font-weight: 700; font-size: 20px; margin: 0; text-
 .btn.dark { background: var(--ink); color: var(--paper); }
 .btn.wide { width: 100%; }
 .btn:disabled { opacity: .4; cursor: default; }
-.chip { font: inherit; font-size: 15px; color: var(--ink); background: var(--panel); border: 0; padding: 7px 14px; cursor: pointer; --r: 999px; }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.chip:disabled { opacity: .35; cursor: default; }
-button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px dashed var(--pink); outline-offset: 3px; }
+button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-visible { outline: 3px dashed var(--accent); outline-offset: 3px; }
 .link { background: none; border: 0; font: inherit; color: var(--ink); cursor: pointer; padding: 6px 0; font-size: 16px; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--faint); }
+.file-btn { position: relative; }
+.file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.pair { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; width: 100%; }
 
-/* ---------- 外觀（大廳） ---------- */
+/* ---------- 外觀 ---------- */
 .sign { background: var(--panel); padding: 18px 16px 14px; text-align: center; margin: 4px 6px 0; }
 .sign-en { display: block; font-family: "Gochi Hand", cursive; font-size: clamp(34px, 11vw, 52px); letter-spacing: .08em; line-height: 1; }
 .sign-zh { display: block; font-size: 15px; letter-spacing: .4em; margin-top: 4px; color: var(--muted); }
 .posts { display: flex; justify-content: space-between; padding: 0 22%; height: 12px; margin: -16px 0 -16px; }
 .posts i { width: 12px; border-left: 2.5px solid var(--ink); border-right: 2.5px solid var(--ink); filter: url(#rough); }
 .booth { background: var(--panel); display: grid; grid-template-columns: 1fr 1.05fr .42fr; min-height: 440px; }
-.booth-side { border-left: 2.5px solid var(--ink); padding: 18px 8px; }
-.mirror { height: 46%; background: var(--panel); }
-.mirror svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .booth-left { padding: 16px 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; border-right: 2.5px solid var(--ink); }
 .window { width: 100%; background: #fff; padding: 16px 14px; display: flex; justify-content: center; gap: 6px; min-height: 150px; align-items: center; }
 .window button { padding: 0; border: 0; background: none; cursor: pointer; height: 112px; flex: 0 1 auto; min-width: 0; }
@@ -92,143 +90,83 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 .stool { position: absolute; bottom: 0; width: 70%; height: 130px; }
 .enter { white-space: nowrap; position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%); z-index: 3; font-size: 19px; padding: 12px 22px; }
 .enter:active { transform: translate(-50%, calc(-50% + 2px)); }
-.credit { text-align: center; color: var(--muted); font-size: 14px; margin: 0; }
+.booth-side { border-left: 2.5px solid var(--ink); padding: 18px 8px; }
+.mirror { height: 46%; background: var(--panel); }
+.mirror svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.footer-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.footer-links .link { font-size: 14px; color: var(--muted); }
 
 /* ---------- 機台內部 ---------- */
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.steps { display: flex; gap: 6px; }
-.steps span { width: 26px; height: 26px; display: grid; place-items: center; font-family: var(--hand); font-size: 17px; color: var(--muted); --r: 50%; }
-.steps span.on { color: var(--paper); background: var(--ink); border-radius: 50%; }
-.sound { width: 40px; height: 40px; border: 0; background: var(--panel); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; --r: 50%; }
-.sound svg { width: 20px; height: 20px; }
 .marquee { background: var(--panel); min-height: 74px; padding: 18px 22px; display: grid; place-items: center; text-align: center; font-size: clamp(19px, 5.4vw, 24px); font-weight: 700; text-wrap: balance; }
 .marquee.in { animation: rise .45s cubic-bezier(.16, 1, .3, 1); }
 @keyframes rise { from { transform: translateY(8px); opacity: 0; } }
 .screen-row { position: relative; display: flex; justify-content: center; align-items: center; gap: 12px; }
-.eye-note { font-family: var(--hand); font-size: 20px; line-height: 1; text-align: center; }
+.eye-note { flex: 0 0 auto; font-family: var(--hand); font-size: 20px; line-height: 1; text-align: center; }
 .eye-note svg { width: 54px; height: 16px; display: block; }
+@media (max-width: 459px) { .eye-note { display: none; } }
 .screen { background: var(--panel); padding: 22px; width: min(100%, 330px); }
 .screen-in { position: relative; display: grid; place-items: center; min-height: 250px; }
 .arrow { position: absolute; top: 42%; transform: translateY(-50%); background: none; border: 0; font-size: 30px; font-family: var(--hand); cursor: pointer; color: var(--ink); width: 40px; height: 48px; z-index: 3; }
 .arrow.prev { left: -6px; } .arrow.next { right: -6px; }
-.frame-prev { display: block; height: 200px; width: auto; max-width: 72%; box-shadow: 0 6px 12px rgba(0,0,0,.18); }
+#frame-pick { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+.frame-prev { display: block; height: 220px; width: auto; max-width: 72%; box-shadow: 0 6px 12px rgba(0,0,0,.18); }
+.frame-name { text-align: center; font-weight: 700; margin: 0; font-size: 16px; }
 #source-pick { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; padding: 10px 0; }
-#source-pick .btn { width: min(100%, 200px); font-size: 17px; padding: 12px 16px; }
+#source-pick .btn { width: min(100%, 200px); padding: 12px 16px; }
 #source-pick .btn svg { width: 20px; height: 20px; }
-#source-pick .file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.go.wait, .go.wait:disabled { background: var(--stop); box-shadow: 0 4px 0 #8e1f1a; filter: none; opacity: 1; }
-#layout-pick { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
-.layout-name { text-align: center; font-weight: 700; margin: 0; font-size: 16px; }
-@media (max-width: 459px) { .eye-note { display: none; } }
+#upload-pick { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .price { position: absolute; right: -6px; bottom: -30px; width: 76px; height: 76px; background: var(--panel); display: grid; place-items: center; text-align: center; font-family: var(--hand); font-size: 19px; line-height: .95; transform: rotate(-8deg); z-index: 4; }
-.viewfinder { position: relative; width: 100%; max-width: 100%; overflow: hidden; background: #111; }
-.viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(1.06) contrast(.96); }
-.viewfinder video.mirror { transform: scaleX(-1); }
-.viewfinder.bw video, .viewfinder.bw .freeze { filter: grayscale(1) contrast(1.1); }
+.viewfinder { position: relative; width: 100%; max-width: 100%; overflow: hidden; background: #111; aspect-ratio: 4 / 3; }
+.viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; transform: scaleX(-1); }
+.viewfinder.bw video, .viewfinder.bw .freeze { filter: grayscale(1) contrast(1.15); }
 .freeze { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .count { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Gochi Hand", cursive; font-size: 140px; color: #fff; text-shadow: 0 4px 18px rgba(0,0,0,.55); pointer-events: none; }
 .count.pop { animation: pop .9s cubic-bezier(.16, 1, .3, 1); }
 @keyframes pop { from { transform: scale(1.7); opacity: 0; } 25% { opacity: 1; } to { transform: scale(.9); opacity: .15; } }
 .badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; font-variant-numeric: tabular-nums; }
-.cam-off { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; color: #e9e6df; font-size: 14px; line-height: 1.7; background: repeating-linear-gradient(45deg, #26241f 0 12px, #2e2c27 12px 24px); }
-.back-choose { align-self: center; }
-.switches { display: flex; justify-content: center; align-items: center; gap: 18px 26px; flex-wrap: wrap; }
-.switch { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+.cam-msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; color: #e9e6df; font-size: 14px; line-height: 1.7; background: repeating-linear-gradient(45deg, #26241f 0 12px, #2e2c27 12px 24px); }
+.back-link { align-self: center; }
+.switch { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px; }
 .switch span { color: var(--muted); }
 .switch span.on { color: var(--ink); font-weight: 700; }
 .toggle { width: 62px; height: 30px; border: 0; background: var(--panel); position: relative; cursor: pointer; padding: 0; --r: 999px; }
 .toggle i { position: absolute; top: 5px; left: 6px; width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--ink); background: var(--panel); transition: left .25s cubic-bezier(.16, 1, .3, 1); }
 .toggle[aria-pressed="true"] i { left: 36px; background: var(--ink); }
-.thumbs { display: grid; gap: 8px; }
-.thumb { max-width: 100%; background: var(--panel); border: 2px dashed var(--faint); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 13px; position: relative; padding: 0; cursor: pointer; font-family: inherit; }
+.thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.thumb { aspect-ratio: 4 / 3; max-width: 100%; background: var(--panel); border: 2px dashed var(--faint); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-family: var(--hand); font-size: 18px; padding: 0; font-weight: 400; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb.filled { border: 2px solid var(--ink); }
-.thumb .x { position: absolute; right: 3px; bottom: 3px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; border-radius: 999px; padding: 1px 7px; }
-.file-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .console { display: grid; grid-template-columns: 1fr 84px; margin-top: 8px; gap: 12px; align-items: stretch; }
-.howto { background: var(--panel); margin: 0; padding: 14px 12px; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; --r: 14px; }
+.howto { background: var(--panel); margin: 0; padding: 14px 12px; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); --r: 14px; }
 .howto li { padding: 0 7px; font-size: 13px; line-height: 1.45; text-align: center; }
 .howto li + li { border-left: 2.5px solid var(--ink); }
 .howto b { display: block; font-family: var(--hand); font-size: 26px; line-height: 1; text-align: left; }
-.howto li.now b { color: var(--pink); }
+.howto li.now b { color: var(--accent); }
 .control { background: var(--panel); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 8px 12px; }
-.control .label { font-family: var(--hand); font-size: 18px; color: var(--ink); font-weight: 400; margin-top: -40px; background: var(--paper); padding: 0 4px; }
+.control .cap { font-family: var(--hand); font-size: 18px; margin-top: -40px; background: var(--paper); padding: 0 4px; }
 .go { width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--ink); background: var(--go); cursor: pointer; box-shadow: 0 4px 0 #1a6b30, inset 0 -4px 0 rgba(0,0,0,.15); transition: transform .1s, box-shadow .1s; }
 .go:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a6b30; }
-.go.busy { background: var(--stop); box-shadow: 0 4px 0 #8e1f1a; }
+.go.red, .go.red:disabled { background: var(--stop); box-shadow: 0 4px 0 #8e1f1a; filter: none; opacity: 1; }
 .go:disabled { filter: grayscale(.8); opacity: .55; cursor: default; }
 .go.pulse { animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 50% { box-shadow: 0 4px 0 #1a6b30, 0 0 0 10px rgba(47, 179, 80, .22); } }
 .control .slit { width: 10px; height: 34px; border: 2.5px solid var(--ink); border-radius: 3px; }
-.control .tray { width: 46px; height: 40px; border: 2.5px solid var(--ink); }
-
-/* 拍照中：全螢幕亮白，當作補光燈 */
-#scr-machine.booth {
-  position: fixed; inset: 0; z-index: 15; background: #fff; justify-content: center; align-items: center; gap: 16px;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 14px) max(16px, env(safe-area-inset-left, 0px));
-}
-#scr-machine.booth.dim { background: #1b1a18; color: #f4f3ef; --ink: #f4f3ef; --panel: #26241f; }
-#scr-machine.booth > :not(.bk) { display: none; }
-#scr-machine:not(.booth) .booth-only { display: none; }
-#scr-machine.booth .marquee { width: min(100%, 520px); }
-#scr-machine.booth .screen { width: min(100%, calc(60vh * var(--ar, 1.33) + 44px)); }
-#scr-machine.booth .price, #scr-machine.booth .eye-note { display: none; }
-.booth-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: min(100%, 520px); }
-.dots { display: flex; gap: 6px; }
-.dots i { width: 13px; height: 13px; border-radius: 50%; border: 2.5px solid currentColor; }
-.dots i.on { background: currentColor; }
+.control .bin { width: 46px; height: 40px; border: 2.5px solid var(--ink); }
 .screen-flash { position: fixed; inset: 0; background: #fff; z-index: 40; pointer-events: none; opacity: 0; }
 .screen-flash.go { animation: flash .5s ease-out; }
 @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
 
-/* ---------- 挑照片 ---------- */
-.slots { display: grid; gap: 8px; }
-.slot { max-width: 100%; border: 2px dashed var(--faint); background: var(--panel); display: grid; place-items: center; overflow: hidden; color: var(--muted); font-family: var(--hand); font-size: 22px; padding: 0; cursor: pointer; }
-.slot img { width: 100%; height: 100%; object-fit: cover; }
-.slot.filled { border: 2px solid var(--ink); }
-.pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.pick { position: relative; border: 3px solid transparent; overflow: hidden; padding: 0; cursor: pointer; background: var(--panel); max-width: 100%; }
-.pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.pick[aria-pressed="true"] { border-color: var(--ink); }
-.pick b { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--paper); font-family: var(--hand); font-size: 17px; display: grid; place-items: center; }
-.pair { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
-
-/* ---------- 裝飾 ---------- */
-.stage { background: #fff; padding: 16px; display: flex; justify-content: center; }
-.stage canvas { max-width: 100%; max-height: 60vh; height: auto; display: block; touch-action: none; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
-.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; border-bottom: 2.5px solid var(--ink); }
-.tabs::-webkit-scrollbar { display: none; }
-.tabs button { flex: 1 0 auto; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 16px; padding: 9px 12px; cursor: pointer; white-space: nowrap; border-radius: 8px 8px 0 0; }
-.tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
-.panel { display: flex; flex-direction: column; gap: 12px; min-height: 120px; }
-.levels { display: grid; grid-template-columns: 48px 1fr; gap: 10px; align-items: center; }
-.levels > span { font-size: 16px; font-weight: 700; }
-.seg { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--panel); padding: 4px; gap: 4px; --r: 10px; }
-.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; padding: 6px 0; border-radius: 7px; cursor: pointer; }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.seg button:disabled { opacity: .3; cursor: default; }
-.ai-note { font-size: 14px; padding: 10px 14px; background: var(--panel); color: var(--muted); line-height: 1.6; margin: 0; --r: 10px; }
-.swatches { display: flex; gap: 12px; flex-wrap: wrap; }
-.swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; padding: 0; }
-.swatch i { width: 58px; height: 58px; display: block; border: 2.5px solid var(--faint); }
-.swatch[aria-pressed="true"] i { border-color: var(--ink); box-shadow: 3px 4px 0 -1px rgba(0,0,0,.18); }
-.swatch[aria-pressed="true"] { font-weight: 700; }
-.swatch:disabled { opacity: .3; cursor: default; }
-.stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 6px; }
-.stickers button { aspect-ratio: 1; max-width: 100%; border: 2px solid var(--faint); background: var(--panel); border-radius: 10px; font-size: 26px; cursor: pointer; display: grid; place-items: center; padding: 0; color: var(--pink); }
-.stickers button.word { font-family: "Mochiy Pop One", var(--zh); font-size: 11px; line-height: 1.2; }
-.sel-tools { display: flex; flex-direction: column; gap: 8px; background: var(--panel); padding: 12px; --r: 10px; }
-.slider { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
-.slider input { width: 100%; accent-color: var(--ink); }
-.pens { display: flex; gap: 10px; flex-wrap: wrap; }
-.pen { width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid var(--ink); cursor: pointer; padding: 0; }
-.pen[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--paper), 0 0 0 5.5px var(--ink); }
-.text-in { width: 100%; padding: 12px 14px; border: 2.5px solid var(--ink); border-radius: 6px; background: var(--panel); color: var(--ink); font: inherit; font-size: 17px; }
-
-/* ---------- 分析中 & 出紙 ---------- */
+/* ---------- 浮層：裁切、說明頁、列印取件 ---------- */
 .overlay { position: fixed; inset: 0; z-index: 20; background: var(--paper); overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(16px, env(safe-area-inset-left, 0px)); display: flex; }
 .overlay-inner { max-width: 480px; margin: auto; display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; width: 100%; }
+.crop-stage { background: #fff; padding: 10px; }
+#crop-cv { display: block; max-width: 100%; touch-action: none; cursor: move; }
+.slider { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); width: 100%; }
+.slider input { width: 100%; accent-color: var(--ink); }
+.info { text-align: left; align-items: stretch; }
+.info article { display: flex; flex-direction: column; gap: 10px; line-height: 1.7; }
+.info p, .info ul { margin: 0; }
+.info ul { padding-left: 1.2em; }
 .spinner { width: 54px; height: 54px; border-radius: 50%; border: 4px dashed var(--ink); animation: spin 2.4s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .printer { display: flex; flex-direction: column; align-items: center; width: 100%; }
@@ -236,13 +174,14 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 .printer-box span { font-family: var(--hand); font-size: 18px; }
 .printer-box i { display: block; width: 86%; height: 14px; border: 2.5px solid var(--ink); border-radius: 3px; background: #2a2825; }
 .paper { overflow: hidden; margin-top: -24px; padding: 0 14px 18px; position: relative; z-index: 3; }
+.paper button { padding: 0; border: 0; background: none; cursor: pointer; display: block; }
 .paper img { display: block; max-width: 100%; max-height: 60vh; box-shadow: 0 10px 24px rgba(0,0,0,.25); -webkit-touch-callout: default; }
 .paper img.print { animation: print 2.6s cubic-bezier(.3, .7, .25, 1) both; }
+@keyframes print { from { transform: translateY(-101%); } 70% { transform: translateY(-5%); } to { transform: translateY(0); } }
 .paper img.drop { animation: drop .45s cubic-bezier(.5, 0, .9, .4) forwards; }
 @keyframes drop { to { transform: translateY(40%); opacity: 0; } }
 .paper img.picked { animation: picked .55s cubic-bezier(.16, 1, .3, 1); }
 @keyframes picked { from { transform: translateY(30%) scale(.55) rotate(-7deg); opacity: .2; } }
-/* 取件口：照片斜躺在下方的開口裡，點一下拿出來 */
 .tray { width: min(100%, 300px); background: var(--panel); border: 0; padding: 12px 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; margin-top: 18px; font: inherit; color: var(--ink); }
 .tray-label { font-family: var(--hand); font-size: 18px; }
 .tray-hole { display: block; position: relative; width: 100%; height: 96px; background: #2a2825; border: 2.5px solid var(--ink); border-radius: 4px; overflow: hidden; }
@@ -253,11 +192,11 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 .tray-note { margin: 4px 0 0; animation: nudge 1.6s ease-in-out infinite; }
 @keyframes nudge { 50% { transform: translateY(-4px); } }
 .pick-actions { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
-#result.printing .pick-actions, #result.waiting .pick-actions { display: none; }
+#result.making .printer, #result:not(.making) .making-msg { display: none; }
+#result.making .pick-actions, #result.printing .pick-actions, #result.waiting .pick-actions { display: none; }
 #result.waiting #paper { display: none; }
 #result.picked #printer-box { display: none; }
 #result.picked .paper { margin-top: 0; }
-@keyframes print { from { transform: translateY(-101%); } 70% { transform: translateY(-5%); } to { transform: translateY(0); } }
 .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: 999px; font-size: 15px; z-index: 50; max-width: calc(100% - 32px); text-align: center; }
 @media (prefers-reduced-motion: reduce) {
   .count.pop, .screen-flash.go, .marquee.in, .paper img.print, .paper img.drop, .paper img.picked, .tray.land .tray-hole img, .tray-note, .spinner, .go.pulse { animation: none; }
@@ -273,7 +212,7 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 </svg>
 
 <div class="app">
-  <!-- 0. 外觀 -->
+  <!-- 外觀 -->
   <section id="scr-lobby">
     <div class="sign sk dbl thick"><span class="sign-en">PHOTOBOOTH</span><span class="sign-zh">口袋拍貼機</span></div>
     <div class="posts" aria-hidden="true"><i></i><i></i></div>
@@ -314,166 +253,108 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
         </div>
       </div>
     </div>
-    <p class="credit">免費 · 手機就能拍 · 照片只留在你的手機裡</p>
+    <nav class="footer-links" aria-label="說明">
+      <button class="link" data-info="privacy">隱私權政策</button>
+      <button class="link" data-info="faq">常見問題</button>
+      <button class="link" data-info="about">關於</button>
+    </nav>
   </section>
 
-  <!-- 1–2. 機台內部 -->
+  <!-- 機台內部：choose 選相框 → source 拍照或上傳 → shoot 拍照 / upload 上傳 -->
   <section id="scr-machine" hidden>
-    <div class="topbar">
-      <button class="link" id="exit">← 離開機台</button>
-      <div class="steps" aria-label="步驟"><span id="st1">1</span><span id="st2">2</span><span id="st3">3</span><span id="st4">4</span></div>
-      <button class="sound sk" id="sound" aria-pressed="true" aria-label="語音與音效"></button>
-    </div>
-    <div class="marquee sk dbl thick bk" id="marquee">用箭頭選一個版型</div>
-    <div class="screen-row bk">
+    <button class="link back-link" id="exit" style="align-self:flex-start">← 離開機台</button>
+    <div class="marquee sk dbl thick" id="marquee">用箭頭挑一個相框</div>
+    <div class="screen-row">
       <div class="eye-note" aria-hidden="true">眼睛<br>看這裡<svg viewBox="0 0 54 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M2 8 H50 M42 2 L51 8 L42 14"/></svg></div>
       <div class="screen sk dbl thick">
         <div class="screen-in">
-          <div id="layout-pick">
+          <div id="frame-pick">
             <button class="arrow prev" id="prev" aria-label="上一個相框">‹</button>
             <canvas class="frame-prev" id="frame-prev"></canvas>
-            <p class="layout-name" id="layout-name"></p>
+            <p class="frame-name" id="frame-name"></p>
             <button class="arrow next" id="next" aria-label="下一個相框">›</button>
           </div>
           <div id="source-pick" hidden>
-            <button class="btn sk" id="src-cam">現場拍照 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
-            <label class="btn sk file-btn">上傳照片 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 15v5h14v-5"/></svg><input type="file" id="src-upload" accept="image/*" multiple></label>
-            <div class="row" id="timers" aria-label="倒數秒數"></div>
+            <button class="btn sk" id="src-cam">拍照 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+            <button class="btn sk" id="src-upload">上傳照片 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 15v5h14v-5"/></svg></button>
           </div>
           <div class="viewfinder" id="vf" hidden>
-            <video id="video" playsinline muted autoplay class="mirror"></video>
+            <video id="video" playsinline muted autoplay></video>
             <img class="freeze" id="freeze" alt="" hidden>
-            <div class="cam-off" id="cam-off" hidden><div>這個畫面無法直接開啟相機。<br>用下面的按鈕拍照或從相簿挑照片。</div></div>
+            <div class="cam-msg" id="cam-msg" hidden></div>
             <div class="badge" id="shot-badge">1 / 4</div>
             <div class="count" id="count"></div>
           </div>
+          <div id="upload-pick" hidden>
+            <label class="btn sk dark file-btn" id="upload-label">選第 1 張照片<input type="file" id="upload-file" accept="image/*"></label>
+            <p class="hint">每張都可以裁切成格子的比例。</p>
+          </div>
         </div>
       </div>
-      <div class="price sk round" id="price">$0<br>=<br>4 張</div>
+      <div class="price sk round" aria-label="免費，一次 4 張">$0<br>=<br>4 張</div>
     </div>
-    <button class="link back-choose" id="back-choose" hidden>← 換相框</button>
-    <div class="switches" id="switches">
-      <div class="switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
-    </div>
+    <button class="link back-link" id="back" hidden>← 換相框</button>
+    <div class="switch" id="color-switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
     <div class="thumbs" id="thumbs" hidden></div>
-    <div class="file-actions" id="file-actions" hidden>
-      <label class="btn sk file-btn">從相簿選<input type="file" id="pick-many" accept="image/*" multiple></label>
-      <label class="btn sk dark file-btn">拍下一張<input type="file" id="pick-cam" accept="image/*" capture="user"></label>
-    </div>
-    <div class="console" id="console">
+    <div class="console">
       <ol class="howto sk" id="howto">
         <li><b>1</b>撥桿選黑白或彩色</li>
         <li><b>2</b>箭頭挑相框，按綠鈕選定</li>
         <li><b>3</b>按綠鈕拍照，等照片印出來</li>
       </ol>
       <div class="control sk">
-        <span class="label">按我</span>
-        <button class="go pulse" id="go" aria-label="綠色按鈕"></button>
+        <span class="cap">按我</span>
+        <button class="go pulse" id="go" aria-label="選這個相框"></button>
         <i class="slit" aria-hidden="true"></i>
-        <i class="tray" aria-hidden="true"></i>
+        <i class="bin" aria-hidden="true"></i>
       </div>
-    </div>
-    <div class="booth-bar bk booth-only">
-      <div class="dots" id="dots"></div>
-      <div class="row">
-        <button class="chip sk" id="light">補光 開</button>
-        <button class="chip sk" id="stop">暫停</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 3. 挑照片 -->
-  <section id="scr-pick" hidden>
-    <h2 id="pick-title">挑出最好看的 4 張</h2>
-    <p class="hint">依序點照片放進格子，再點一次可以拿掉。</p>
-    <div class="slots" id="slots"></div>
-    <div class="pick-grid" id="pick-grid"></div>
-    <div class="pair">
-      <button class="btn sk" id="pick-back">重拍</button>
-      <button class="btn sk dark" id="pick-done">就用這幾張 →</button>
-    </div>
-  </section>
-
-  <!-- 4. 裝飾 -->
-  <section id="scr-edit" hidden>
-    <div class="stage sk"><canvas id="cv"></canvas></div>
-    <div class="tabs" role="tablist" id="tabs">
-      <button role="tab" data-tab="beauty" aria-selected="true">美顏</button>
-      <button role="tab" data-tab="bg" aria-selected="false">背景</button>
-      <button role="tab" data-tab="filter" aria-selected="false">濾鏡</button>
-      <button role="tab" data-tab="frame" aria-selected="false">邊框</button>
-      <button role="tab" data-tab="sticker" aria-selected="false">貼圖</button>
-      <button role="tab" data-tab="pen" aria-selected="false">塗鴉</button>
-      <button role="tab" data-tab="text" aria-selected="false">文字</button>
-    </div>
-    <div class="panel" id="p-beauty">
-      <div class="row" id="presets"></div>
-      <div class="levels" id="levels"></div>
-      <p class="ai-note sk" id="ai-note" hidden></p>
-    </div>
-    <div class="panel" id="p-bg" hidden>
-      <p class="hint" id="bg-hint">AI 會把人物去背，換成攝影棚背景。</p>
-      <div class="swatches" id="bgs"></div>
-    </div>
-    <div class="panel" id="p-filter" hidden>
-      <div class="swatches" id="filters"></div>
-      <span class="label">照片特效</span>
-      <div class="row" id="fxs"></div>
-    </div>
-    <div class="panel" id="p-frame" hidden><div class="swatches" id="frames"></div></div>
-    <div class="panel" id="p-sticker" hidden>
-      <p class="hint">點貼圖加到照片上，拖曳移動位置。</p>
-      <div class="stickers" id="stickers"></div>
-      <div class="sel-tools sk" id="sel-tools" hidden>
-        <div class="slider"><span>大小</span><input type="range" id="st-size" min="40" max="500"></div>
-        <div class="slider"><span>旋轉</span><input type="range" id="st-rot" min="-180" max="180"></div>
-        <button class="chip sk" id="st-del">刪除這個貼圖</button>
-      </div>
-    </div>
-    <div class="panel" id="p-pen" hidden>
-      <div class="row" id="pen-types"></div>
-      <div class="pens" id="pens"></div>
-      <div class="slider"><span>粗細</span><input type="range" id="pen-size" min="4" max="40" value="12"></div>
-      <div class="row"><button class="chip sk" id="undo">復原上一步</button></div>
-    </div>
-    <div class="panel" id="p-text" hidden>
-      <label class="label" for="foot-text">底部文字</label>
-      <input class="text-in" id="foot-text" maxlength="24" value="BESTIE DAY ♡">
-      <div class="row"><button class="chip sk" id="show-date" aria-pressed="true">加上日期</button></div>
-    </div>
-    <div class="pair">
-      <button class="btn sk" id="reshoot">重拍</button>
-      <button class="btn sk dark" id="save">完成，印出來</button>
     </div>
   </section>
 </div>
 
-<div class="overlay" id="analyzing" hidden>
+<!-- 裁切 -->
+<div class="overlay" id="crop" hidden role="dialog" aria-labelledby="crop-title">
   <div class="overlay-inner">
-    <div class="spinner" aria-hidden="true"></div>
-    <h2>AI 美顏準備中</h2>
-    <p class="hint" id="analyzing-msg">第一次要下載美顏模型，大約幾秒鐘。</p>
+    <h2 id="crop-title">裁切照片</h2>
+    <p class="hint">拖曳框框選範圍，用滑桿調大小；也可以用方向鍵移動。</p>
+    <div class="crop-stage sk"><canvas id="crop-cv" tabindex="0" aria-label="裁切範圍，方向鍵可以移動"></canvas></div>
+    <div class="slider"><span>大小</span><input type="range" id="crop-size" min="30" max="100" value="100"></div>
+    <div class="pair">
+      <button class="btn sk" id="crop-cancel">取消</button>
+      <button class="btn sk dark" id="crop-ok">使用這張</button>
+    </div>
   </div>
 </div>
 
+<!-- 說明頁 -->
+<div class="overlay" id="info" hidden role="dialog" aria-labelledby="info-title">
+  <div class="overlay-inner info">
+    <h2 id="info-title"></h2>
+    <article id="info-body"></article>
+    <button class="btn sk wide" id="info-close">關閉</button>
+  </div>
+</div>
+
+<!-- 製作、列印、取件 -->
 <div class="overlay" id="result" hidden>
   <div class="overlay-inner">
-    <h2 id="result-title">列印中…</h2>
+    <h2 id="result-title">製作拍貼中…</h2>
+    <div class="making-msg"><div class="spinner" aria-hidden="true"></div></div>
     <div class="printer">
       <div class="printer-box sk thick" id="printer-box"><span>出紙口</span><i></i></div>
-      <div class="paper" id="paper"><img id="result-img" alt="拍貼成品"></div>
+      <div class="paper" id="paper"><button id="paper-btn" aria-label="下載拍貼"><img id="result-img" alt="拍貼成品"></button></div>
       <button class="tray sk thick" id="tray" hidden aria-label="從取件口拿出照片">
         <span class="tray-label">取件口</span>
         <span class="tray-hole"><img id="tray-img" alt=""></span>
       </button>
       <p class="note tray-note" id="tray-note" hidden>點一下，把照片拿出來</p>
     </div>
-    <div class="pick-actions" id="pick-actions">
-      <p class="hint">手機上可以長按圖片儲存或分享。</p>
-      <button class="btn sk dark wide" id="dl">下載圖片</button>
-      <button class="btn sk wide" id="share" hidden>分享給朋友</button>
-      <button class="btn sk wide" id="close-result">繼續裝飾</button>
-      <button class="link" id="restart">走出機台</button>
+    <div class="pick-actions">
+      <p class="hint">點照片就能下載。手機上也可以長按照片直接存進相簿。</p>
+      <button class="btn sk dark wide" id="dl">下載拍貼</button>
+      <button class="btn sk wide" id="share" hidden>分享</button>
+      <button class="btn sk wide" id="again">再拍一組</button>
+      <button class="link" id="leave">走出機台</button>
     </div>
   </div>
 </div>
@@ -483,143 +364,67 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 <script>
 const $ = (id) => document.getElementById(id);
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ---------- 設定資料 ----------
-const LAYOUTS = {
-  strip:  { name: "4格直條", W: 600, H: 1800, foot: { y: 1672, h: 128 },
-            cells: [0,1,2,3].map(i => ({ x: 40, y: 40 + i * 414, w: 520, h: 390 })) },
-  grid:   { name: "四宮格", W: 1200, H: 1100, foot: { y: 884, h: 216 },
-            cells: [[40,40],[610,40],[40,472],[610,472]].map(([x,y]) => ({ x, y, w: 550, h: 412 })) },
-  six:    { name: "六格", W: 1200, H: 1500, foot: { y: 1316, h: 184 },
-            cells: [0,1,2].flatMap(r => [40, 610].map(x => ({ x, y: 40 + r * 432, w: 550, h: 412 }))) },
-  hero:   { name: "大圖＋3小", W: 1200, H: 1400, foot: { y: 1170, h: 230 },
-            cells: [{ x: 40, y: 40, w: 1120, h: 840 }, ...[40, 420, 800].map(x => ({ x, y: 900, w: 360, h: 270 }))] },
-  duo:    { name: "雙人並排", W: 1200, H: 900, foot: { y: 728, h: 172 },
-            cells: [[40,40],[610,40]].map(([x,y]) => ({ x, y, w: 550, h: 688 })) },
-  single: { name: "大頭貼", W: 1000, H: 1200, foot: { y: 960, h: 240 },
-            cells: [{ x: 40, y: 40, w: 920, h: 920 }] },
-};
+// ---------- 拍貼條規格：固定 4 格直條 ----------
+const STRIP = { W: 600, H: 1800, foot: { y: 1672, h: 128 },
+  cells: [0, 1, 2, 3].map(i => ({ x: 40, y: 40 + i * 414, w: 520, h: 390 })) };
+const ASPECT = 520 / 390;
+const Q = 2; // 輸出 1200 × 3600
 const FRAMES = [
-  { id: "classic", name: "復古白條", bg: "#fbfaf6", pat: "#fbfaf6", pattern: "none", ink: "#222222", noStroke: true, hand: true, square: true },
-  { id: "black",   name: "黑色條",   bg: "#151515", pat: "#151515", pattern: "none", ink: "#f2f0ea", noStroke: true, hand: true, square: true },
-  { id: "berry", name: "草莓牛奶", bg: "#ffd3e3", pat: "#ffffff", pattern: "dots",    ink: "#e2457a" },
-  { id: "mint",  name: "薄荷汽水", bg: "#c6f1e1", pat: "#ffffff", pattern: "stripes", ink: "#178062" },
-  { id: "night", name: "夜光派對", bg: "#1f1745", pat: "#ffe066", pattern: "stars",   ink: "#ff7ad9" },
-  { id: "plaid", name: "奶油格紋", bg: "#fff1c2", pat: "#ffe08a", pattern: "checker", ink: "#b0601a" },
-  { id: "lilac", name: "薰衣草",   bg: "#e3d8ff", pat: "#f5f0ff", pattern: "hearts",  ink: "#6b4fd8" },
-  { id: "film",  name: "底片",     bg: "#161616", pat: "#f1ebe0", pattern: "film",    ink: "#ffb347", noStroke: true },
-];
-const BGS = [
-  { id: "none",    name: "原背景" },
-  { id: "studio",  name: "白色棚" },
-  { id: "pink",    name: "粉紅光暈" },
-  { id: "dream",   name: "夢幻星空" },
-  { id: "rainbow", name: "彩虹糖" },
-  { id: "cloud",   name: "藍天白雲" },
-  { id: "heart",   name: "愛心牆" },
-];
-const FILTERS = [
-  { id: "none",  name: "原色" }, { id: "milk", name: "牛奶肌" }, { id: "pink", name: "粉嫩" },
-  { id: "retro", name: "復古" }, { id: "bw",   name: "黑白" },   { id: "cool", name: "冷光" },
-];
-const FXS = [
-  { id: "none", name: "無" }, { id: "sparkle", name: "閃亮" }, { id: "bubble", name: "泡泡" }, { id: "hearts", name: "愛心雨" },
-];
-const BEAUTY = [
-  { key: "skin",   name: "美肌", ai: true },
-  { key: "eye",    name: "大眼", ai: true },
-  { key: "slim",   name: "瘦臉", ai: true },
-  { key: "makeup", name: "妝感", ai: true },
-];
-const PRESETS = [
-  { name: "素顏", v: { skin: 0, eye: 0, slim: 0, makeup: 0 } },
-  { name: "自然", v: { skin: 1, eye: 1, slim: 0, makeup: 0 } },
-  { name: "甜美", v: { skin: 2, eye: 1, slim: 1, makeup: 1 } },
-  { name: "機台級", v: { skin: 3, eye: 2, slim: 2, makeup: 2 } },
-];
-const LEVEL_NAMES = ["關", "輕", "中", "強"];
-const POSES = ["比個愛心 ♡", "嘟嘴裝可愛", "雙手捧臉", "歪頭比 YA", "一起大笑", "做個鬼臉", "假裝很驚訝", "臉貼近一點", "眨一隻眼", "雙手比讚"];
-const STICKERS = ["💖","✨","🎀","⭐","🌸","🐰","🍓","👑","💋","🦋","🐱","🌈","☁️","💫","🍰","🎵","🐻","🍒","🫧","🌷"];
-const WORDS = ["LOVE","BFF","CUTE","最可愛","好朋友","♡♡♡","YA!","今天超可愛"];
-const PENS = ["#ff3d8b","#ffffff","#ffe14d","#5ee0ff","#9b6bff","#2b2b2b"];
-const PEN_TYPES = [
-  { id: "neon", name: "螢光筆" }, { id: "glitter", name: "亮片筆" }, { id: "rainbow", name: "彩虹筆" },
-  { id: "hearts", name: "愛心印章" }, { id: "stars", name: "星星印章" },
+  { id: "white",     name: "白框" },
+  { id: "black",     name: "黑框" },
+  { id: "doodle",    name: "塗鴉框" },
+  { id: "stars",     name: "星星框" },
+  { id: "hearts",    name: "愛心框" },
+  { id: "heartcut",  name: "愛心鏤空框" },
+  { id: "birthday",  name: "生日快樂" },
+  { id: "valentine", name: "情人節" },
+  { id: "newyear",   name: "新年快樂" },
 ];
 
-const S = {
-  layout: "strip", timer: 3, facing: "user", shots: [], picks: [], filter: "milk", frame: "classic",
-  bg: "none", fx: "none", beauty: { skin: 1, eye: 1, slim: 0, makeup: 0 },
-  items: [], selected: -1, tab: "beauty", pen: { color: "#ff3d8b", size: 12, type: "neon" },
-  footText: "BESTIE DAY ♡", showDate: true, sound: true, light: true, color: true,
-};
-let stream = null, camOK = false, busy = false, abort = false, M = "choose";
+const S = { color: true, frame: 0, shots: [null, null, null, null], mode: "choose" };
+let stream = null, busy = false;
 
 function toast(msg) {
   const t = $("toast"); t.textContent = msg; t.hidden = false;
-  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600);
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 3000);
 }
-function show(id) {
-  ["scr-lobby","scr-machine","scr-pick","scr-edit"].forEach(s => ($(s).hidden = s !== id));
-  const step = id === "scr-machine" ? (M === "choose" ? 1 : 2) : id === "scr-pick" ? 3 : id === "scr-edit" ? 4 : 0;
-  [1,2,3,4].forEach(i => $("st" + i).classList.toggle("on", i === step));
-  window.scrollTo(0, 0);
-}
-function cells() { return LAYOUTS[S.layout].cells.length; }
 function setMarquee(text) {
   const m = $("marquee"); if (m.textContent === text) return;
   m.textContent = text; m.classList.remove("in"); void m.offsetWidth; m.classList.add("in");
 }
 
-// ---------- 聲音 ----------
-const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
-const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
-function syncSound() { $("sound").innerHTML = S.sound ? ICON_ON : ICON_OFF; $("sound").setAttribute("aria-pressed", S.sound); }
-$("sound").onclick = () => { S.sound = !S.sound; syncSound(); if (!S.sound) try { speechSynthesis.cancel(); } catch (e) {} };
+// ---------- 音效（全部用程式合成，不載入音檔） ----------
 let audioCtx = null;
+function ac() { return (audioCtx ||= new (window.AudioContext || window.webkitAudioContext)()); }
 function beep(freq, dur) {
-  if (!S.sound) return;
   try {
-    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.frequency.value = freq; g.gain.value = .08;
-    o.connect(g).connect(audioCtx.destination); o.start();
-    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + dur); o.stop(audioCtx.currentTime + dur);
+    const a = ac(), o = a.createOscillator(), g = a.createGain();
+    o.frequency.value = freq; g.gain.value = .08; o.connect(g).connect(a.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + dur); o.stop(a.currentTime + dur);
   } catch (e) {}
 }
 function shutter() {
-  if (!S.sound) return;
   try {
-    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-    const len = audioCtx.sampleRate * .12, buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate), d = buf.getChannelData(0);
+    const a = ac(), len = a.sampleRate * .12, buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
-    const src = audioCtx.createBufferSource(), g = audioCtx.createGain(); g.gain.value = .35;
-    src.buffer = buf; src.connect(g).connect(audioCtx.destination); src.start();
+    const s = a.createBufferSource(), g = a.createGain(); g.gain.value = .35; s.buffer = buf; s.connect(g).connect(a.destination); s.start();
   } catch (e) {}
 }
 function whirr() {
-  if (!S.sound) return;
   try {
-    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime;
+    const a = ac(), o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
     o.type = "sawtooth"; o.frequency.setValueAtTime(70, t); o.frequency.linearRampToValueAtTime(95, t + 2.2);
     g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.03, t + .2); g.gain.setValueAtTime(.03, t + 2.1); g.gain.linearRampToValueAtTime(.0001, t + 2.4);
-    o.connect(g).connect(audioCtx.destination); o.start(); o.stop(t + 2.5);
-  } catch (e) {}
-}
-function say(text) {
-  if (!S.sound || !window.speechSynthesis) return;
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text); u.lang = "zh-TW"; u.rate = 1.08; u.pitch = 1.35;
-    speechSynthesis.speak(u);
+    o.connect(g).connect(a.destination); o.start(); o.stop(t + 2.5);
   } catch (e) {}
 }
 
-// ---------- 0. 外觀 & 我的拍貼 ----------
+// ---------- 外觀與展示窗（最近 4 張，只存在這台裝置） ----------
 function loadGallery() { try { return JSON.parse(localStorage.getItem("booth-gallery") || "[]"); } catch (e) { return []; } }
 function saveToGallery(canvas) {
-  const t = document.createElement("canvas"), w = Math.min(300, canvas.width);
+  const t = document.createElement("canvas"), w = 300;
   t.width = w; t.height = Math.round(canvas.height * w / canvas.width);
   t.getContext("2d").drawImage(canvas, 0, 0, t.width, t.height);
   const g = [t.toDataURL("image/jpeg", .78), ...loadGallery()].slice(0, 4);
@@ -635,417 +440,59 @@ function buildGallery() {
   }
   g.forEach((url, k) => {
     const b = document.createElement("button");
-    b.style.setProperty("--tilt", `${[-3, 2, -1, 3][k]}deg`);
     b.setAttribute("aria-label", `打開第 ${k + 1} 張拍貼`);
     b.innerHTML = `<img alt="" src="${url}" style="--tilt:${[-3, 2, -1, 3][k]}deg">`;
-    b.onclick = () => openFromGallery(url);
+    b.onclick = async () => { lastBlob = await (await fetch(url)).blob(); showResult(URL.createObjectURL(lastBlob), false); };
     el.append(b);
   });
   $("gallery-note").innerHTML = "我的<br>拍貼";
 }
-async function openFromGallery(url) {
-  lastBlob = await (await fetch(url)).blob();
-  showResult(URL.createObjectURL(lastBlob), false);
-  $("close-result").hidden = true;
-}
 $("enter").onclick = async () => {
-  $("booth-door").classList.add("open");
-  beep(520, .08);
-  await wait(matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 650);
-  M = "choose"; show("scr-machine"); syncMachine();
+  $("booth-door").classList.add("open"); beep(520, .08);
+  await wait(reduceMotion() ? 0 : 650);
+  $("scr-lobby").hidden = true; $("scr-machine").hidden = false; window.scrollTo(0, 0);
+  setMode("choose");
   $("booth-door").classList.remove("open");
 };
-$("exit").onclick = () => {
-  if (busy) return;
-  stopCamera(); show("scr-lobby"); buildGallery();
+function leaveMachine() {
+  stopCamera(); busy = false;
+  $("result").hidden = true; $("scr-machine").hidden = true; $("scr-lobby").hidden = false;
+  buildGallery(); window.scrollTo(0, 0);
+}
+$("exit").onclick = () => { if (!busy) leaveMachine(); };
+
+// ---------- 說明頁 ----------
+const INFO = {
+  privacy: ["隱私權政策", `
+    <p>口袋拍貼機的照片全部在你的手機或電腦上處理，不會上傳到任何伺服器。</p>
+    <ul>
+      <li>相機畫面只用來拍你按下綠色按鈕後的 4 張照片。</li>
+      <li>拍好的拍貼只有在你按「下載」或「分享」時才會離開這台裝置。</li>
+      <li>展示窗裡的最近 4 張拍貼存在這個瀏覽器的本機儲存空間，清除網站資料就會刪掉。</li>
+      <li>網頁會從 Google Fonts 載入字型。</li>
+    </ul>`],
+  faq: ["常見問題", `
+    <h3>按了拍照沒有畫面？</h3>
+    <p>請允許瀏覽器使用相機。如果是從 LINE、IG 等 App 裡打開的，請改用 Safari 或 Chrome。</p>
+    <h3>可以用手機裡的照片嗎？</h3>
+    <p>可以，選「上傳照片」，一張一張選，每張都能裁切。</p>
+    <h3>照片怎麼存起來？</h3>
+    <p>拿到照片後點一下就會下載；手機上也可以長按照片存進相簿。</p>
+    <h3>要錢嗎？</h3>
+    <p>不用，一次 4 張，免費。</p>`],
+  about: ["關於", `
+    <p>口袋拍貼機是一台畫在網頁上的拍貼機：拉開布簾、選相框、拍 4 張，等它從出紙口印出來。</p>
+    <p>不用下載 App，手機打開網頁就能拍。</p>`],
 };
+document.querySelectorAll("[data-info]").forEach(b => b.onclick = () => {
+  const [t, html] = INFO[b.dataset.info];
+  $("info-title").textContent = t; $("info-body").innerHTML = html; $("info").hidden = false;
+  $("info-close").focus();
+});
+$("info-close").onclick = () => ($("info").hidden = true);
 
-// ---------- 1. 選相框 ----------
-// 箭頭切換的每一格都是「版型＋相框」的組合，螢幕上直接畫出實際樣子
-const CHOICES = [
-  ["strip", "classic"], ["strip", "black"], ["strip", "berry"], ["strip", "film"],
-  ["grid", "classic"], ["grid", "mint"], ["six", "night"], ["hero", "plaid"],
-  ["duo", "lilac"], ["single", "classic"],
-].map(([layout, frame]) => ({ layout, frame }));
-let choice = 0;
-function drawFramePreview() {
-  const { layout, frame } = CHOICES[choice], L = LAYOUTS[layout], F = FRAMES.find(f => f.id === frame);
-  const c = $("frame-prev"), cssH = L.H > L.W * 1.6 ? 220 : 170, k = cssH * 2 / L.H;
-  c.width = Math.round(L.W * k); c.height = Math.round(L.H * k); c.style.height = cssH + "px";
-  const ctx = c.getContext("2d"); ctx.scale(k, k);
-  drawPattern(ctx, L.W, L.H, F);
-  L.cells.forEach(cell => {
-    if (!F.square) { ctx.fillStyle = F.id === "film" ? "#000" : "#fff"; rr(ctx, cell.x - 8, cell.y - 8, cell.w + 16, cell.h + 16, 22); ctx.fill(); }
-    ctx.fillStyle = "#7a776f"; rr(ctx, cell.x, cell.y, cell.w, cell.h, F.square ? 2 : 16); ctx.fill();
-  });
-  const big = Math.min(L.foot.h * .4, L.W * .08);
-  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = F.ink;
-  ctx.font = F.hand ? `${big}px "Gochi Hand", cursive` : `${big}px "Mochiy Pop One", sans-serif`;
-  ctx.fillText(S.footText, L.W / 2, L.foot.y + L.foot.h * .45);
-  $("layout-name").textContent = `${L.name} · ${F.name}`;
-}
-function cycleChoice(d) {
-  choice = (choice + d + CHOICES.length) % CHOICES.length;
-  S.layout = CHOICES[choice].layout; S.frame = CHOICES[choice].frame;
-  beep(660, .05); drawFramePreview(); syncMachine();
-}
-$("prev").onclick = () => cycleChoice(-1);
-$("next").onclick = () => cycleChoice(1);
-function syncColor() {
-  $("color-toggle").setAttribute("aria-pressed", S.color);
-  $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
-  $("vf").classList.toggle("bw", !S.color);
-}
-$("color-toggle").onclick = () => {
-  S.color = !S.color; S.filter = S.color ? "milk" : "bw";
-  beep(400, .05); syncColor();
-};
-function buildTimers() {
-  $("timers").innerHTML = "";
-  for (const t of [3, 5, 10]) {
-    const b = document.createElement("button");
-    b.className = "chip sk"; b.textContent = `倒數 ${t} 秒`; b.setAttribute("aria-pressed", S.timer === t);
-    b.onclick = () => { S.timer = t; buildTimers(); };
-    $("timers").append(b);
-  }
-}
-
-// 機台狀態：choose 選相框 → source 拍照或上傳 → shoot 拍照中
-function syncMachine() {
-  const choosing = M === "choose", source = M === "source", shooting = M === "shoot";
-  $("layout-pick").hidden = !choosing; $("source-pick").hidden = !source; $("vf").hidden = !shooting;
-  $("back-choose").hidden = choosing || busy;
-  $("switches").hidden = !choosing;
-  $("thumbs").hidden = !shooting;
-  $("file-actions").hidden = !shooting || camOK;
-  $("price").innerHTML = `$0<br>=<br>${shooting ? S.shots.length || cells() : cells()} 張`;
-  const done = shooting && S.shots.length && nextEmpty() === -1;
-  const go = $("go");
-  go.disabled = busy ? false : source || (shooting && !camOK && !done);
-  go.classList.toggle("busy", busy);
-  go.classList.toggle("wait", source);
-  go.classList.toggle("pulse", !busy && !go.disabled);
-  go.setAttribute("aria-label", choosing ? "選這個相框" : busy ? "暫停拍照" : done ? "下一步" : "開始拍照");
-  [...$("howto").children].forEach((li, k) => li.classList.toggle("now", choosing ? k === 1 : k === 2));
-  if (choosing) { setMarquee("用箭頭挑一個相框"); drawFramePreview(); syncColor(); }
-  else if (source) { setMarquee("要現場拍，還是上傳照片？"); buildTimers(); }
-  else if (!busy) setMarquee(done ? (S.shots.length > cells() ? "拍好了！按綠色按鈕挑照片" : "拍好了！按綠色按鈕去裝飾")
-    : camOK ? "坐好、看鏡頭，按綠色按鈕開始" : "用下面的按鈕加入照片");
-  [1,2,3,4].forEach(i => $("st" + i).classList.toggle("on", i === (choosing ? 1 : 2)));
-}
-$("go").onclick = async () => {
-  if (busy) { abort = true; return; }
-  if (M === "choose") { M = "source"; beep(520, .08); return syncMachine(); }
-  if (M !== "shoot") return;
-  if (S.shots.length && nextEmpty() === -1) return goNext();
-  if (camOK) runBooth();
-};
-$("src-cam").onclick = () => enterShoot();
-$("src-upload").onchange = async (e) => {
-  const files = [...e.target.files]; e.target.value = "";
-  if (!files.length) return;
-  stopCamera(); camOK = false; M = "shoot"; S.picks = [];
-  S.shots = new Array(cells()).fill(null);
-  buildShoot();
-  $("cam-off").hidden = false;
-  $("cam-off").firstElementChild.innerHTML = "照片會照順序放進格子，<br>不夠的話用下面的按鈕補上。";
-  await addFiles(files);
-  loadAI();
-};
-async function enterShoot() {
-  M = "shoot"; S.shots = []; S.picks = [];
-  syncMachine(); await startCamera();
-  const total = camOK ? Math.min(cells() + 2, 8) : cells();
-  S.shots = new Array(total).fill(null);
-  buildShoot(); syncMachine();
-  say(camOK ? "準備好就按綠色按鈕" : "");
-  loadAI(); // 先在背景下載美顏模型
-}
-$("back-choose").onclick = () => { stopCamera(); M = "choose"; syncMachine(); };
-
-// ---------- 2. 拍照 ----------
-function cellAspect() { const c = LAYOUTS[S.layout].cells[0]; return c.w / c.h; }
-function nextEmpty() { return S.shots.findIndex(s => !s); }
-function makeShot(cv) { return { cv, ai: null, cache: new Map(), thumb: cv.toDataURL("image/jpeg", .6) }; }
-
-function buildShoot() {
-  const total = S.shots.length;
-  $("vf").style.aspectRatio = cellAspect();
-  $("scr-machine").style.setProperty("--ar", cellAspect());
-  const cols = total === 1 ? 1 : total === 2 ? 2 : 4;
-  $("thumbs").style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  $("thumbs").innerHTML = "";
-  S.shots.forEach((shot, i) => {
-    const b = document.createElement("button");
-    b.className = "thumb" + (shot ? " filled" : "");
-    b.style.aspectRatio = cellAspect();
-    if (cols === 1) b.style.maxWidth = "120px";
-    b.innerHTML = shot ? `<img alt="第 ${i + 1} 張" src="${shot.thumb}"><span class="x">重拍</span>` : `${i + 1}`;
-    b.onclick = () => { if (shot && !busy) { S.shots[i] = null; buildShoot(); syncMachine(); } };
-    $("thumbs").append(b);
-  });
-  const done = nextEmpty() === -1;
-  $("shot-badge").textContent = `${done ? total : nextEmpty() + 1} / ${total}`;
-  $("dots").innerHTML = S.shots.map(s => `<i class="${s ? "on" : ""}"></i>`).join("");
-}
-
-async function startCamera() {
-  stopCamera();
-  $("video").classList.toggle("mirror", S.facing === "user");
-  try {
-    if (!navigator.mediaDevices?.getUserMedia) throw new Error("no camera api");
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: S.facing, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false,
-    });
-    $("video").srcObject = stream;
-    await $("video").play();
-    camOK = true;
-  } catch (e) {
-    camOK = false;
-    $("cam-off").firstElementChild.innerHTML = "這個畫面無法直接開啟相機。<br>用下面的按鈕拍照或從相簿挑照片。";
-  }
-  $("cam-off").hidden = camOK;
-}
-function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
-
-async function countdown(sec) {
-  const c = $("count");
-  for (let n = sec; n > 0 && !abort; n--) {
-    c.textContent = n; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop");
-    beep(880, .12); await wait(1000);
-  }
-  c.textContent = "";
-}
-function grabFrame() {
-  const v = $("video"), cv = document.createElement("canvas");
-  cv.width = v.videoWidth; cv.height = v.videoHeight;
-  const ctx = cv.getContext("2d");
-  if (S.facing === "user") { ctx.translate(cv.width, 0); ctx.scale(-1, 1); }
-  ctx.drawImage(v, 0, 0);
-  const f = $("screen-flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
-  shutter();
-  return cv;
-}
-function syncLight() {
-  $("scr-machine").classList.toggle("dim", !S.light);
-  $("light").textContent = S.light ? "補光 開" : "補光 關";
-}
-$("light").onclick = () => { S.light = !S.light; syncLight(); };
-$("stop").onclick = () => { abort = true; };
-
-async function runBooth() {
-  if (busy || !camOK) return;
-  busy = true; abort = false;
-  $("scr-machine").classList.add("booth"); syncLight(); syncMachine();
-  try { await navigator.wakeLock?.request("screen"); } catch (e) {}
-  let i, n = 0;
-  while ((i = nextEmpty()) !== -1 && !abort) {
-    const pose = POSES[(i + Math.floor(Math.random() * POSES.length)) % POSES.length];
-    setMarquee(`第 ${i + 1} 張：${pose}`);
-    $("shot-badge").textContent = `${i + 1} / ${S.shots.length}`;
-    say(pose);
-    await wait(n === 0 ? 1400 : 900);
-    await countdown(S.timer);
-    if (abort) break;
-    S.shots[i] = makeShot(grabFrame());
-    $("freeze").src = S.shots[i].thumb; $("freeze").hidden = false;
-    buildShoot();
-    await wait(1100);
-    $("freeze").hidden = true;
-    n++;
-  }
-  $("scr-machine").classList.remove("booth");
-  busy = false; buildShoot(); syncMachine();
-  if (nextEmpty() === -1) say("拍完囉！");
-}
-
-// 無法用即時相機時：用檔案（手機會開相機 App）
-async function fileToCanvas(file) {
-  let img, url = null;
-  try { img = await createImageBitmap(file, { imageOrientation: "from-image" }); }
-  catch (e) { url = URL.createObjectURL(file); img = new Image(); img.src = url; await img.decode(); }
-  try {
-    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
-    const scale = Math.min(1, 2000 / Math.max(iw, ih));
-    const cv = document.createElement("canvas");
-    cv.width = Math.round(iw * scale); cv.height = Math.round(ih * scale);
-    const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(img, 0, 0, cv.width, cv.height);
-    return cv;
-  } finally { if (url) URL.revokeObjectURL(url); img.close?.(); }
-}
-async function addFiles(files) {
-  for (const f of files) {
-    const i = nextEmpty(); if (i === -1) break;
-    try { S.shots[i] = makeShot(await fileToCanvas(f)); } catch (e) { toast("這張照片讀不出來，換一張試試"); }
-  }
-  buildShoot(); syncMachine();
-}
-$("pick-many").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
-$("pick-cam").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
-
-function goNext() {
-  stopCamera();
-  if (S.shots.length > cells()) { S.picks = S.shots.map((_, i) => i).slice(0, cells()); show("scr-pick"); buildPick(); }
-  else { S.picks = S.shots.map((_, i) => i); goEdit(); }
-}
-
-// ---------- 3. 挑照片 ----------
-function buildPick() {
-  const n = cells();
-  $("pick-title").textContent = `挑出最好看的 ${n} 張`;
-  $("slots").style.gridTemplateColumns = `repeat(${Math.min(n, 4)}, 1fr)`;
-  $("slots").innerHTML = "";
-  for (let k = 0; k < n; k++) {
-    const i = S.picks[k], b = document.createElement("button");
-    b.className = "slot" + (i != null ? " filled" : "");
-    b.style.aspectRatio = cellAspect();
-    b.innerHTML = i != null ? `<img alt="第 ${k + 1} 格" src="${S.shots[i].thumb}">` : `${k + 1}`;
-    b.onclick = () => { if (i != null) { S.picks.splice(k, 1); buildPick(); } };
-    $("slots").append(b);
-  }
-  $("pick-grid").innerHTML = "";
-  S.shots.forEach((shot, i) => {
-    const pos = S.picks.indexOf(i), b = document.createElement("button");
-    b.className = "pick"; b.setAttribute("aria-pressed", pos >= 0);
-    b.style.aspectRatio = cellAspect();
-    b.innerHTML = `<img alt="照片 ${i + 1}" src="${shot.thumb}">${pos >= 0 ? `<b>${pos + 1}</b>` : ""}`;
-    b.onclick = () => {
-      if (pos >= 0) S.picks.splice(pos, 1);
-      else if (S.picks.length < n) S.picks.push(i);
-      else toast("格子滿了，先點上面的格子拿掉一張");
-      buildPick();
-    };
-    $("pick-grid").append(b);
-  });
-  $("pick-done").disabled = S.picks.length !== n;
-}
-async function reshoot() {
-  S.shots = S.shots.map(() => null); S.picks = []; M = "shoot";
-  show("scr-machine"); await startCamera(); buildShoot(); syncMachine();
-}
-$("pick-back").onclick = reshoot;
-$("pick-done").onclick = () => goEdit();
-
-// ---------- Rust 影像核心（px.wasm，原始碼在 px/src/lib.rs）----------
-// 載入成功就用 Rust 版運算；失敗（例如環境不允許 WebAssembly）就繼續用下面的 JavaScript 版。
-let PX = null;
-const EMPTY_F32 = new Float32Array(0);
-const TONE_CODE = { milk: 1, pink: 2, retro: 3, bw: 4, cool: 5 };
-function makePx(e) {
-  // 把 JS 陣列複製進 wasm 記憶體、呼叫、需要的話再複製回來
-  const run = (bufs, fn) => {
-    const ps = bufs.map(([ta]) => {
-      const n = ta.byteLength, p = e.px_alloc(n);
-      new Uint8Array(e.memory.buffer, p, n).set(new Uint8Array(ta.buffer, ta.byteOffset, n));
-      return [p, n];
-    });
-    try { return fn(...ps.map(x => x[0])); }
-    finally {
-      bufs.forEach(([ta, mut], k) => {
-        const [p, n] = ps[k];
-        if (mut) new Uint8Array(ta.buffer, ta.byteOffset, n).set(new Uint8Array(e.memory.buffer, p, n));
-        e.px_free(p, n);
-      });
-    }
-  };
-  return {
-    bulge: (d, w, h, cx, cy, r, k) => run([[d, 1]], p => e.bulge(p, w, h, cx, cy, r, k)),
-    slim: (d, w, h, pts, chin, r, fade) => run([[d, 1], [pts, 0]], (p, q) => e.slim(p, w, h, q, pts.length, chin, r, fade)),
-    smoothSkin: (d, w, h, mask, x0, y0, x1, y1, r, eps, amt, lift) =>
-      run([[d, 1], [mask, 0]], (p, m) => e.smooth_skin(p, w, h, m, mask.length, x0, y0, x1, y1, r, eps, amt, lift)),
-    sharpen: (d, w, h, mask, amount) => run([[d, 1], [mask, 0]], (p, m) => e.sharpen(p, w, h, m, mask.length, amount)),
-    refineAlpha: (img, mask, w, h, r, eps) => run([[img, 0], [mask, 1]], (p, m) => e.refine_alpha(p, m, w, h, r, eps)),
-    upsampleMask: (small, sw, sh, w, h, s) => {
-      const out = new Float32Array(w * h);
-      run([[small, 0], [out, 1]], (a, b) => e.upsample_mask(a, sw, sh, b, w, h, s));
-      return out;
-    },
-    tone: (d, code, seed) => run([[d, 1]], p => e.tone(p, d.length, code, seed)),
-  };
-}
-const pxReady = (async () => {
-  try {
-    const buf = await (await fetch("px.wasm")).arrayBuffer();
-    const { instance } = await WebAssembly.instantiate(buf, {});
-    PX = makePx(instance.exports);
-  } catch (e) { console.warn("Rust 影像核心無法載入，改用 JavaScript 版", e); }
-})();
-
-// ---------- AI 美顏（MediaPipe，需要能連到 CDN 的環境）----------
-const MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
-const FACE_MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-const SEG_MODEL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite";
-const AI = { ok: null, face: null, seg: null, promise: null };
-function loadAI() {
-  if (AI.promise) return AI.promise;
-  AI.promise = (async () => {
-    const mp = await import(`${MP}/vision_bundle.mjs`);
-    const fs = await mp.FilesetResolver.forVisionTasks(`${MP}/wasm`);
-    const make = (delegate) => Promise.all([
-      mp.FaceLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: FACE_MODEL, delegate }, runningMode: "IMAGE", numFaces: 4 }),
-      mp.ImageSegmenter.createFromOptions(fs, { baseOptions: { modelAssetPath: SEG_MODEL, delegate }, runningMode: "IMAGE", outputConfidenceMasks: true, outputCategoryMask: false }),
-    ]);
-    let r;
-    try { r = await make("GPU"); } catch (e) { r = await make("CPU"); }
-    [AI.face, AI.seg] = r;
-    return (AI.ok = true);
-  })().catch((e) => { console.warn("AI 美顏無法載入", e); return (AI.ok = false); });
-  return AI.promise;
-}
-function maskToCanvas(f, w, h) {
-  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
-  const ctx = cv.getContext("2d"), img = ctx.createImageData(w, h), d = img.data;
-  for (let i = 0; i < f.length; i++) {
-    let t = (f[i] - .25) / .5; t = t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
-    d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 255; d[i * 4 + 3] = t * 255;
-  }
-  ctx.putImageData(img, 0, 0);
-  return cv;
-}
-function analyze(shot) {
-  if (shot.ai || !AI.ok) return shot.ai;
-  let faces = [], mask = null;
-  try { faces = AI.face.detect(shot.cv).faceLandmarks || []; } catch (e) { console.warn(e); }
-  try {
-    const res = AI.seg.segment(shot.cv), m = res?.confidenceMasks?.[0];
-    if (m) mask = maskToCanvas(m.getAsFloat32Array(), m.width, m.height);
-    res?.close?.();
-  } catch (e) { console.warn(e); }
-  return (shot.ai = { faces, mask });
-}
-
-async function goEdit() {
-  show("scr-edit");
-  $("analyzing").hidden = false;
-  $("analyzing-msg").textContent = "第一次要下載美顏模型，大約幾秒鐘。";
-  await fontsReady;
-  const ok = await Promise.race([loadAI(), wait(25000).then(() => false)]);
-  if (ok) {
-    for (let k = 0; k < S.picks.length; k++) {
-      $("analyzing-msg").textContent = `正在找臉… ${k + 1} / ${S.picks.length}`;
-      await wait(30);
-      analyze(S.shots[S.picks[k]]);
-    }
-  }
-  $("analyzing").hidden = true;
-  S.items = []; S.selected = -1;
-  invalidate(); render(); buildEditPanels();
-}
-
-// ---------- 合成 ----------
-const fontsReady = Promise.all([
-  document.fonts.load('48px "Mochiy Pop One"'),
-  document.fonts.load('48px "Gochi Hand"'),
-  document.fonts.load('700 48px "LXGW WenKai TC"', "拍貼"),
-]).catch(() => {});
-
+// ---------- 相框圖案（全部用程式畫） ----------
 function seeded(seed) { let s = seed * 9301 + 49297; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
-function rr(ctx, x, y, w, h, r) {
-  ctx.beginPath(); ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-}
 function heartPath(ctx, x, y, s) {
   ctx.beginPath(); ctx.moveTo(x, y + s * .3);
   ctx.bezierCurveTo(x, y, x - s * .5, y, x - s * .5, y + s * .3);
@@ -1053,732 +500,342 @@ function heartPath(ctx, x, y, s) {
   ctx.bezierCurveTo(x, y + s * .8, x + s * .5, y + s * .6, x + s * .5, y + s * .3);
   ctx.bezierCurveTo(x + s * .5, y, x, y, x, y + s * .3); ctx.closePath();
 }
-function heart(ctx, x, y, s) { heartPath(ctx, x, y, s); ctx.fill(); }
+function starPath(ctx, x, y, r, rot = 0) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = rot - Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r * .45 : r;
+    ctx.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad);
+  }
+  ctx.closePath();
+}
 function sparkle(ctx, x, y, r) {
   ctx.beginPath(); ctx.moveTo(x, y - r);
   ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
   ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
 }
-function starPath(ctx, x, y, r) {
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r * .45 : r;
-    ctx.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad);
-  }
-  ctx.closePath();
-}
-function drawPattern(ctx, W, H, F) {
-  ctx.fillStyle = F.bg; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = F.pat;
-  if (F.pattern === "dots") {
-    for (let y = 0, r = 0; y < H + 40; y += 34, r++)
-      for (let x = (r % 2) * 17; x < W + 40; x += 34) { ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); }
-  } else if (F.pattern === "stripes") {
-    ctx.save(); ctx.rotate(-Math.PI / 4);
-    for (let x = -H * 2; x < W * 2; x += 56) ctx.fillRect(x, -H * 2, 22, H * 5);
-    ctx.restore();
-  } else if (F.pattern === "checker") {
-    for (let y = 0; y < H; y += 40) for (let x = (y / 40 % 2) * 40; x < W; x += 80) ctx.fillRect(x, y, 40, 40);
-  } else if (F.pattern === "stars") {
-    const rnd = seeded(7);
-    for (let k = 0; k < W * H / 9000; k++) { ctx.globalAlpha = .4 + rnd() * .6; sparkle(ctx, rnd() * W, rnd() * H, 4 + rnd() * 12); }
-    ctx.globalAlpha = 1;
-  } else if (F.pattern === "hearts") {
-    for (let y = 10, r = 0; y < H; y += 60, r++) for (let x = (r % 2) * 30; x < W + 30; x += 60) heart(ctx, x, y, 18);
-  } else if (F.pattern === "film") {
-    for (let y = 14; y < H; y += 56) { rr(ctx, 11, y, 18, 30, 5); ctx.fill(); rr(ctx, W - 29, y, 18, 30, 5); ctx.fill(); }
-  }
-}
-
-// 攝影棚背景（去背後換上）
-function drawBg(ctx, w, h, id) {
-  if (id === "studio") {
-    const g = ctx.createRadialGradient(w / 2, h * .4, 0, w / 2, h * .4, Math.max(w, h) * .8);
-    g.addColorStop(0, "#ffffff"); g.addColorStop(1, "#ece6ee"); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-  } else if (id === "pink") {
-    const g = ctx.createLinearGradient(0, 0, w, h); g.addColorStop(0, "#ffe1ee"); g.addColorStop(1, "#ff9ec7");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    const rnd = seeded(3);
-    for (let k = 0; k < 14; k++) {
-      const x = rnd() * w, y = rnd() * h, r = (.05 + rnd() * .12) * w;
-      const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-      rg.addColorStop(0, "rgba(255,255,255,.75)"); rg.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = rg; ctx.fillRect(x - r, y - r, r * 2, r * 2);
-    }
-  } else if (id === "dream") {
-    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#2a1b62"); g.addColorStop(.6, "#8a4fc9"); g.addColorStop(1, "#ff8cc6");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    const rnd = seeded(11); ctx.fillStyle = "#fff6c9";
-    for (let k = 0; k < w * h / 2500; k++) { ctx.globalAlpha = .3 + rnd() * .7; sparkle(ctx, rnd() * w, rnd() * h * .8, 2 + rnd() * 7); }
-    ctx.globalAlpha = 1;
-  } else if (id === "rainbow") {
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    ["#ffc4d6","#ffd9b3","#fff4b3","#c8f5c8","#bfe3ff","#dccbff"].forEach((c, i, a) => g.addColorStop(i / (a.length - 1), c));
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-  } else if (id === "cloud") {
-    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#7cc8ff"); g.addColorStop(1, "#d6efff");
-    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    const rnd = seeded(5); ctx.fillStyle = "rgba(255,255,255,.92)";
-    for (let k = 0; k < 6; k++) {
-      const x = rnd() * w, y = rnd() * h, s = (.06 + rnd() * .07) * w;
-      [[0, 0, 1], [s * .9, s * .1, .8], [-s * .9, s * .15, .75], [s * .4, -s * .45, .8]].forEach(([dx, dy, k2]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, s * k2, 0, 7); ctx.fill(); });
-    }
-  } else if (id === "heart") {
-    ctx.fillStyle = "#ffd6e6"; ctx.fillRect(0, 0, w, h);
-    const s = w / 9; ctx.fillStyle = "#ff8fb8";
-    for (let y = -s / 2, r = 0; y < h; y += s, r++) for (let x = (r % 2) * s / 2; x < w + s; x += s) heart(ctx, x, y, s * .5);
-  }
-}
-
-function lm(P, i) { return P[i] || P[0]; }
-function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
-function bilinear(src, W, H, x, y, out, o) {
-  if (x < 0) x = 0; if (y < 0) y = 0; if (x > W - 1.001) x = W - 1.001; if (y > H - 1.001) y = H - 1.001;
-  const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i00 = (y0 * W + x0) * 4, i10 = i00 + 4, i01 = i00 + W * 4, i11 = i01 + 4;
-  for (let c = 0; c < 3; c++)
-    out[o + c] = (src[i00 + c] * (1 - fx) + src[i10 + c] * fx) * (1 - fy) + (src[i01 + c] * (1 - fx) + src[i11 + c] * fx) * fy;
-}
-// 局部放大（大眼）：邊緣用平滑衰減，不會出現一圈變形
-function warpBulge(img, c, r, k) {
-  if (PX) return PX.bulge(img.data, img.width, img.height, c[0], c[1], r, k);
-  const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
-  const x0 = Math.max(0, Math.floor(c[0] - r)), x1 = Math.min(W - 1, Math.ceil(c[0] + r));
-  const y0 = Math.max(0, Math.floor(c[1] - r)), y1 = Math.min(H - 1, Math.ceil(c[1] + r)), r2 = r * r;
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const dx = x - c[0], dy = y - c[1], d2 = dx * dx + dy * dy;
-    if (d2 >= r2) continue;
-    const t = 1 - d2 / r2, s = 1 - k * t * t;
-    bilinear(src, W, H, c[0] + dx * s, c[1] + dy * s, data, (y * W + x) * 4);
-  }
-}
-// 局部推移（瘦臉）
-function warpShift(img, c, m, r) {
-  const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
-  const mx = m[0] - c[0], my = m[1] - c[1], mc2 = mx * mx + my * my, r2 = r * r;
-  const x0 = Math.max(0, Math.floor(c[0] - r)), x1 = Math.min(W - 1, Math.ceil(c[0] + r));
-  const y0 = Math.max(0, Math.floor(c[1] - r)), y1 = Math.min(H - 1, Math.ceil(c[1] + r));
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const dx = x - c[0], dy = y - c[1], d2 = dx * dx + dy * dy;
-    if (d2 >= r2) continue;
-    let t = (r2 - d2) / (r2 - d2 + mc2); t *= t;
-    bilinear(src, W, H, x - t * mx, y - t * my, data, (y * W + x) * 4);
-  }
-}
-
-// 瘦臉：下顎兩側往臉的中線水平收，整張只算一次平滑位移；下巴以下淡出，不動到脖子和衣領
-function slimFace(img, P, amt, fw) {
-  const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
-  const mid = lm(P, 1)[0], chinY = lm(P, 152)[1], r = fw * .26, r2 = r * r, fade = fw * .1;
-  const pts = [...JAW_L, ...JAW_R].map(i => { const c = lm(P, i); return [c[0], c[1], Math.sign(mid - c[0]) * amt]; });
-  if (PX) return PX.slim(data, W, H, new Float32Array(pts.flat()), chinY, r, fade);
-  const x0 = Math.max(0, Math.floor(Math.min(...pts.map(p => p[0])) - r)), x1 = Math.min(W - 1, Math.ceil(Math.max(...pts.map(p => p[0])) + r));
-  const y0 = Math.max(0, Math.floor(Math.min(...pts.map(p => p[1])) - r)), y1 = Math.min(H - 1, Math.ceil(chinY + fade));
-  for (let y = y0; y <= y1; y++) {
-    const below = y > chinY ? Math.max(0, 1 - (y - chinY) / fade) : 1;
-    for (let x = x0; x <= x1; x++) {
-      let sw = 0, sd = 0;
-      for (const [px, py, s] of pts) {
-        const d2 = (x - px) * (x - px) + (y - py) * (y - py);
-        if (d2 < r2) { const t = 1 - d2 / r2, w = t * t; sw += w; sd += w * s; }
-      }
-      if (!sw) continue;
-      const dx = sd / sw * Math.min(1, sw) * below;
-      if (Math.abs(dx) < .05) continue;
-      bilinear(src, W, H, x - dx, y, data, (y * W + x) * 4);
-    }
-  }
-}
-// 方框模糊（兩次一維累加，O(n)）
-function boxBlur(src, w, h, r) {
-  const tmp = new Float32Array(w * h), out = new Float32Array(w * h), k = 1 / (2 * r + 1);
-  for (let y = 0; y < h; y++) {
-    const o = y * w; let s = 0;
-    for (let x = -r; x <= r; x++) s += src[o + Math.min(w - 1, Math.max(0, x))];
-    for (let x = 0; x < w; x++) { tmp[o + x] = s * k; s += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)]; }
-  }
-  for (let x = 0; x < w; x++) {
-    let s = 0;
-    for (let y = -r; y <= r; y++) s += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
-    for (let y = 0; y < h; y++) { out[y * w + x] = s * k; s += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; }
+// 在相框邊緣（不擋到照片中央）挑位置
+function marginSpots(n, seed) {
+  const rnd = seeded(seed), out = [];
+  for (let k = 0; out.length < n && k < n * 20; k++) {
+    const side = rnd();
+    let x, y = 20 + rnd() * (STRIP.H - 40);
+    if (side < .4) x = 6 + rnd() * 44; else if (side < .8) x = STRIP.W - 6 - rnd() * 44;
+    else { x = 40 + rnd() * 520; const c = STRIP.cells[Math.floor(rnd() * 4)]; y = c.y + c.h + 4 + rnd() * 18; }
+    out.push([x, y, rnd()]);
   }
   return out;
 }
-// 導向濾波：平滑但保留邊緣（毛孔、斑點變淡，五官輪廓不糊）
-function guided(I, p, w, h, r, eps) {
-  const n = w * h, Ip = new Float32Array(n), II = I === p ? null : new Float32Array(n);
-  for (let i = 0; i < n; i++) { Ip[i] = I[i] * p[i]; if (II) II[i] = I[i] * I[i]; }
-  const mI = boxBlur(I, w, h, r), mp = I === p ? mI : boxBlur(p, w, h, r);
-  const mIp = boxBlur(Ip, w, h, r), mII = II ? boxBlur(II, w, h, r) : mIp;
-  const a = new Float32Array(n), b = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const v = mII[i] - mI[i] * mI[i];
-    a[i] = (mIp[i] - mI[i] * mp[i]) / (v + eps); b[i] = mp[i] - a[i] * mI[i];
-  }
-  const ma = boxBlur(a, w, h, r), mb = boxBlur(b, w, h, r), q = new Float32Array(n);
-  for (let i = 0; i < n; i++) q[i] = ma[i] * I[i] + mb[i];
-  return q;
+const FRAME_STYLE = {
+  white:     { bg: "#ffffff" },
+  black:     { bg: "#141414" },
+  doodle:    { bg: "#ffffff" },
+  stars:     { bg: "#16224a" },
+  hearts:    { bg: "#ffd3df" },
+  heartcut:  { bg: "#ff9cbc" },
+  birthday:  { bg: "#fff4cf", text: "HAPPY BIRTHDAY", ink: "#e2457a" },
+  valentine: { bg: "#ffe4ea", text: "HAPPY VALENTINE'S DAY", ink: "#c81e4a" },
+  newyear:   { bg: "#121212", text: "HAPPY NEW YEAR 2026", ink: "#f2c94c" },
+};
+function drawFrameBack(ctx, id) {
+  ctx.fillStyle = FRAME_STYLE[id].bg; ctx.fillRect(0, 0, STRIP.W, STRIP.H);
 }
-
-const FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
-const EYE_L = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246];
-const EYE_R = [362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398];
-const BROW_L = [70,63,105,66,107,55,65,52,53,46], BROW_R = [300,293,334,296,336,285,295,282,283,276];
-const LIPS_OUT = [61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
-const LIPS_IN = [78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95];
-const JAW_L = [132,58,172,136,150], JAW_R = [361,288,397,365,379];
-
-function polyPath(ctx, P, ids, grow = 1) {
-  let cx = 0, cy = 0; ids.forEach(i => { cx += lm(P, i)[0]; cy += lm(P, i)[1]; }); cx /= ids.length; cy /= ids.length;
-  ctx.beginPath();
-  ids.forEach((i, k) => { const [x, y] = lm(P, i); ctx[k ? "lineTo" : "moveTo"](cx + (x - cx) * grow, cy + (y - cy) * grow); });
-  ctx.closePath();
-}
-// 皮膚遮罩：臉的輪廓，挖掉眼睛、眉毛、嘴巴，邊緣羽化
-function skinMask(faces, w, h) {
-  const s = 4, c = document.createElement("canvas"); c.width = Math.ceil(w / s); c.height = Math.ceil(h / s);
-  const x = c.getContext("2d"); x.scale(1 / s, 1 / s);
-  faces.forEach(P => {
-    x.fillStyle = "#fff"; polyPath(x, P, FACE_OVAL, .97); x.fill();
-    x.fillStyle = "#000";
-    [[EYE_L, 1.5], [EYE_R, 1.5], [BROW_L, 1.25], [BROW_R, 1.25], [LIPS_OUT, 1.15]].forEach(([ids, g]) => { polyPath(x, P, ids, g); x.fill(); });
-  });
-  const m = new Float32Array(c.width * c.height), d = x.getImageData(0, 0, c.width, c.height).data;
-  for (let i = 0; i < m.length; i++) m[i] = d[i * 4] / 255;
-  const fw = faces.length ? dist(lm(faces[0], 234), lm(faces[0], 454)) / s : 20;
-  const soft = boxBlur(boxBlur(m, c.width, c.height, Math.max(1, Math.round(fw * .04))), c.width, c.height, Math.max(1, Math.round(fw * .04)));
-  // 放回原尺寸
-  if (PX) return PX.upsampleMask(soft, c.width, c.height, w, h, s);
-  const out = new Float32Array(w * h);
-  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
-    const gx = Math.min(c.width - 1.001, xx / s), gy = Math.min(c.height - 1.001, y / s), x0 = gx | 0, y0 = gy | 0, fx = gx - x0, fy = gy - y0, i = y0 * c.width + x0;
-    out[y * w + xx] = (soft[i] * (1 - fx) + soft[i + 1] * fx) * (1 - fy) + (soft[i + c.width] * (1 - fx) + soft[i + c.width + 1] * fx) * fy;
-  }
-  return out;
-}
-function smoothSkin(img, faces, mask, level) {
-  const { width: W, height: H, data } = img;
-  let x0 = W, x1 = 0, y0 = H, y1 = 0;
-  faces.forEach(P => FACE_OVAL.forEach(i => { const [x, y] = lm(P, i); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }));
-  const pad = (x1 - x0) * .08;
-  x0 = Math.max(0, Math.floor(x0 - pad)); y0 = Math.max(0, Math.floor(y0 - pad)); x1 = Math.min(W, Math.ceil(x1 + pad)); y1 = Math.min(H, Math.ceil(y1 + pad));
-  const w = x1 - x0, h = y1 - y0; if (w < 8 || h < 8) return;
-  const fw = dist(lm(faces[0], 234), lm(faces[0], 454));
-  const r = Math.max(2, Math.round(fw * .02)), eps = [0, .0012, .0022, .0038][level];
-  const amt = [0, .45, .62, .78][level], lift = [0, .04, .07, .1][level];
-  if (PX) return PX.smoothSkin(data, W, H, mask, x0, y0, x1, y1, r, eps, amt, lift);
-  for (let c = 0; c < 3; c++) {
-    const p = new Float32Array(w * h);
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) p[y * w + x] = data[((y + y0) * W + x + x0) * 4 + c] / 255;
-    const q = guided(p, p, w, h, r, eps);
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const gi = (y + y0) * W + x + x0, m = mask[gi]; if (m < .01) continue;
-      let v = p[y * w + x]; v += (q[y * w + x] - v) * amt * m;
-      v += lift * m * v * (1 - v) * 2;
-      data[gi * 4 + c] = v * 255;
-    }
-  }
-}
-// 銳利化：只加在皮膚以外（眼睛、頭髮、衣服），讓照片清楚
-function sharpen(img, mask, amount) {
-  if (PX) return PX.sharpen(img.data, img.width, img.height, mask || EMPTY_F32, amount);
-  const { width: W, height: H, data } = img, n = W * H;
-  for (let c = 0; c < 3; c++) {
-    const p = new Float32Array(n);
-    for (let i = 0; i < n; i++) p[i] = data[i * 4 + c];
-    const b = boxBlur(p, W, H, 1);
-    for (let i = 0; i < n; i++) {
-      const k = amount * (mask ? 1 - mask[i] * .85 : 1);
-      data[i * 4 + c] = p[i] + (p[i] - b[i]) * k;
-    }
-  }
-}
-function feathered(draw, w, h, soften) {
-  const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"));
-  const s = document.createElement("canvas"); s.width = Math.max(1, Math.round(w / soften)); s.height = Math.max(1, Math.round(h / soften));
-  const sx = s.getContext("2d"); sx.imageSmoothingQuality = "high"; sx.drawImage(c, 0, 0, s.width, s.height);
-  return s;
-}
-function applyMakeup(ctx, faces, lv, w, h) {
-  if (!lv || !faces.length) return;
-  const a = [0, .14, .22, .3][lv];
-  // 腮紅：柔光疊加，看起來像氣色而不是色塊
-  ctx.save(); ctx.globalCompositeOperation = "soft-light";
-  faces.forEach(P => {
-    const fw = dist(lm(P, 234), lm(P, 454));
-    [[50, 1], [280, -1]].forEach(([i, dir]) => {
-      const c = lm(P, i), cx = c[0] - dir * fw * .02, r = fw * .15;
-      const g = ctx.createRadialGradient(cx, c[1], 0, cx, c[1], r);
-      g.addColorStop(0, `rgba(255,90,130,${a * 2.2})`); g.addColorStop(1, "rgba(255,90,130,0)");
-      ctx.fillStyle = g; ctx.fillRect(cx - r, c[1] - r, r * 2, r * 2);
+function drawFrameFront(ctx, id) {
+  const st = FRAME_STYLE[id];
+  ctx.save();
+  if (id === "doodle") {
+    ctx.strokeStyle = "#222"; ctx.lineWidth = 3.2; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    marginSpots(26, 4).forEach(([x, y, t], k) => {
+      ctx.beginPath();
+      if (k % 4 === 0) { for (let a = 0; a < 12; a += .3) ctx.lineTo(x + Math.cos(a) * a * 1.3, y + Math.sin(a) * a * 1.3); ctx.stroke(); }
+      else if (k % 4 === 1) { starPath(ctx, x, y, 13, t); ctx.stroke(); }
+      else if (k % 4 === 2) { ctx.moveTo(x - 16, y); for (let i = 0; i <= 8; i++) ctx.lineTo(x - 16 + i * 4, y + (i % 2 ? -6 : 6)); ctx.stroke(); }
+      else { heartPath(ctx, x, y - 10, 22); ctx.stroke(); }
     });
-  });
-  ctx.restore();
-  // 唇色：羽化邊緣，柔光疊加
-  const lips = feathered(x => {
-    x.fillStyle = "rgb(230,40,90)";
-    faces.forEach(P => {
-      x.beginPath();
-      LIPS_OUT.forEach((i, k) => x[k ? "lineTo" : "moveTo"](...lm(P, i))); x.closePath();
-      LIPS_IN.forEach((i, k) => x[k ? "lineTo" : "moveTo"](...lm(P, i))); x.closePath();
-      x.fill("evenodd");
+    ctx.beginPath(); ctx.arc(300, 1736, 26, .2, Math.PI - .2); ctx.stroke();
+    ctx.fillStyle = "#222"; ctx.beginPath(); ctx.arc(288, 1716, 4, 0, 7); ctx.arc(312, 1716, 4, 0, 7); ctx.fill();
+  } else if (id === "stars") {
+    marginSpots(34, 9).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#ffe066" : "#fff6c4"; starPath(ctx, x, y, 7 + t * 9, t * 2); ctx.fill(); });
+  } else if (id === "hearts" || id === "valentine") {
+    marginSpots(30, id === "hearts" ? 6 : 12).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#e8335f" : "#ff7aa0"; heartPath(ctx, x, y - 9, 16 + t * 10); ctx.fill(); });
+  } else if (id === "heartcut") {
+    marginSpots(26, 3).forEach(([x, y, t]) => { ctx.fillStyle = "#fff"; heartPath(ctx, x, y - 7, 12 + t * 8); ctx.fill(); });
+  } else if (id === "birthday") {
+    const rnd = seeded(8), cols = ["#e2457a", "#2fa5e0", "#f2c94c", "#5cc58a", "#9b6bff"];
+    marginSpots(46, 8).forEach(([x, y]) => {
+      ctx.fillStyle = cols[Math.floor(rnd() * cols.length)];
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rnd() * 6);
+      if (rnd() < .5) ctx.fillRect(-6, -3, 12, 6); else { ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill(); }
+      ctx.restore();
     });
-  }, w, h, 1.6);
-  ctx.save(); ctx.imageSmoothingQuality = "high";
-  ctx.globalCompositeOperation = "soft-light"; ctx.globalAlpha = Math.min(1, a * 2.4); ctx.drawImage(lips, 0, 0, w, h);
+  } else if (id === "newyear") {
+    marginSpots(36, 15).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#f2c94c" : "#fff2c2"; sparkle(ctx, x, y, 6 + t * 12); });
+  }
+  if (st.text) {
+    ctx.fillStyle = st.ink; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    let size = 52; ctx.font = `${size}px "Gochi Hand", cursive`;
+    while (ctx.measureText(st.text).width > 520 && size > 24) { size -= 2; ctx.font = `${size}px "Gochi Hand", cursive`; }
+    ctx.fillText(st.text, STRIP.W / 2, STRIP.foot.y + STRIP.foot.h / 2);
+  }
   ctx.restore();
 }
-// 色調：只做柔和的曲線調整，不整張洗白
-function tone(img, f) {
-  if (f === "none") return;
-  if (PX) return PX.tone(img.data, TONE_CODE[f] || 0, 7);
-  const d = img.data, grain = f === "bw" || f === "retro";
+// 照片放進格子：愛心鏤空框是愛心形狀，其他是方格
+function cellClip(ctx, id, c) {
+  if (id === "heartcut") { const s = c.h * 1.02; heartPath(ctx, c.x + c.w / 2, c.y + (c.h - s) / 2 + 4, s); }
+  else { ctx.beginPath(); ctx.rect(c.x, c.y, c.w, c.h); }
+}
+function drawPhoto(ctx, src, c) {
+  const s = Math.max(c.w / src.width, c.h / src.height), sw = c.w / s, sh = c.h / s;
+  ctx.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, c.x, c.y, c.w, c.h);
+}
+function toBW(canvas) {
+  const ctx = canvas.getContext("2d"), img = ctx.getImageData(0, 0, canvas.width, canvas.height), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
-    let r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
-    const l = .299 * r + .587 * g + .114 * b;
-    if (f === "milk" || f === "pink") {
-      const lift = (v) => .025 + .975 * (v + .1 * v * (1 - v));
-      r = lift(r); g = lift(g); b = lift(b);
-      const L = .299 * r + .587 * g + .114 * b; r = L + (r - L) * .93; g = L + (g - L) * .93; b = L + (b - L) * .93;
-      if (f === "pink") { r += .035 * l; b += .025 * l; g -= .01 * l; } else { r += .01; b -= .005; }
-    } else if (f === "retro") {
-      const sr = .393 * r + .769 * g + .189 * b, sg = .349 * r + .686 * g + .168 * b, sb = .272 * r + .534 * g + .131 * b;
-      r = r * .7 + sr * .3; g = g * .7 + sg * .3; b = b * .7 + sb * .3;
-      r = .07 + r * .86; g = .06 + g * .86; b = .05 + b * .82;
-    } else if (f === "bw") {
-      const s = l < .5 ? 2 * l * l : 1 - 2 * (1 - l) * (1 - l);
-      r = g = b = .035 + .955 * (l * .45 + s * .55);
-    } else if (f === "cool") {
-      r = r * .97; g = g * 1.0 + .01; b = b * 1.03 + .02;
-    }
-    if (grain) { const n = (Math.random() - .5) * .045; r += n; g += n; b += n; }
-    d[i] = r * 255; d[i + 1] = g * 255; d[i + 2] = b * 255;
+    let l = .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2];
+    l = (l - 128) * 1.18 + 134;
+    d[i] = d[i + 1] = d[i + 2] = l;
   }
+  ctx.putImageData(img, 0, 0);
+}
+function buildStrip() {
+  const id = FRAMES[S.frame].id, out = document.createElement("canvas");
+  out.width = STRIP.W * Q; out.height = STRIP.H * Q;
+  const ctx = out.getContext("2d"); ctx.scale(Q, Q); ctx.imageSmoothingQuality = "high";
+  drawFrameBack(ctx, id);
+  // 照片先畫在獨立的圖層，黑白模式只處理照片
+  const ph = document.createElement("canvas"); ph.width = out.width; ph.height = out.height;
+  const pc = ph.getContext("2d"); pc.scale(Q, Q); pc.imageSmoothingQuality = "high";
+  STRIP.cells.forEach((c, k) => { pc.save(); cellClip(pc, id, c); pc.clip(); drawPhoto(pc, S.shots[k], c); pc.restore(); });
+  if (!S.color) toBW(ph);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(ph, 0, 0); ctx.restore();
+  drawFrameFront(ctx, id);
+  return out;
+}
+function drawFramePreview() {
+  const id = FRAMES[S.frame].id, c = $("frame-prev"), k = 220 * 2 / STRIP.H;
+  c.width = Math.round(STRIP.W * k); c.height = Math.round(STRIP.H * k);
+  const ctx = c.getContext("2d"); ctx.scale(k, k);
+  drawFrameBack(ctx, id);
+  ctx.fillStyle = "#7a776f";
+  STRIP.cells.forEach(cell => { ctx.save(); cellClip(ctx, id, cell); ctx.fill(); ctx.restore(); });
+  drawFrameFront(ctx, id);
+  $("frame-name").textContent = FRAMES[S.frame].name;
 }
 
-function processCell(shot, w, h, opt) {
-  const key = [w, h, opt.filter, opt.bg, opt.skin, opt.eye, opt.slim, opt.makeup, opt.fx, opt.seed].join("|");
-  if (shot.cache.has(key)) return shot.cache.get(key);
-  if (shot.cache.size > 24) shot.cache.clear();
-  const src = shot.cv, ai = shot.ai;
-  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
-  const ctx = cv.getContext("2d");
-  ctx.imageSmoothingQuality = "high";
-  const s = Math.max(w / src.width, h / src.height), sw = w / s, sh = h / s;
-  let sx = (src.width - sw) / 2, sy = (src.height - sh) / 2;
-  // 有偵測到臉就把臉放在格子中間偏上
-  if (ai?.faces?.length) {
-    let x0 = 1, x1 = 0, y0 = 1, y1 = 0;
-    ai.faces.forEach(f => f.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }));
-    const fx = (x0 + x1) / 2 * src.width, fy = (y0 + y1) / 2 * src.height;
-    sx = Math.min(Math.max(fx - sw / 2, 0), src.width - sw);
-    sy = Math.min(Math.max(fy - sh * .45, 0), src.height - sh);
-  }
-  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, w, h);
-  const small = w * h < 40000; // 縮圖預覽不做重運算
+// ---------- 機台狀態 ----------
+function syncColor() {
+  $("color-toggle").setAttribute("aria-pressed", S.color);
+  $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
+  $("vf").classList.toggle("bw", !S.color);
+}
+$("color-toggle").onclick = () => { S.color = !S.color; beep(400, .05); syncColor(); };
+$("prev").onclick = () => { S.frame = (S.frame + FRAMES.length - 1) % FRAMES.length; beep(660, .05); drawFramePreview(); };
+$("next").onclick = () => { S.frame = (S.frame + 1) % FRAMES.length; beep(660, .05); drawFramePreview(); };
 
-  // 去背換背景：用照片本身修整遮罩邊緣（頭髮比較自然）
-  if (opt.bg !== "none" && ai?.mask) {
-    const mk = ai.mask, kx = mk.width / src.width, ky = mk.height / src.height;
-    const mc = document.createElement("canvas"); mc.width = w; mc.height = h;
-    const mx = mc.getContext("2d"); mx.imageSmoothingQuality = "high";
-    mx.drawImage(mk, sx * kx, sy * ky, sw * kx, sh * ky, 0, 0, w, h);
-    if (!small && PX) {
-      const md = mx.getImageData(0, 0, w, h);
-      PX.refineAlpha(ctx.getImageData(0, 0, w, h).data, md.data, w, h, Math.max(2, Math.round(w / 90)), .0008);
-      mx.putImageData(md, 0, 0);
-    } else if (!small) {
-      const md = mx.getImageData(0, 0, w, h), px = ctx.getImageData(0, 0, w, h).data, n = w * h;
-      const p = new Float32Array(n), I = new Float32Array(n);
-      for (let i = 0; i < n; i++) { p[i] = md.data[i * 4 + 3] / 255; I[i] = (.299 * px[i * 4] + .587 * px[i * 4 + 1] + .114 * px[i * 4 + 2]) / 255; }
-      const q = guided(I, p, w, h, Math.max(2, Math.round(w / 90)), .0008);
-      for (let i = 0; i < n; i++) { const v = q[i]; md.data[i * 4 + 3] = (v < 0 ? 0 : v > 1 ? 1 : v) * 255; }
-      mx.putImageData(md, 0, 0);
-    }
-    const person = document.createElement("canvas"); person.width = w; person.height = h;
-    const pc = person.getContext("2d");
-    pc.drawImage(cv, 0, 0); pc.globalCompositeOperation = "destination-in"; pc.drawImage(mc, 0, 0);
-    ctx.clearRect(0, 0, w, h); drawBg(ctx, w, h, opt.bg); ctx.drawImage(person, 0, 0);
-  }
+function filled() { return S.shots.filter(Boolean).length; }
+function setMode(mode) {
+  S.mode = mode;
+  const m = mode;
+  $("frame-pick").hidden = m !== "choose";
+  $("source-pick").hidden = m !== "source";
+  $("vf").hidden = m !== "shoot";
+  $("upload-pick").hidden = m !== "upload";
+  $("color-switch").hidden = m !== "choose";
+  $("thumbs").hidden = m !== "shoot" && m !== "upload";
+  $("back").hidden = m === "choose" || busy;
+  const go = $("go");
+  go.classList.toggle("red", m === "source" || busy);
+  go.disabled = !busy && (m === "source" || (m === "upload" && filled() < 4));
+  go.classList.toggle("pulse", !go.disabled && !busy);
+  go.setAttribute("aria-label", { choose: "選這個相框", source: "先選拍照或上傳", shoot: "開始拍照", upload: "印出拍貼" }[m]);
+  [...$("howto").children].forEach((li, k) => li.classList.toggle("now", m === "choose" ? k === 1 : k === 2));
+  if (m === "choose") { setMarquee("用箭頭挑一個相框"); drawFramePreview(); syncColor(); }
+  if (m === "source") setMarquee("要拍照，還是上傳照片？");
+  if (m === "upload") { setMarquee(filled() < 4 ? `上傳第 ${filled() + 1} 張照片` : "照片齊了！按綠色按鈕印出來"); syncUploadLabel(); }
+  buildThumbs();
+}
+function buildThumbs() {
+  $("thumbs").innerHTML = S.shots.map((s, i) =>
+    s ? `<div class="thumb filled"><img alt="第 ${i + 1} 張" src="${s.toDataURL("image/jpeg", .6)}"></div>` : `<div class="thumb">${i + 1}</div>`).join("");
+}
+$("go").onclick = () => {
+  if (busy) return;
+  if (S.mode === "choose") { beep(520, .08); setMode("source"); }
+  else if (S.mode === "shoot") runShoot();
+  else if (S.mode === "upload" && filled() === 4) makeStrip();
+};
+$("back").onclick = () => { stopCamera(); S.shots = [null, null, null, null]; setMode("choose"); };
+$("src-cam").onclick = async () => {
+  S.shots = [null, null, null, null]; setMode("shoot");
+  setMarquee("相機準備中…");
+  const ok = await startCamera();
+  setMarquee(ok ? "看鏡頭，按綠色按鈕開始拍 4 張" : "相機無法使用，可以改用上傳照片");
+  $("go").disabled = !ok; $("go").classList.toggle("pulse", ok);
+};
+$("src-upload").onclick = () => { S.shots = [null, null, null, null]; setMode("upload"); };
 
-  const faces = (ai?.faces || []).map(f => f.map(p => [(p.x * src.width - sx) * w / sw, (p.y * src.height - sy) * h / sh]));
-  const img = ctx.getImageData(0, 0, w, h);
-  // 大眼：以眼睛中心輕微放大
-  faces.forEach(P => {
-    const fw = dist(lm(P, 234), lm(P, 454));
-    if (opt.eye > 0) {
-      const k = [0, .07, .11, .15][opt.eye];
-      [[33, 133, 159, 145], [362, 263, 386, 374]].forEach(([a, b, t, u]) => {
-        const c = [(lm(P, a)[0] + lm(P, b)[0]) / 2, (lm(P, t)[1] + lm(P, u)[1]) / 2];
-        warpBulge(img, c, dist(lm(P, a), lm(P, b)) * .95, k);
-      });
-    }
-    if (opt.slim > 0) slimFace(img, P, [0, .022, .036, .05][opt.slim] * fw, fw);
-  });
-  const mask = faces.length && !small ? skinMask(faces, w, h) : null;
-  if (mask && opt.skin > 0) smoothSkin(img, faces, mask, opt.skin);
-  if (!small) sharpen(img, mask, .55);
-  ctx.putImageData(img, 0, 0);
-  applyMakeup(ctx, faces, opt.makeup, w, h);
-
-  if (opt.filter !== "none") { const im = ctx.getImageData(0, 0, w, h); tone(im, opt.filter); ctx.putImageData(im, 0, 0); }
-  if (opt.filter === "retro" || opt.filter === "bw") {
-    const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .4, w / 2, h / 2, Math.max(w, h) * .78);
-    gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, opt.filter === "bw" ? "rgba(0,0,0,.22)" : "rgba(40,20,0,.3)");
-    ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
+// ---------- 拍照 ----------
+const CAM_ERRORS = {
+  NotAllowedError: "相機權限被拒絕了。請在瀏覽器設定裡允許使用相機，再試一次。",
+  SecurityError: "相機權限被拒絕了。請在瀏覽器設定裡允許使用相機，再試一次。",
+  NotFoundError: "這台裝置找不到相機。",
+  NotReadableError: "相機正在被其他 App 使用，請先關掉那個 App。",
+  OverconstrainedError: "這台裝置的相機不符合需要的規格。",
+};
+async function startCamera() {
+  stopCamera();
+  const msg = $("cam-msg"); msg.hidden = true; $("shot-badge").textContent = "1 / 4";
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) throw Object.assign(new Error(), { name: "NotFoundError" });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
+    $("video").srcObject = stream; await $("video").play();
+    return true;
+  } catch (e) {
+    msg.textContent = (CAM_ERRORS[e.name] || "無法開啟相機。") + " 也可以按「← 換相框」回去改用上傳照片。";
+    msg.hidden = false;
+    return false;
   }
-  drawFx(ctx, w, h, opt.fx, opt.seed);
-  shot.cache.set(key, cv);
+}
+function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+function grabFrame() {
+  const v = $("video"), cv = document.createElement("canvas");
+  cv.width = v.videoWidth; cv.height = v.videoHeight;
+  const ctx = cv.getContext("2d"); ctx.translate(cv.width, 0); ctx.scale(-1, 1); ctx.drawImage(v, 0, 0);
+  const f = $("screen-flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+  shutter();
   return cv;
 }
-
-function drawFx(ctx, w, h, fx, seed) {
-  if (fx === "none") return;
-  const rnd = seeded(seed + 1), u = Math.min(w, h);
-  ctx.save();
-  if (fx === "sparkle") {
-    for (let k = 0; k < 16; k++) {
-      const edge = rnd() < .5, x = edge ? (rnd() < .5 ? rnd() * .22 : 1 - rnd() * .22) * w : rnd() * w;
-      const y = edge ? rnd() * h : (rnd() < .5 ? rnd() * .2 : 1 - rnd() * .2) * h, r = u * (.015 + rnd() * .045);
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r * 1.8);
-      g.addColorStop(0, "rgba(255,255,255,.8)"); g.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = g; ctx.fillRect(x - r * 2, y - r * 2, r * 4, r * 4);
-      ctx.fillStyle = "#fff"; sparkle(ctx, x, y, r);
-    }
-  } else if (fx === "bubble") {
-    for (let k = 0; k < 12; k++) {
-      const x = rnd() * w, y = rnd() * h, r = u * (.03 + rnd() * .07);
-      if (Math.abs(x - w / 2) < w * .22 && Math.abs(y - h / 2) < h * .3) continue;
-      ctx.fillStyle = "rgba(255,255,255,.14)"; ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = Math.max(2, r * .07);
-      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.ellipse(x - r * .4, y - r * .4, r * .22, r * .12, -.7, 0, 7); ctx.fill();
-    }
-  } else if (fx === "hearts") {
-    for (let k = 0; k < 18; k++) {
-      const x = rnd() * w, y = rnd() * h * .45, s = u * (.03 + rnd() * .05);
-      ctx.globalAlpha = .55 + rnd() * .45; ctx.fillStyle = rnd() < .5 ? "#ff5c9e" : "#ffb3d1";
-      heart(ctx, x, y - s / 2, s);
-    }
+async function runShoot() {
+  if (!stream) return;
+  busy = true; setMode("shoot");
+  try { await navigator.wakeLock?.request("screen"); } catch (e) {}
+  for (let i = 0; i < 4; i++) {
+    setMarquee(`第 ${i + 1} 張`); $("shot-badge").textContent = `${i + 1} / 4`;
+    await wait(i ? 700 : 300);
+    const c = $("count");
+    for (let n = 3; n > 0; n--) { c.textContent = n; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop"); beep(880, .12); await wait(1000); }
+    c.textContent = "";
+    S.shots[i] = grabFrame(); buildThumbs();
+    $("freeze").src = S.shots[i].toDataURL("image/jpeg", .7); $("freeze").hidden = false;
+    await wait(900); $("freeze").hidden = true;
   }
-  ctx.restore();
+  stopCamera(); busy = false;
+  makeStrip();
 }
 
-let base = null;
-const Q = 2; // 輸出解析度倍率：版型座標 × Q = 實際像素
-function invalidate() { base = null; }
-function cellOpt(k) { return { filter: S.filter, bg: S.bg, fx: S.fx, seed: k, ...S.beauty }; }
-function buildBase() {
-  const L = LAYOUTS[S.layout], F = FRAMES.find(f => f.id === S.frame);
-  base = document.createElement("canvas"); base.width = L.W * Q; base.height = L.H * Q;
-  const ctx = base.getContext("2d");
-  ctx.scale(Q, Q); ctx.imageSmoothingQuality = "high";
-  drawPattern(ctx, L.W, L.H, F);
-  L.cells.forEach((c, k) => {
-    const shot = S.shots[S.picks[k]];
-    if (!F.square) { ctx.fillStyle = F.id === "film" ? "#000" : "#ffffff"; rr(ctx, c.x - 8, c.y - 8, c.w + 16, c.h + 16, 22); ctx.fill(); }
-    ctx.save(); rr(ctx, c.x, c.y, c.w, c.h, F.square ? 2 : 16); ctx.clip();
-    if (shot) ctx.drawImage(processCell(shot, c.w * Q, c.h * Q, cellOpt(k)), c.x, c.y, c.w, c.h);
-    ctx.restore();
-  });
-  const fy = L.foot.y, fh = L.foot.h, cx = L.W / 2;
-  const big = Math.min(fh * (F.hand ? .42 : .36), L.W * (F.hand ? .085 : .075));
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.font = F.hand ? `${big}px "Gochi Hand", "LXGW WenKai TC", cursive` : `${big}px "Mochiy Pop One", "Noto Sans TC", sans-serif`;
-  const ty = S.showDate ? fy + fh * .42 : fy + fh * .5;
-  ctx.lineJoin = "round"; ctx.lineWidth = big * .28; ctx.strokeStyle = "#ffffff";
-  if (!F.noStroke) ctx.strokeText(S.footText, cx, ty);
-  ctx.fillStyle = F.ink; ctx.fillText(S.footText, cx, ty);
-  const tw = Math.min(ctx.measureText(S.footText).width, L.W * .8);
-  if (S.footText.trim() && !F.hand) {
-    ctx.fillStyle = F.ink;
-    sparkle(ctx, cx - tw / 2 - big * .7, ty - big * .15, big * .32);
-    sparkle(ctx, cx + tw / 2 + big * .7, ty + big * .1, big * .26);
-  }
-  if (S.showDate) {
-    const d = new Date(), p = (n) => String(n).padStart(2, "0");
-    ctx.font = F.hand ? `${big * .5}px "Gochi Hand", cursive` : `700 ${big * .42}px "Noto Sans TC", sans-serif`;
-    ctx.fillStyle = F.ink; ctx.globalAlpha = .85;
-    const date = F.hand ? `${p(d.getMonth() + 1)}.${p(d.getDate())}.${String(d.getFullYear()).slice(2)}` : `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
-    ctx.fillText(date, cx, ty + big * .95);
-    ctx.globalAlpha = 1;
-  }
+// ---------- 上傳與裁切 ----------
+function syncUploadLabel() {
+  const n = filled();
+  $("upload-label").firstChild.textContent = n < 4 ? `選第 ${n + 1} 張照片` : "重新選照片";
 }
-
-const cv = $("cv"), cx2 = cv.getContext("2d");
-function stickerFont(it) {
-  return it.word ? `${it.size * .5}px "Mochiy Pop One", "LXGW WenKai TC", sans-serif`
-                 : `${it.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+const MAX_FILE_MB = 25;
+async function fileToCanvas(file) {
+  let img, url = null;
+  try { img = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch (e) { url = URL.createObjectURL(file); img = new Image(); img.src = url; await img.decode(); }
+  try {
+    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    const scale = Math.min(1, 2400 / Math.max(iw, ih));
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(iw * scale); cv.height = Math.round(ih * scale);
+    if (!cv.width || !cv.height) throw new Error("empty");
+    const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high"; ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    return cv;
+  } finally { if (url) URL.revokeObjectURL(url); img?.close?.(); }
 }
-// 沿著筆跡每隔 gap 放一個點
-function along(pts, gap, fn) {
-  let carry = 0, n = 0;
-  fn(pts[0][0], pts[0][1], n++);
-  for (let i = 1; i < pts.length; i++) {
-    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], seg = Math.hypot(x1 - x0, y1 - y0);
-    let t = gap - carry;
-    while (t <= seg) { fn(x0 + (x1 - x0) * t / seg, y0 + (y1 - y0) * t / seg, n++); t += gap; }
-    carry = seg - (t - gap);
-  }
+$("upload-file").onchange = async (e) => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  if (f.size > MAX_FILE_MB * 1024 * 1024) return toast(`檔案太大了，請選 ${MAX_FILE_MB} MB 以下的照片。`);
+  if (filled() === 4) { S.shots = [null, null, null, null]; }
+  try { openCrop(await fileToCanvas(f)); }
+  catch (err) { toast("這張照片讀不出來，請換一張試試。"); }
+};
+const crop = { src: null, x: 0, y: 0, w: 0, h: 0, k: 1 };
+function cropMax() { return Math.min(crop.src.width, crop.src.height * ASPECT); }
+function clampCrop() {
+  crop.x = Math.min(Math.max(crop.x, 0), crop.src.width - crop.w);
+  crop.y = Math.min(Math.max(crop.y, 0), crop.src.height - crop.h);
 }
-function drawStroke(ctx, it) {
-  const pts = it.pts; if (!pts.length) return;
-  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-  const path = () => { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); pts.forEach(p => ctx.lineTo(p[0], p[1])); if (pts.length === 1) ctx.lineTo(pts[0][0] + .1, pts[0][1]); };
-  if (it.pen === "neon") {
-    ctx.shadowColor = it.color; ctx.shadowBlur = it.size * 1.4;
-    path(); ctx.strokeStyle = it.color; ctx.lineWidth = it.size; ctx.stroke();
-    ctx.shadowBlur = 0; path(); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = it.size * .38; ctx.stroke();
-  } else if (it.pen === "glitter") {
-    path(); ctx.strokeStyle = it.color; ctx.globalAlpha = .85; ctx.lineWidth = it.size; ctx.stroke(); ctx.globalAlpha = 1;
-    const rnd = seeded(it.seed);
-    along(pts, it.size * .35, (x, y) => {
-      for (let k = 0; k < 2; k++) {
-        ctx.fillStyle = rnd() < .5 ? "#ffffff" : "#fff2a8";
-        ctx.beginPath(); ctx.arc(x + (rnd() - .5) * it.size, y + (rnd() - .5) * it.size, it.size * (.06 + rnd() * .12), 0, 7); ctx.fill();
-      }
-      if (rnd() < .12) { ctx.fillStyle = "#fff"; sparkle(ctx, x + (rnd() - .5) * it.size * 1.6, y + (rnd() - .5) * it.size * 1.6, it.size * .6); }
-    });
-  } else if (it.pen === "rainbow") {
-    for (let i = 1; i < pts.length; i++) {
-      ctx.beginPath(); ctx.moveTo(...pts[i - 1]); ctx.lineTo(...pts[i]);
-      ctx.strokeStyle = `hsl(${(i * 7 + it.seed) % 360} 95% 65%)`; ctx.lineWidth = it.size; ctx.stroke();
-    }
-    path(); ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = it.size * .3; ctx.stroke();
-  } else {
-    const s = it.size * 1.6;
-    along(pts, s * 1.15, (x, y) => {
-      ctx.fillStyle = it.color; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = s * .14;
-      if (it.pen === "hearts") heartPath(ctx, x, y - s / 2, s);
-      else starPath(ctx, x, y, s * .6);
-      ctx.stroke(); ctx.fill();
-    });
-  }
-  ctx.restore();
+function drawCrop() {
+  const cv = $("crop-cv"), ctx = cv.getContext("2d"), k = crop.k;
+  ctx.drawImage(crop.src, 0, 0, cv.width, cv.height);
+  ctx.fillStyle = "rgba(20,18,16,.55)";
+  ctx.beginPath(); ctx.rect(0, 0, cv.width, cv.height); ctx.rect(crop.x * k, crop.y * k, crop.w * k, crop.h * k); ctx.fill("evenodd");
+  ctx.setLineDash([10, 6]); ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.strokeRect(crop.x * k, crop.y * k, crop.w * k, crop.h * k);
 }
-function drawItems(ctx, showSel) {
-  S.items.forEach((it, idx) => {
-    if (it.type === "stroke") return drawStroke(ctx, it);
-    ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(it.rot * Math.PI / 180);
-    ctx.font = stickerFont(it); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    if (it.word) {
-      ctx.lineJoin = "round"; ctx.lineWidth = it.size * .12; ctx.strokeStyle = "#ffffff"; ctx.strokeText(it.text, 0, 0);
-      ctx.fillStyle = "#ff3d8b"; ctx.fillText(it.text, 0, 0);
-    } else ctx.fillText(it.text, 0, 0);
-    if (showSel && idx === S.selected) {
-      const r = hitRadius(ctx, it);
-      ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeStyle = "#1f1e1c";
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
-    }
-    ctx.restore();
-  });
+function resizeCrop(pct) {
+  const cx = crop.x + crop.w / 2, cy = crop.y + crop.h / 2;
+  crop.w = cropMax() * pct / 100; crop.h = crop.w / ASPECT;
+  crop.x = cx - crop.w / 2; crop.y = cy - crop.h / 2; clampCrop(); drawCrop();
 }
-function hitRadius(ctx, it) {
-  ctx.save(); ctx.font = stickerFont(it);
-  const w = ctx.measureText(it.text).width; ctx.restore();
-  return Math.max(it.size * .6, w / 2 + 10);
+function openCrop(src) {
+  crop.src = src;
+  const cv = $("crop-cv"), maxW = Math.min(460, window.innerWidth - 60), maxH = window.innerHeight * .55;
+  crop.k = Math.min(maxW / src.width, maxH / src.height);
+  cv.width = Math.round(src.width * crop.k); cv.height = Math.round(src.height * crop.k);
+  $("crop-size").value = 100; crop.w = cropMax(); crop.h = crop.w / ASPECT;
+  crop.x = (src.width - crop.w) / 2; crop.y = (src.height - crop.h) / 2;
+  drawCrop(); $("crop").hidden = false; cv.focus();
 }
-let raf = 0;
-function render() {
-  if (!base) buildBase();
-  if (cv.width !== base.width || cv.height !== base.height) { cv.width = base.width; cv.height = base.height; }
-  cx2.clearRect(0, 0, cv.width, cv.height);
-  cx2.drawImage(base, 0, 0);
-  cx2.save(); cx2.scale(Q, Q); drawItems(cx2, true); cx2.restore();
-}
-function renderSoon() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
-function exportCanvas() {
-  if (!base) buildBase();
-  const out = document.createElement("canvas"); out.width = base.width; out.height = base.height;
-  const ctx = out.getContext("2d"); ctx.drawImage(base, 0, 0); ctx.scale(Q, Q); drawItems(ctx, false);
-  return out;
-}
-
-// ---------- 編輯面板 ----------
-function aiReady() { return AI.ok && S.picks.some(i => S.shots[i]?.ai); }
-function faceCount() { return S.picks.reduce((n, i) => n + (S.shots[i]?.ai?.faces.length || 0), 0); }
-function hasMask() { return S.picks.some(i => S.shots[i]?.ai?.mask); }
-
-function buildBeauty() {
-  $("presets").innerHTML = "";
-  PRESETS.forEach(p => {
-    const b = document.createElement("button"); b.className = "chip sk"; b.textContent = p.name;
-    b.setAttribute("aria-pressed", BEAUTY.every(x => S.beauty[x.key] === p.v[x.key]));
-    b.onclick = () => { Object.assign(S.beauty, p.v); invalidate(); render(); buildBeauty(); };
-    $("presets").append(b);
-  });
-  $("levels").innerHTML = "";
-  const ai = aiReady() && faceCount() > 0;
-  BEAUTY.forEach(x => {
-    const label = document.createElement("span"); label.textContent = x.name;
-    const seg = document.createElement("div"); seg.className = "seg sk";
-    LEVEL_NAMES.forEach((n, v) => {
-      const b = document.createElement("button"); b.textContent = n;
-      b.setAttribute("aria-pressed", S.beauty[x.key] === v);
-      b.disabled = x.ai && !ai && v > 0;
-      b.onclick = () => { S.beauty[x.key] = v; invalidate(); render(); buildBeauty(); };
-      seg.append(b);
-    });
-    $("levels").append(label, seg);
-  });
-  const note = $("ai-note");
-  note.hidden = false;
-  if (!AI.ok) note.textContent = "AI 美顏在這裡無法載入，大眼、瘦臉、妝感和換背景暫時不能用。用手機打開 GitHub Pages 網址就有完整功能。";
-  else if (!faceCount()) note.textContent = "照片裡沒找到臉，大眼、瘦臉和妝感不會作用。拍的時候臉靠近鏡頭一點、光線亮一點。";
-  else note.textContent = `AI 找到 ${faceCount()} 張臉，美顏只會套在臉上。`;
-}
-function buildEditPanels() {
-  if (!aiReady() || !faceCount()) { S.beauty.eye = S.beauty.slim = S.beauty.makeup = 0; invalidate(); render(); }
-  if (!hasMask()) S.bg = "none";
-  buildBeauty();
-  const first = S.shots[S.picks[0]];
-  $("bgs").innerHTML = "";
-  $("bg-hint").textContent = hasMask() ? "AI 會把人物去背，換成攝影棚背景。" : "這裡無法使用 AI 去背，所以不能換背景。";
-  BGS.forEach(B => {
-    const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.bg === B.id);
-    b.disabled = B.id !== "none" && !hasMask();
-    const p = document.createElement("canvas"); p.width = p.height = 108;
-    if (B.id === "none") p.getContext("2d").drawImage(processCell(first, 108, 108, { ...cellOpt(0), bg: "none", fx: "none" }), 0, 0);
-    else drawBg(p.getContext("2d"), 108, 108, B.id);
-    b.innerHTML = `<i style="background:url(${p.toDataURL("image/jpeg", .8)}) center/cover"></i>${B.name}`;
-    b.onclick = () => { S.bg = B.id; invalidate(); render(); setPressed("bgs", b); };
-    $("bgs").append(b);
-  });
-  $("filters").innerHTML = "";
-  FILTERS.forEach(f => {
-    const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.filter === f.id);
-    const prev = processCell(first, 108, 108, { ...cellOpt(0), filter: f.id, fx: "none" });
-    b.innerHTML = `<i style="background:url(${prev.toDataURL("image/jpeg", .7)}) center/cover"></i>${f.name}`;
-    b.onclick = () => { S.filter = f.id; invalidate(); render(); setPressed("filters", b); };
-    $("filters").append(b);
-  });
-  $("fxs").innerHTML = "";
-  FXS.forEach(f => {
-    const b = document.createElement("button"); b.className = "chip sk"; b.textContent = f.name; b.setAttribute("aria-pressed", S.fx === f.id);
-    b.onclick = () => { S.fx = f.id; invalidate(); render(); setPressed("fxs", b); };
-    $("fxs").append(b);
-  });
-  $("frames").innerHTML = "";
-  FRAMES.forEach(F => {
-    const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.frame === F.id);
-    const p = document.createElement("canvas"); p.width = p.height = 108; drawPattern(p.getContext("2d"), 108, 108, F);
-    if (F.square) { const c = p.getContext("2d"); c.fillStyle = "#8a8781"; c.fillRect(30, 14, 48, 36); c.fillRect(30, 58, 48, 36); }
-    b.innerHTML = `<i style="background:url(${p.toDataURL()}) center/cover"></i>${F.name}`;
-    b.onclick = () => { S.frame = F.id; invalidate(); render(); setPressed("frames", b); };
-    $("frames").append(b);
-  });
-  $("stickers").innerHTML = "";
-  [...STICKERS, ...WORDS].forEach(t => {
-    const b = document.createElement("button"); const word = WORDS.includes(t);
-    if (word) b.className = "word";
-    b.textContent = t; b.setAttribute("aria-label", "加入貼圖 " + t);
-    b.onclick = () => addSticker(t, word);
-    $("stickers").append(b);
-  });
-  $("pen-types").innerHTML = "";
-  PEN_TYPES.forEach(p => {
-    const b = document.createElement("button"); b.className = "chip sk"; b.textContent = p.name; b.setAttribute("aria-pressed", S.pen.type === p.id);
-    b.onclick = () => { S.pen.type = p.id; setPressed("pen-types", b); };
-    $("pen-types").append(b);
-  });
-  $("pens").innerHTML = "";
-  PENS.forEach(c => {
-    const b = document.createElement("button"); b.className = "pen"; b.style.background = c;
-    b.setAttribute("aria-label", "筆的顏色 " + c); b.setAttribute("aria-pressed", S.pen.color === c);
-    b.onclick = () => { S.pen.color = c; setPressed("pens", b); };
-    $("pens").append(b);
-  });
-  syncSel();
-}
-function setPressed(containerId, on) {
-  [...$(containerId).children].forEach(el => el.setAttribute("aria-pressed", el === on));
-}
-document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => {
-  S.tab = b.dataset.tab;
-  document.querySelectorAll("#tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
-  ["beauty","bg","filter","frame","sticker","pen","text"].forEach(t => ($("p-" + t).hidden = t !== S.tab));
-  if (S.tab !== "sticker") { S.selected = -1; syncSel(); render(); }
+$("crop-size").oninput = (e) => resizeCrop(+e.target.value);
+let cropDrag = null;
+$("crop-cv").addEventListener("pointerdown", (e) => {
+  cropDrag = { x: e.clientX, y: e.clientY, ox: crop.x, oy: crop.y };
+  $("crop-cv").setPointerCapture(e.pointerId);
 });
-
-function addSticker(text, word) {
-  const L = LAYOUTS[S.layout];
-  const size = Math.round(Math.min(L.W, L.H) * (word ? .3 : .16));
-  const jitter = () => (Math.random() - .5) * L.W * .2;
-  S.items.push({ type: "sticker", text, word, x: L.W / 2 + jitter(), y: L.H / 2 + jitter(), size, rot: Math.round((Math.random() - .5) * 30) });
-  S.selected = S.items.length - 1; syncSel(); render();
-}
-function syncSel() {
-  const it = S.items[S.selected];
-  $("sel-tools").hidden = !it || it.type !== "sticker";
-  if (it?.type === "sticker") { $("st-size").value = it.size; $("st-rot").value = it.rot; }
-}
-$("st-size").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.size = +e.target.value; renderSoon(); } };
-$("st-rot").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.rot = +e.target.value; renderSoon(); } };
-$("st-del").onclick = () => { if (S.selected >= 0) { S.items.splice(S.selected, 1); S.selected = -1; syncSel(); render(); } };
-$("pen-size").oninput = (e) => (S.pen.size = +e.target.value);
-$("undo").onclick = () => { S.items.pop(); S.selected = -1; syncSel(); render(); };
-$("foot-text").oninput = (e) => { S.footText = e.target.value; invalidate(); renderSoon(); };
-$("show-date").onclick = (e) => { S.showDate = !S.showDate; e.target.setAttribute("aria-pressed", S.showDate); invalidate(); render(); };
-
-// 畫布上的觸控：貼圖拖曳 / 塗鴉
-function toCanvas(e) {
-  const r = cv.getBoundingClientRect();
-  const L = LAYOUTS[S.layout];
-  return [(e.clientX - r.left) * L.W / r.width, (e.clientY - r.top) * L.H / r.height];
-}
-let drag = null;
-cv.addEventListener("pointerdown", (e) => {
-  const [x, y] = toCanvas(e);
-  if (S.tab === "pen") {
-    const scale = LAYOUTS[S.layout].W / cv.getBoundingClientRect().width;
-    S.items.push({ type: "stroke", pen: S.pen.type, color: S.pen.color, size: S.pen.size * scale, seed: Math.floor(Math.random() * 1e6), pts: [[x, y]] });
-    drag = { stroke: S.items[S.items.length - 1] };
-  } else {
-    let hit = -1;
-    for (let i = S.items.length - 1; i >= 0; i--) {
-      const it = S.items[i];
-      if (it.type === "sticker" && Math.hypot(it.x - x, it.y - y) < hitRadius(cx2, it)) { hit = i; break; }
-    }
-    if (hit < 0 && S.tab !== "sticker") return;
-    if (hit >= 0 && S.tab !== "sticker") document.querySelector('#tabs [data-tab="sticker"]').click();
-    S.selected = hit; syncSel();
-    if (hit >= 0) drag = { it: S.items[hit], dx: x - S.items[hit].x, dy: y - S.items[hit].y };
-    render();
-  }
-  cv.setPointerCapture(e.pointerId);
+$("crop-cv").addEventListener("pointermove", (e) => {
+  if (!cropDrag) return;
+  const r = $("crop-cv").getBoundingClientRect(), s = crop.src.width / r.width;
+  crop.x = cropDrag.ox + (e.clientX - cropDrag.x) * s; crop.y = cropDrag.oy + (e.clientY - cropDrag.y) * s;
+  clampCrop(); drawCrop();
 });
-cv.addEventListener("pointermove", (e) => {
-  if (!drag) return;
-  const [x, y] = toCanvas(e);
-  if (drag.stroke) drag.stroke.pts.push([x, y]);
-  else { drag.it.x = x - drag.dx; drag.it.y = y - drag.dy; }
-  renderSoon();
+$("crop-cv").addEventListener("pointerup", () => (cropDrag = null));
+$("crop-cv").addEventListener("keydown", (e) => {
+  const step = crop.src.width * .02, d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+  if (!d) return;
+  e.preventDefault(); crop.x += d[0]; crop.y += d[1]; clampCrop(); drawCrop();
 });
-const endDrag = () => (drag = null);
-cv.addEventListener("pointerup", endDrag);
-cv.addEventListener("pointercancel", endDrag);
+$("crop-cancel").onclick = () => ($("crop").hidden = true);
+$("crop-ok").onclick = () => {
+  const out = document.createElement("canvas");
+  out.width = Math.round(crop.w); out.height = Math.round(crop.h);
+  const ctx = out.getContext("2d"); ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(crop.src, crop.x, crop.y, crop.w, crop.h, 0, 0, out.width, out.height);
+  S.shots[S.shots.findIndex(s => !s)] = out;
+  $("crop").hidden = true; setMode("upload");
+};
 
-$("reshoot").onclick = reshoot;
-
-// ---------- 列印 & 儲存 ----------
-let lastBlob = null;
-// 出片分三段：printing 從出紙口印出 → waiting 掉進取件口等你拿 → picked 拿在手上，可以下載分享
-const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+// ---------- 製作、列印、取件 ----------
+// making 製作中 → printing 從出紙口印出 → waiting 掉進取件口 → picked 拿在手上
+let lastBlob = null, printTimer = 0;
 function setPhase(phase) {
   const r = $("result");
-  ["printing", "waiting", "picked"].forEach(p => r.classList.toggle(p, p === phase));
+  ["making", "printing", "waiting", "picked"].forEach(p => r.classList.toggle(p, p === phase));
   $("tray").hidden = $("tray-note").hidden = phase !== "waiting";
-  $("result-title").textContent = { printing: "列印中…", waiting: "照片印好了！", picked: "拿到了！" }[phase];
+  $("result-title").textContent = { making: "製作拍貼中…", printing: "列印中…", waiting: "照片印好了！", picked: "你的拍貼！" }[phase];
 }
-let printTimer = 0;
+async function makeStrip() {
+  $("result").hidden = false; setPhase("making");
+  await document.fonts.load('52px "Gochi Hand"').catch(() => {});
+  await wait(reduceMotion() ? 0 : 900);
+  try {
+    const out = buildStrip();
+    lastBlob = await new Promise((res, rej) => out.toBlob(b => (b ? res(b) : rej(new Error("empty"))), "image/jpeg", .93));
+    saveToGallery(out);
+    showResult(URL.createObjectURL(lastBlob), true);
+    whirr();
+  } catch (e) {
+    $("result").hidden = true; toast("拍貼做不出來，請再試一次。");
+  }
+}
 function showResult(url, animate) {
   const img = $("result-img");
   if (img.src.startsWith("blob:") && img.src !== url) URL.revokeObjectURL(img.src);
   img.src = url; $("tray-img").src = url;
   $("share").hidden = !(lastBlob && navigator.canShare && navigator.canShare({ files: [new File([lastBlob], "p.jpg", { type: lastBlob.type })] }));
-  $("close-result").hidden = false;
-  img.classList.remove("print", "drop", "picked");
-  clearTimeout(printTimer);
+  img.classList.remove("print", "drop", "picked"); clearTimeout(printTimer);
   $("result").hidden = false;
-  if (!animate) { setPhase("picked"); return; }
+  if (!animate) return setPhase("picked");
   setPhase("printing");
   void img.offsetWidth; img.classList.add("print");
   const fast = reduceMotion();
@@ -1787,52 +844,39 @@ function showResult(url, animate) {
     printTimer = setTimeout(() => {
       setPhase("waiting");
       const t = $("tray"); t.classList.remove("land"); void t.offsetWidth; t.classList.add("land");
-      beep(330, .12); beep(1320, .18); say("照片印好了，請在取件口拿取");
-      t.focus({ preventScroll: true });
+      beep(330, .12); t.focus({ preventScroll: true });
     }, fast ? 0 : 450);
   }, fast ? 0 : 2600);
 }
 $("tray").onclick = () => {
   const img = $("result-img");
   img.classList.remove("drop", "print"); setPhase("picked");
-  void img.offsetWidth; img.classList.add("picked");
-  beep(880, .06);
-};
-$("save").onclick = async () => {
-  S.selected = -1; syncSel(); render();
-  const out = exportCanvas();
-  lastBlob = await new Promise(r => out.toBlob(r, "image/jpeg", .93));
-  saveToGallery(out);
-  showResult(URL.createObjectURL(lastBlob), true);
-  say("列印中，請稍等"); whirr();
+  void img.offsetWidth; img.classList.add("picked"); beep(880, .06);
 };
 function fileName() {
   const d = new Date(), p = (n) => String(n).padStart(2, "0");
-  return `拍貼_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.${lastBlob?.type === "image/jpeg" ? "jpg" : "png"}`;
+  return `拍貼_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.jpg`;
 }
-$("dl").onclick = async () => {
+async function download() {
   if (!lastBlob) return;
   const dl = window.claude?.use ? await window.claude.use("downloads").catch(() => null) : null;
   if (dl) {
-    try { await dl.save({ filename: fileName(), data: lastBlob }); toast("已存好圖片"); }
-    catch (e) { if (e?.code !== "declined") toast("這裡無法下載，請長按圖片儲存"); }
+    try { await dl.save({ filename: fileName(), data: lastBlob }); toast("已存好拍貼"); }
+    catch (e) { if (e?.code !== "declined") toast("這裡無法下載，請長按照片儲存"); }
     return;
   }
   const a = document.createElement("a"); a.href = $("result-img").src; a.download = fileName();
   document.body.append(a); a.click(); a.remove();
-};
+}
+$("dl").onclick = download;
+$("paper-btn").onclick = () => { if ($("result").classList.contains("picked")) download(); };
 $("share").onclick = async () => {
-  try { await navigator.share({ files: [new File([lastBlob], fileName(), { type: lastBlob.type })], title: "我的拍貼" }); }
-  catch (e) { if (e?.name !== "AbortError") toast("分享失敗，請長按圖片儲存"); }
+  try { await navigator.share({ files: [new File([lastBlob], fileName(), { type: lastBlob.type })], text: "來看我的拍貼！" }); }
+  catch (e) { if (e?.name !== "AbortError") toast("這台裝置不支援分享，請先下載再傳給朋友"); }
 };
-$("close-result").onclick = () => ($("result").hidden = true);
-$("restart").onclick = () => {
-  $("result").hidden = true; stopCamera();
-  S.shots = []; S.picks = []; S.items = []; M = "choose";
-  show("scr-lobby"); buildGallery();
-};
+$("again").onclick = () => { $("result").hidden = true; S.shots = [null, null, null, null]; setMode("choose"); };
+$("leave").onclick = leaveMachine;
 
-syncSound();
 buildGallery();
 </script>
 
