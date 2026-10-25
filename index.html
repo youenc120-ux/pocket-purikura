@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff3d8b">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+</head>
+<body>
+<title>口袋拍貼機</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* 單欄手機 App：上方步驟條，中間是相機或作品，下方是工具列 */
+:root {
+  --bg: #fff4f8;
+  --card: #ffffff;
+  --ink: #3b1730;
+  --muted: #94677f;
+  --line: #f2cadb;
+  --accent: #ff3d8b;
+  --accent-ink: #ffffff;
+  --lilac: #a88bff;
+  --soft: #ffe3ee;
+  --display: "Mochiy Pop One", "Noto Sans TC", system-ui, sans-serif;
+  --body: "Noto Sans TC", system-ui, -apple-system, "PingFang TC", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c49bb3;
+    --line: #4a2b48; --accent: #ff5c9e; --accent-ink: #1b1120; --lilac: #b9a2ff; --soft: #3a2140;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1120; --card: #2a1a30; --ink: #fde9f3; --muted: #c49bb3;
+  --line: #4a2b48; --accent: #ff5c9e; --accent-ink: #1b1120; --lilac: #b9a2ff; --soft: #3a2140;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.app { max-width: 520px; margin: 0 auto; padding-block: 14px 28px; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.logo { font-family: var(--display); font-size: 22px; letter-spacing: .02em; color: var(--accent); margin: 0; }
+.logo small { display: block; font-family: var(--body); font-size: 11px; color: var(--muted); letter-spacing: .14em; font-weight: 500; }
+.steps { display: flex; gap: 6px; }
+.steps span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--soft); color: var(--muted); }
+.steps span.on { background: var(--accent); color: var(--accent-ink); }
+h2 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 0; text-wrap: balance; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.6; }
+section { display: flex; flex-direction: column; gap: 14px; }
+
+/* 版型卡 */
+.layouts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.layout-card { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 14px 10px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; font: inherit; color: inherit; }
+.layout-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+.layout-card b { font-size: 14px; }
+.layout-card span { font-size: 12px; color: var(--muted); }
+.mini { display: grid; gap: 3px; padding: 5px; background: var(--soft); border-radius: 6px; height: 84px; }
+.mini i { background: var(--accent); opacity: .55; border-radius: 2px; }
+.mini.strip { grid-template-rows: repeat(4, 1fr); width: 34px; }
+.mini.grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; width: 76px; }
+.mini.duo { grid-template-columns: 1fr 1fr; width: 76px; }
+.mini.single { width: 70px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.label { font-size: 12px; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
+.chip { border: 2px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.btn { border: 0; border-radius: 999px; padding: 15px 22px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.btn.ghost { background: var(--soft); color: var(--ink); }
+.btn.wide { width: 100%; }
+.btn:disabled { opacity: .45; cursor: default; }
+button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px solid var(--lilac); outline-offset: 2px; }
+
+/* 拍照 */
+.viewfinder { position: relative; width: 100%; max-width: 100%; border-radius: 22px; overflow: hidden; background: #000; border: 4px solid var(--card); box-shadow: 0 8px 30px color-mix(in srgb, var(--accent) 22%, transparent); }
+.viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.viewfinder video.mirror { transform: scaleX(-1); }
+.count { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--display); font-size: 120px; color: #fff; text-shadow: 0 4px 20px rgba(255, 61, 139, .9); pointer-events: none; }
+.count.pop { animation: pop .9s ease-out; }
+@keyframes pop { from { transform: scale(1.6); opacity: 0; } 30% { opacity: 1; } to { transform: scale(.9); opacity: .2; } }
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.flash.go { animation: flash .45s ease-out; }
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+.badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.45); color: #fff; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+.cam-off { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; color: #ffd6e7; font-size: 14px; line-height: 1.7; background: repeating-linear-gradient(45deg, #2a1530 0 14px, #301a37 14px 28px); }
+.thumbs { display: grid; gap: 8px; }
+.thumb { aspect-ratio: 4/3; max-width: 100%; border-radius: 10px; background: var(--soft); border: 2px dashed var(--line); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 12px; font-weight: 700; position: relative; padding: 0; cursor: pointer; font-family: inherit; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.filled { border-style: solid; border-color: var(--accent); }
+.thumb .x { position: absolute; right: 4px; bottom: 4px; background: rgba(0,0,0,.5); color: #fff; font-size: 11px; border-radius: 999px; padding: 1px 7px; }
+.file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.file-btn { position: relative; }
+
+/* 編輯 */
+.stage { background: var(--card); border-radius: 22px; padding: 12px; border: 2px solid var(--line); display: flex; justify-content: center; }
+.stage canvas { max-width: 100%; max-height: 62vh; height: auto; display: block; border-radius: 6px; touch-action: none; box-shadow: 0 4px 18px rgba(0,0,0,.12); }
+.tabs { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--soft); border-radius: 16px; padding: 4px; gap: 4px; }
+.tabs button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; padding: 9px 0; border-radius: 12px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--card); color: var(--accent); }
+.panel { display: flex; flex-direction: column; gap: 12px; min-height: 120px; }
+.swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.swatch { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; padding: 0; }
+.swatch i { width: 54px; height: 54px; border-radius: 14px; border: 3px solid var(--line); display: block; }
+.swatch[aria-pressed="true"] i { border-color: var(--accent); }
+.stickers { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 6px; }
+.stickers button { aspect-ratio: 1; max-width: 100%; border: 0; background: var(--card); border-radius: 12px; font-size: 26px; cursor: pointer; display: grid; place-items: center; padding: 0; color: var(--accent); }
+.stickers button.word { font-family: var(--display); font-size: 12px; }
+.sel-tools { display: flex; flex-direction: column; gap: 8px; background: var(--card); padding: 12px; border-radius: 14px; }
+.slider { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.slider input { width: 100%; accent-color: var(--accent); }
+.pens { display: flex; gap: 10px; flex-wrap: wrap; }
+.pen { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); cursor: pointer; padding: 0; }
+.pen[aria-pressed="true"] { border-color: var(--ink); transform: scale(1.1); }
+.text-in { width: 100%; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 16px; }
+.actions { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+
+/* 成品 */
+.result { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); z-index: 20; overflow-y: auto; padding: calc(env(safe-area-inset-top, 0px) + 20px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(16px, env(safe-area-inset-left, 0px)); }
+.result-inner { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; }
+.result img { max-width: 100%; max-height: 64vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.2); -webkit-touch-callout: default; }
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 30; max-width: calc(100% - 32px); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .count.pop, .flash.go { animation: none; } }
+</style>
+
+<div class="app">
+  <header>
+    <h1 class="logo">口袋拍貼機<small>POCKET PURIKURA</small></h1>
+    <div class="steps" aria-label="步驟"><span id="st1" class="on">1</span><span id="st2">2</span><span id="st3">3</span></div>
+  </header>
+
+  <!-- 1. 選版型 -->
+  <section id="scr-setup">
+    <h2>選一個版型</h2>
+    <div class="layouts" id="layouts"></div>
+    <div class="row"><span class="label">倒數</span><div class="row" id="timers"></div></div>
+    <button class="btn wide" id="go-shoot">開始拍照</button>
+  </section>
+
+  <!-- 2. 拍照 -->
+  <section id="scr-shoot" hidden>
+    <div class="row" style="justify-content:space-between">
+      <h2 id="shoot-title">看鏡頭！</h2>
+      <button class="chip" id="flip">切換鏡頭</button>
+    </div>
+    <div class="viewfinder" id="vf">
+      <video id="video" playsinline muted autoplay class="mirror"></video>
+      <div class="cam-off" id="cam-off" hidden>
+        <div>這個畫面無法直接開啟相機。<br>用下面的按鈕拍照或從相簿挑照片，<br>一張一張填進格子裡。</div>
+      </div>
+      <div class="badge" id="shot-badge">1 / 4</div>
+      <div class="count" id="count"></div>
+      <div class="flash" id="flash"></div>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+    <p class="hint" id="thumb-hint">點已拍好的格子可以重拍那一張。</p>
+    <div id="live-actions" class="actions">
+      <button class="btn ghost" id="back-setup">上一步</button>
+      <button class="btn" id="snap">開始連拍</button>
+    </div>
+    <div id="file-actions" class="actions" hidden>
+      <label class="btn ghost file-btn">從相簿選<input type="file" id="pick-many" accept="image/*" multiple></label>
+      <label class="btn file-btn">拍下一張<input type="file" id="pick-cam" accept="image/*" capture="user"></label>
+    </div>
+    <button class="btn wide" id="go-edit" disabled>去裝飾 →</button>
+  </section>
+
+  <!-- 3. 裝飾 -->
+  <section id="scr-edit" hidden>
+    <div class="stage"><canvas id="cv"></canvas></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="filter" aria-selected="true">濾鏡</button>
+      <button role="tab" data-tab="frame" aria-selected="false">邊框</button>
+      <button role="tab" data-tab="sticker" aria-selected="false">貼圖</button>
+      <button role="tab" data-tab="pen" aria-selected="false">塗鴉</button>
+      <button role="tab" data-tab="text" aria-selected="false">文字</button>
+    </div>
+    <div class="panel" id="p-filter"><div class="swatches" id="filters"></div></div>
+    <div class="panel" id="p-frame" hidden><div class="swatches" id="frames"></div></div>
+    <div class="panel" id="p-sticker" hidden>
+      <p class="hint">點貼圖加到照片上，拖曳移動位置。</p>
+      <div class="stickers" id="stickers"></div>
+      <div class="sel-tools" id="sel-tools" hidden>
+        <div class="slider"><span>大小</span><input type="range" id="st-size" min="40" max="400"></div>
+        <div class="slider"><span>旋轉</span><input type="range" id="st-rot" min="-180" max="180"></div>
+        <button class="chip" id="st-del">刪除這個貼圖</button>
+      </div>
+    </div>
+    <div class="panel" id="p-pen" hidden>
+      <p class="hint">直接在照片上畫。螢光筆會有發光的白芯。</p>
+      <div class="pens" id="pens"></div>
+      <div class="slider"><span>粗細</span><input type="range" id="pen-size" min="4" max="40" value="12"></div>
+      <div class="row"><button class="chip" id="pen-neon" aria-pressed="true">螢光筆</button><button class="chip" id="undo">復原上一筆</button></div>
+    </div>
+    <div class="panel" id="p-text" hidden>
+      <label class="label" for="foot-text">底部文字</label>
+      <input class="text-in" id="foot-text" maxlength="24" value="BESTIE DAY ♡">
+      <div class="row"><button class="chip" id="show-date" aria-pressed="true">加上日期</button></div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="reshoot">重拍</button>
+      <button class="btn" id="save">完成，存成圖片</button>
+    </div>
+  </section>
+</div>
+
+<div class="result" id="result" hidden>
+  <div class="result-inner">
+    <h2>完成啦！</h2>
+    <img id="result-img" alt="拍貼成品">
+    <p class="hint">手機上可以長按圖片儲存或分享。</p>
+    <button class="btn wide" id="dl">下載圖片</button>
+    <button class="btn ghost wide" id="share" hidden>分享</button>
+    <button class="btn ghost wide" id="close-result">繼續裝飾</button>
+    <button class="chip" id="restart">再拍一組</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// ---------- 設定資料 ----------
+const LAYOUTS = {
+  strip:  { name: "4格直條", sub: "經典拍貼條", W: 600, H: 1800, foot: { y: 1672, h: 128 },
+            cells: [0,1,2,3].map(i => ({ x: 40, y: 40 + i * 414, w: 520, h: 390 })) },
+  grid:   { name: "四宮格", sub: "2 × 2", W: 1200, H: 1100, foot: { y: 884, h: 216 },
+            cells: [[40,40],[610,40],[40,472],[610,472]].map(([x,y]) => ({ x, y, w: 550, h: 412 })) },
+  duo:    { name: "雙人並排", sub: "2 張直式", W: 1200, H: 900, foot: { y: 728, h: 172 },
+            cells: [[40,40],[610,40]].map(([x,y]) => ({ x, y, w: 550, h: 688 })) },
+  single: { name: "大頭貼", sub: "1 張方形", W: 1000, H: 1200, foot: { y: 960, h: 240 },
+            cells: [{ x: 40, y: 40, w: 920, h: 920 }] },
+};
+const FRAMES = [
+  { id: "berry", name: "草莓牛奶", bg: "#ffd3e3", pat: "#ffffff", pattern: "dots",    ink: "#e2457a" },
+  { id: "mint",  name: "薄荷汽水", bg: "#c6f1e1", pat: "#ffffff", pattern: "stripes", ink: "#178062" },
+  { id: "night", name: "夜光派對", bg: "#1f1745", pat: "#ffe066", pattern: "stars",   ink: "#ff7ad9" },
+  { id: "plaid", name: "奶油格紋", bg: "#fff1c2", pat: "#ffe08a", pattern: "checker", ink: "#b0601a" },
+  { id: "lilac", name: "薰衣草",   bg: "#e3d8ff", pat: "#f5f0ff", pattern: "hearts",  ink: "#6b4fd8" },
+  { id: "white", name: "純白",     bg: "#ffffff", pat: "#ffffff", pattern: "none",    ink: "#2b2b2b" },
+];
+const FILTERS = [
+  { id: "none",   name: "原色" },
+  { id: "beauty", name: "美肌" },
+  { id: "pink",   name: "粉嫩" },
+  { id: "retro",  name: "復古" },
+  { id: "bw",     name: "黑白" },
+  { id: "cool",   name: "冷光" },
+];
+const STICKERS = ["💖","✨","🎀","⭐","🌸","🐰","🍓","👑","💋","🦋","🐱","🌈","☁️","💫","🍰","🎵","🐻","🍒","🫧","🌷"];
+const WORDS = ["LOVE","BFF","CUTE","最可愛","好朋友","♡♡♡"];
+const PENS = ["#ff3d8b","#ffffff","#ffe14d","#5ee0ff","#9b6bff","#2b2b2b"];
+
+const S = {
+  layout: "strip", timer: 3, facing: "user", shots: [], filter: "beauty", frame: "berry",
+  items: [], selected: -1, tab: "filter", pen: { color: "#ff3d8b", size: 12, neon: true },
+  footText: "BESTIE DAY ♡", showDate: true,
+};
+let stream = null, camOK = false, busy = false;
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2400);
+}
+function setStep(n) { [1,2,3].forEach(i => $("st" + i).classList.toggle("on", i <= n)); }
+function show(id) {
+  ["scr-setup","scr-shoot","scr-edit"].forEach(s => ($(s).hidden = s !== id));
+  setStep(id === "scr-setup" ? 1 : id === "scr-shoot" ? 2 : 3);
+  window.scrollTo(0, 0);
+}
+
+// ---------- 1. 版型 ----------
+function buildSetup() {
+  $("layouts").innerHTML = "";
+  for (const [id, L] of Object.entries(LAYOUTS)) {
+    const b = document.createElement("button");
+    b.className = "layout-card"; b.setAttribute("aria-pressed", S.layout === id);
+    b.innerHTML = `<div class="mini ${id}">${"<i></i>".repeat(L.cells.length)}</div><b>${L.name}</b><span>${L.sub}</span>`;
+    b.onclick = () => { S.layout = id; buildSetup(); };
+    $("layouts").append(b);
+  }
+  $("timers").innerHTML = "";
+  for (const t of [3, 5, 10]) {
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t + " 秒"; b.setAttribute("aria-pressed", S.timer === t);
+    b.onclick = () => { S.timer = t; buildSetup(); };
+    $("timers").append(b);
+  }
+}
+$("go-shoot").onclick = () => {
+  const n = LAYOUTS[S.layout].cells.length;
+  if (S.shots.length !== n) S.shots = new Array(n).fill(null);
+  show("scr-shoot"); buildShoot(); startCamera();
+};
+
+// ---------- 2. 拍照 ----------
+function cellAspect() { const c = LAYOUTS[S.layout].cells[0]; return c.w / c.h; }
+function nextEmpty() { return S.shots.findIndex(s => !s); }
+
+function buildShoot() {
+  const L = LAYOUTS[S.layout];
+  $("vf").style.aspectRatio = cellAspect();
+  const cols = L.cells.length === 1 ? 1 : L.cells.length === 2 ? 2 : 4;
+  $("thumbs").style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  $("thumbs").innerHTML = "";
+  S.shots.forEach((shot, i) => {
+    const b = document.createElement("button");
+    b.className = "thumb" + (shot ? " filled" : "");
+    b.style.aspectRatio = cellAspect();
+    if (cols === 1) b.style.maxWidth = "120px";
+    b.innerHTML = shot ? `<img alt="第 ${i + 1} 張"><span class="x">重拍</span>` : `第 ${i + 1} 張`;
+    if (shot) b.querySelector("img").src = shot.toDataURL("image/jpeg", .6);
+    b.onclick = () => { if (shot && !busy) { S.shots[i] = null; buildShoot(); } };
+    $("thumbs").append(b);
+  });
+  const done = nextEmpty() === -1;
+  $("go-edit").disabled = !done;
+  $("thumb-hint").hidden = !S.shots.some(Boolean);
+  const k = done ? L.cells.length : nextEmpty() + 1;
+  $("shot-badge").textContent = `${k} / ${L.cells.length}`;
+  $("snap").textContent = done ? "全部拍好了" : S.shots.some(Boolean) ? "繼續拍" : "開始連拍";
+  $("snap").disabled = done;
+  $("shoot-title").textContent = done ? "拍好囉！" : "看鏡頭！";
+}
+
+async function startCamera() {
+  stopCamera();
+  $("video").classList.toggle("mirror", S.facing === "user");
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("no camera api");
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: S.facing, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false,
+    });
+    $("video").srcObject = stream;
+    await $("video").play();
+    camOK = true;
+  } catch (e) {
+    camOK = false;
+  }
+  $("cam-off").hidden = camOK;
+  $("live-actions").hidden = !camOK;
+  $("file-actions").hidden = camOK;
+  $("flip").hidden = !camOK;
+}
+function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+$("flip").onclick = () => { S.facing = S.facing === "user" ? "environment" : "user"; startCamera(); };
+$("back-setup").onclick = () => { stopCamera(); show("scr-setup"); };
+
+let audioCtx = null;
+function beep(freq, dur) {
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = freq; g.gain.value = .08;
+    o.connect(g).connect(audioCtx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + dur); o.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function countdown(sec) {
+  const c = $("count");
+  for (let n = sec; n > 0; n--) {
+    c.textContent = n; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop");
+    beep(880, .12); await wait(1000);
+  }
+  c.textContent = "";
+}
+function grabFrame() {
+  const v = $("video"), cv = document.createElement("canvas");
+  cv.width = v.videoWidth; cv.height = v.videoHeight;
+  const ctx = cv.getContext("2d");
+  if (S.facing === "user") { ctx.translate(cv.width, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(v, 0, 0);
+  const f = $("flash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+  beep(1600, .25);
+  return cv;
+}
+$("snap").onclick = async () => {
+  if (busy || !camOK) return;
+  busy = true; $("snap").disabled = true; $("back-setup").disabled = true;
+  let i;
+  while ((i = nextEmpty()) !== -1) {
+    $("shot-badge").textContent = `${i + 1} / ${S.shots.length}`;
+    await countdown(S.timer);
+    S.shots[i] = grabFrame();
+    buildShoot();
+    await wait(700);
+  }
+  busy = false; $("back-setup").disabled = false;
+  buildShoot();
+};
+
+// 無法用即時相機時：用檔案（手機會開相機 App）
+async function fileToCanvas(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(img.naturalWidth * scale); cv.height = Math.round(img.naturalHeight * scale);
+    cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+    return cv;
+  } finally { URL.revokeObjectURL(url); }
+}
+async function addFiles(files) {
+  for (const f of files) {
+    const i = nextEmpty(); if (i === -1) break;
+    try { S.shots[i] = await fileToCanvas(f); } catch (e) { toast("這張照片讀不出來，換一張試試"); }
+  }
+  buildShoot();
+}
+$("pick-many").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
+$("pick-cam").onchange = (e) => { addFiles([...e.target.files]); e.target.value = ""; };
+
+$("go-edit").onclick = async () => {
+  stopCamera(); show("scr-edit");
+  S.items = []; S.selected = -1;
+  await fontsReady; invalidate(); render(); buildEditPanels();
+};
+
+// ---------- 3. 合成 ----------
+const fontsReady = Promise.all([
+  document.fonts.load('48px "Mochiy Pop One"'),
+  document.fonts.load('700 48px "Noto Sans TC"'),
+]).catch(() => {});
+
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function heart(ctx, x, y, s) {
+  ctx.beginPath(); ctx.moveTo(x, y + s * .3);
+  ctx.bezierCurveTo(x, y, x - s * .5, y, x - s * .5, y + s * .3);
+  ctx.bezierCurveTo(x - s * .5, y + s * .6, x, y + s * .8, x, y + s);
+  ctx.bezierCurveTo(x, y + s * .8, x + s * .5, y + s * .6, x + s * .5, y + s * .3);
+  ctx.bezierCurveTo(x + s * .5, y, x, y, x, y + s * .3); ctx.fill();
+}
+function sparkle(ctx, x, y, r) {
+  ctx.beginPath(); ctx.moveTo(x, y - r);
+  ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+}
+function drawPattern(ctx, W, H, F) {
+  ctx.fillStyle = F.bg; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = F.pat;
+  if (F.pattern === "dots") {
+    for (let y = 0, r = 0; y < H + 40; y += 34, r++)
+      for (let x = (r % 2) * 17; x < W + 40; x += 34) { ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); }
+  } else if (F.pattern === "stripes") {
+    ctx.save(); ctx.rotate(-Math.PI / 4);
+    for (let x = -H * 2; x < W * 2; x += 56) ctx.fillRect(x, -H * 2, 22, H * 5);
+    ctx.restore();
+  } else if (F.pattern === "checker") {
+    for (let y = 0; y < H; y += 40) for (let x = (y / 40 % 2) * 40; x < W; x += 80) ctx.fillRect(x, y, 40, 40);
+  } else if (F.pattern === "stars") {
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let k = 0; k < W * H / 9000; k++) { ctx.globalAlpha = .4 + rnd() * .6; sparkle(ctx, rnd() * W, rnd() * H, 4 + rnd() * 12); }
+    ctx.globalAlpha = 1;
+  } else if (F.pattern === "hearts") {
+    for (let y = 10, r = 0; y < H; y += 60, r++) for (let x = (r % 2) * 30; x < W + 30; x += 60) heart(ctx, x, y, 18);
+  }
+}
+
+// 每格照片：裁切成格子比例 + 濾鏡
+function processCell(src, w, h, filter) {
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d");
+  const s = Math.max(w / src.width, h / src.height);
+  const sw = w / s, sh = h / s;
+  ctx.drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, w, h);
+  if (filter === "none") return cv;
+  if (filter === "beauty") {
+    // 柔膚：縮小再放大的模糊圖疊在原圖上
+    const sm = document.createElement("canvas"); sm.width = Math.ceil(w / 6); sm.height = Math.ceil(h / 6);
+    sm.getContext("2d").drawImage(cv, 0, 0, sm.width, sm.height);
+    ctx.globalAlpha = .38; ctx.imageSmoothingQuality = "high"; ctx.drawImage(sm, 0, 0, w, h); ctx.globalAlpha = 1;
+  }
+  const img = ctx.getImageData(0, 0, w, h), d = img.data;
+  const cl = (v) => v < 0 ? 0 : v > 255 ? 255 : v;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i], g = d[i + 1], b = d[i + 2];
+    if (filter === "beauty") { r = r * 1.06 + 16; g = g * 1.05 + 12; b = b * 1.05 + 14; }
+    else if (filter === "pink") { r = r * 1.04 + 22; g = g * .98 + 6; b = b * 1.02 + 18; }
+    else if (filter === "retro") {
+      const tr = .393 * r + .769 * g + .189 * b, tg = .349 * r + .686 * g + .168 * b, tb = .272 * r + .534 * g + .131 * b;
+      r = (r * .35 + tr * .65) * .9 + 20; g = (g * .35 + tg * .65) * .9 + 16; b = (b * .35 + tb * .65) * .85 + 10;
+    } else if (filter === "bw") { const l = (.299 * r + .587 * g + .114 * b - 128) * 1.15 + 138; r = g = b = l; }
+    else if (filter === "cool") { r = r * .95 + 4; g = g * 1.02 + 10; b = b * 1.08 + 22; }
+    d[i] = cl(r); d[i + 1] = cl(g); d[i + 2] = cl(b);
+  }
+  ctx.putImageData(img, 0, 0);
+  if (filter === "retro") {
+    const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .35, w / 2, h / 2, Math.max(w, h) * .75);
+    gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(40,20,0,.45)");
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
+  }
+  return cv;
+}
+
+let base = null;
+function invalidate() { base = null; }
+function buildBase() {
+  const L = LAYOUTS[S.layout], F = FRAMES.find(f => f.id === S.frame);
+  base = document.createElement("canvas"); base.width = L.W; base.height = L.H;
+  const ctx = base.getContext("2d");
+  drawPattern(ctx, L.W, L.H, F);
+  L.cells.forEach((c, i) => {
+    ctx.fillStyle = "#ffffff"; rr(ctx, c.x - 8, c.y - 8, c.w + 16, c.h + 16, 22); ctx.fill();
+    ctx.save(); rr(ctx, c.x, c.y, c.w, c.h, 16); ctx.clip();
+    if (S.shots[i]) ctx.drawImage(processCell(S.shots[i], c.w, c.h, S.filter), c.x, c.y);
+    ctx.restore();
+  });
+  const fy = L.foot.y, fh = L.foot.h, cx = L.W / 2;
+  const big = Math.min(fh * .36, L.W * .075);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = `${big}px "Mochiy Pop One", "Noto Sans TC", sans-serif`;
+  const ty = S.showDate ? fy + fh * .42 : fy + fh * .5;
+  ctx.lineJoin = "round"; ctx.lineWidth = big * .28; ctx.strokeStyle = "#ffffff";
+  if (F.id !== "white") ctx.strokeText(S.footText, cx, ty);
+  ctx.fillStyle = F.ink; ctx.fillText(S.footText, cx, ty);
+  if (S.showDate) {
+    const d = new Date(), p = (n) => String(n).padStart(2, "0");
+    ctx.font = `700 ${big * .42}px "Noto Sans TC", sans-serif`;
+    ctx.fillStyle = F.ink; ctx.globalAlpha = .8;
+    ctx.fillText(`${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`, cx, ty + big * .95);
+    ctx.globalAlpha = 1;
+  }
+}
+
+const cv = $("cv"), cx2 = cv.getContext("2d");
+function stickerFont(it) {
+  return it.word ? `${it.size * .5}px "Mochiy Pop One", "Noto Sans TC", sans-serif`
+                 : `${it.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+}
+function drawItems(ctx, showSel) {
+  S.items.forEach((it, idx) => {
+    if (it.type === "stroke") {
+      if (it.pts.length < 1) return;
+      ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+      const path = () => { ctx.beginPath(); ctx.moveTo(it.pts[0][0], it.pts[0][1]); it.pts.forEach(p => ctx.lineTo(p[0], p[1])); };
+      if (it.neon) { ctx.shadowColor = it.color; ctx.shadowBlur = it.size * 1.4; }
+      path(); ctx.strokeStyle = it.color; ctx.lineWidth = it.size; ctx.stroke();
+      if (it.neon) { ctx.shadowBlur = 0; path(); ctx.strokeStyle = "#ffffff"; ctx.lineWidth = it.size * .38; ctx.stroke(); }
+      ctx.restore();
+    } else {
+      ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(it.rot * Math.PI / 180);
+      ctx.font = stickerFont(it); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      if (it.word) {
+        ctx.lineJoin = "round"; ctx.lineWidth = it.size * .12; ctx.strokeStyle = "#ffffff"; ctx.strokeText(it.text, 0, 0);
+        ctx.fillStyle = "#ff3d8b"; ctx.fillText(it.text, 0, 0);
+      } else ctx.fillText(it.text, 0, 0);
+      if (showSel && idx === S.selected) {
+        const r = hitRadius(ctx, it);
+        ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeStyle = "#a88bff";
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  });
+}
+function hitRadius(ctx, it) {
+  ctx.save(); ctx.font = stickerFont(it);
+  const w = ctx.measureText(it.text).width; ctx.restore();
+  return Math.max(it.size * .6, w / 2 + 10);
+}
+function render() {
+  if (!base) buildBase();
+  if (cv.width !== base.width) { cv.width = base.width; cv.height = base.height; }
+  cx2.clearRect(0, 0, cv.width, cv.height);
+  cx2.drawImage(base, 0, 0);
+  drawItems(cx2, true);
+}
+function exportCanvas() {
+  if (!base) buildBase();
+  const out = document.createElement("canvas"); out.width = base.width; out.height = base.height;
+  const ctx = out.getContext("2d"); ctx.drawImage(base, 0, 0); drawItems(ctx, false);
+  return out;
+}
+
+// ---------- 編輯面板 ----------
+function buildEditPanels() {
+  // 濾鏡：用第一張照片做縮圖
+  $("filters").innerHTML = "";
+  FILTERS.forEach(f => {
+    const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.filter === f.id);
+    const prev = processCell(S.shots[0], 108, 108, f.id);
+    b.innerHTML = `<i style="background:url(${prev.toDataURL("image/jpeg", .7)}) center/cover"></i>${f.name}`;
+    b.onclick = () => { S.filter = f.id; invalidate(); render(); setPressed("filters", b); };
+    $("filters").append(b);
+  });
+  $("frames").innerHTML = "";
+  FRAMES.forEach(F => {
+    const b = document.createElement("button"); b.className = "swatch"; b.setAttribute("aria-pressed", S.frame === F.id);
+    const p = document.createElement("canvas"); p.width = p.height = 108; drawPattern(p.getContext("2d"), 108, 108, F);
+    b.innerHTML = `<i style="background:url(${p.toDataURL()}) center/cover"></i>${F.name}`;
+    b.onclick = () => { S.frame = F.id; invalidate(); render(); setPressed("frames", b); };
+    $("frames").append(b);
+  });
+  $("stickers").innerHTML = "";
+  [...STICKERS, ...WORDS].forEach(t => {
+    const b = document.createElement("button"); const word = WORDS.includes(t);
+    if (word) b.className = "word";
+    b.textContent = t; b.setAttribute("aria-label", "加入貼圖 " + t);
+    b.onclick = () => addSticker(t, word);
+    $("stickers").append(b);
+  });
+  $("pens").innerHTML = "";
+  PENS.forEach(c => {
+    const b = document.createElement("button"); b.className = "pen"; b.style.background = c;
+    b.setAttribute("aria-label", "筆的顏色 " + c); b.setAttribute("aria-pressed", S.pen.color === c);
+    b.onclick = () => { S.pen.color = c; setPressed("pens", b); };
+    $("pens").append(b);
+  });
+  syncSel();
+}
+function setPressed(containerId, on) {
+  [...$(containerId).children].forEach(el => el.setAttribute("aria-pressed", el === on));
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  S.tab = b.dataset.tab;
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  ["filter","frame","sticker","pen","text"].forEach(t => ($("p-" + t).hidden = t !== S.tab));
+  if (S.tab !== "sticker") { S.selected = -1; syncSel(); render(); }
+});
+
+function addSticker(text, word) {
+  const L = LAYOUTS[S.layout];
+  const size = Math.round(L.W * (word ? .3 : .16));
+  const jitter = () => (Math.random() - .5) * L.W * .2;
+  S.items.push({ type: "sticker", text, word, x: L.W / 2 + jitter(), y: L.H / 2 + jitter(), size, rot: Math.round((Math.random() - .5) * 30) });
+  S.selected = S.items.length - 1; syncSel(); render();
+}
+function syncSel() {
+  const it = S.items[S.selected];
+  $("sel-tools").hidden = !it;
+  if (it) { $("st-size").value = it.size; $("st-rot").value = it.rot; }
+}
+$("st-size").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.size = +e.target.value; render(); } };
+$("st-rot").oninput = (e) => { const it = S.items[S.selected]; if (it) { it.rot = +e.target.value; render(); } };
+$("st-del").onclick = () => { if (S.selected >= 0) { S.items.splice(S.selected, 1); S.selected = -1; syncSel(); render(); } };
+$("pen-size").oninput = (e) => (S.pen.size = +e.target.value);
+$("pen-neon").onclick = (e) => { S.pen.neon = !S.pen.neon; e.target.setAttribute("aria-pressed", S.pen.neon); };
+$("undo").onclick = () => {
+  for (let i = S.items.length - 1; i >= 0; i--) if (S.items[i].type === "stroke") { S.items.splice(i, 1); break; }
+  S.selected = -1; render();
+};
+$("foot-text").oninput = (e) => { S.footText = e.target.value; invalidate(); render(); };
+$("show-date").onclick = (e) => { S.showDate = !S.showDate; e.target.setAttribute("aria-pressed", S.showDate); invalidate(); render(); };
+
+// 畫布上的觸控：貼圖拖曳 / 塗鴉
+function toCanvas(e) {
+  const r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height];
+}
+let drag = null;
+cv.addEventListener("pointerdown", (e) => {
+  const [x, y] = toCanvas(e);
+  if (S.tab === "pen") {
+    const scale = cv.width / cv.getBoundingClientRect().width;
+    S.items.push({ type: "stroke", color: S.pen.color, size: S.pen.size * scale, neon: S.pen.neon, pts: [[x, y]] });
+    drag = { stroke: S.items[S.items.length - 1] };
+  } else if (S.tab === "sticker") {
+    let hit = -1;
+    for (let i = S.items.length - 1; i >= 0; i--) {
+      const it = S.items[i];
+      if (it.type === "sticker" && Math.hypot(it.x - x, it.y - y) < hitRadius(cx2, it)) { hit = i; break; }
+    }
+    S.selected = hit; syncSel();
+    if (hit >= 0) drag = { it: S.items[hit], dx: x - S.items[hit].x, dy: y - S.items[hit].y };
+    render();
+  } else return;
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  const [x, y] = toCanvas(e);
+  if (drag.stroke) drag.stroke.pts.push([x, y]);
+  else { drag.it.x = x - drag.dx; drag.it.y = y - drag.dy; }
+  render();
+});
+const endDrag = () => (drag = null);
+cv.addEventListener("pointerup", endDrag);
+cv.addEventListener("pointercancel", endDrag);
+
+$("reshoot").onclick = () => {
+  S.shots = S.shots.map(() => null); show("scr-shoot"); buildShoot(); startCamera();
+};
+
+// ---------- 儲存 ----------
+let lastBlob = null;
+$("save").onclick = async () => {
+  S.selected = -1; syncSel(); render();
+  const out = exportCanvas();
+  lastBlob = await new Promise(r => out.toBlob(r, "image/png"));
+  const img = $("result-img"); if (img.src) URL.revokeObjectURL(img.src);
+  img.src = URL.createObjectURL(lastBlob);
+  $("share").hidden = !(navigator.canShare && navigator.canShare({ files: [new File([lastBlob], "p.png", { type: "image/png" })] }));
+  $("result").hidden = false;
+};
+function fileName() {
+  const d = new Date(), p = (n) => String(n).padStart(2, "0");
+  return `拍貼_${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.png`;
+}
+$("dl").onclick = async () => {
+  if (!lastBlob) return;
+  const dl = window.claude?.use ? await window.claude.use("downloads").catch(() => null) : null;
+  if (dl) {
+    try { await dl.save({ filename: fileName(), data: lastBlob }); toast("已存好圖片"); }
+    catch (e) { if (e?.code !== "declined") toast("這裡無法下載，請長按圖片儲存"); }
+    return;
+  }
+  const a = document.createElement("a"); a.href = $("result-img").src; a.download = fileName();
+  document.body.append(a); a.click(); a.remove();
+};
+$("share").onclick = async () => {
+  try { await navigator.share({ files: [new File([lastBlob], fileName(), { type: "image/png" })], title: "我的拍貼" }); }
+  catch (e) { if (e?.name !== "AbortError") toast("分享失敗，請長按圖片儲存"); }
+};
+$("close-result").onclick = () => ($("result").hidden = true);
+$("restart").onclick = () => {
+  $("result").hidden = true; S.shots = []; S.items = []; show("scr-setup"); buildSetup();
+};
+
+buildSetup();
+</script>
+
+</body>
+</html>
