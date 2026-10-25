@@ -69,7 +69,10 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 .sign-zh { display: block; font-size: 15px; letter-spacing: .4em; margin-top: 4px; color: var(--muted); }
 .posts { display: flex; justify-content: space-between; padding: 0 22%; height: 12px; margin: -16px 0 -16px; }
 .posts i { width: 12px; border-left: 2.5px solid var(--ink); border-right: 2.5px solid var(--ink); filter: url(#rough); }
-.booth { background: var(--panel); display: grid; grid-template-columns: 1fr 1.05fr; min-height: 440px; }
+.booth { background: var(--panel); display: grid; grid-template-columns: 1fr 1.05fr .42fr; min-height: 440px; }
+.booth-side { border-left: 2.5px solid var(--ink); padding: 18px 8px; }
+.mirror { height: 46%; background: var(--panel); }
+.mirror svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .booth-left { padding: 16px 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 6px; border-right: 2.5px solid var(--ink); }
 .window { width: 100%; background: #fff; padding: 16px 14px; display: flex; justify-content: center; gap: 6px; min-height: 150px; align-items: center; }
 .window button { padding: 0; border: 0; background: none; cursor: pointer; height: 112px; flex: 0 1 auto; min-width: 0; }
@@ -108,8 +111,12 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
 .screen-in { position: relative; display: grid; place-items: center; min-height: 250px; }
 .arrow { position: absolute; top: 42%; transform: translateY(-50%); background: none; border: 0; font-size: 30px; font-family: var(--hand); cursor: pointer; color: var(--ink); width: 40px; height: 48px; z-index: 3; }
 .arrow.prev { left: -6px; } .arrow.next { right: -6px; }
-.layout-prev { position: relative; height: 200px; background: var(--faint); box-shadow: 0 6px 12px rgba(0,0,0,.18); max-width: 70%; }
-.layout-prev i { position: absolute; background: #6f6c66; outline: 1.5px solid #4a4843; }
+.frame-prev { display: block; height: 200px; width: auto; max-width: 72%; box-shadow: 0 6px 12px rgba(0,0,0,.18); }
+#source-pick { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; padding: 10px 0; }
+#source-pick .btn { width: min(100%, 200px); font-size: 17px; padding: 12px 16px; }
+#source-pick .btn svg { width: 20px; height: 20px; }
+#source-pick .file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.go.wait, .go.wait:disabled { background: var(--stop); box-shadow: 0 4px 0 #8e1f1a; filter: none; opacity: 1; }
 #layout-pick { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
 .layout-name { text-align: center; font-weight: 700; margin: 0; font-size: 16px; }
 @media (max-width: 459px) { .eye-note { display: none; } }
@@ -280,6 +287,13 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
         </svg>
         <button class="btn sk enter" id="enter">進入 →</button>
       </div>
+      <div class="booth-side" aria-hidden="true">
+        <div class="mirror sk">
+          <svg viewBox="0 0 40 120" preserveAspectRatio="none" fill="none" stroke="#1f1e1c" stroke-width="2" stroke-linecap="round" style="filter:url(#rough)">
+            <path d="M10 18 L22 10 M12 26 L26 16"/><path d="M16 104 L30 94 M20 110 L32 102"/>
+          </svg>
+        </div>
+      </div>
     </div>
     <p class="credit">免費 · 手機就能拍 · 照片只留在你的手機裡</p>
   </section>
@@ -297,10 +311,15 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
       <div class="screen sk dbl thick">
         <div class="screen-in">
           <div id="layout-pick">
-            <button class="arrow prev" id="prev" aria-label="上一個版型">‹</button>
-            <div class="layout-prev" id="layout-prev"></div>
+            <button class="arrow prev" id="prev" aria-label="上一個相框">‹</button>
+            <canvas class="frame-prev" id="frame-prev"></canvas>
             <p class="layout-name" id="layout-name"></p>
-            <button class="arrow next" id="next" aria-label="下一個版型">›</button>
+            <button class="arrow next" id="next" aria-label="下一個相框">›</button>
+          </div>
+          <div id="source-pick" hidden>
+            <button class="btn sk" id="src-cam">現場拍照 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+            <label class="btn sk file-btn">上傳照片 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 15v5h14v-5"/></svg><input type="file" id="src-upload" accept="image/*" multiple></label>
+            <div class="row" id="timers" aria-label="倒數秒數"></div>
           </div>
           <div class="viewfinder" id="vf" hidden>
             <video id="video" playsinline muted autoplay class="mirror"></video>
@@ -313,10 +332,9 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
       </div>
       <div class="price sk round" id="price">$0<br>=<br>4 張</div>
     </div>
-    <button class="link back-choose" id="back-choose" hidden>← 換版型</button>
+    <button class="link back-choose" id="back-choose" hidden>← 換相框</button>
     <div class="switches" id="switches">
       <div class="switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
-      <div class="row" id="timers" aria-label="倒數秒數"></div>
     </div>
     <div class="thumbs" id="thumbs" hidden></div>
     <div class="file-actions" id="file-actions" hidden>
@@ -326,8 +344,8 @@ button:focus-visible, label.btn:focus-within, input:focus-visible { outline: 3px
     <div class="console" id="console">
       <ol class="howto sk" id="howto">
         <li><b>1</b>撥桿選黑白或彩色</li>
-        <li><b>2</b>箭頭選版型，按綠鈕</li>
-        <li><b>3</b>再按綠鈕開拍，等照片印出來</li>
+        <li><b>2</b>箭頭挑相框，按綠鈕選定</li>
+        <li><b>3</b>按綠鈕拍照，等照片印出來</li>
       </ol>
       <div class="control sk">
         <span class="label">按我</span>
@@ -455,7 +473,6 @@ const LAYOUTS = {
   single: { name: "大頭貼", W: 1000, H: 1200, foot: { y: 960, h: 240 },
             cells: [{ x: 40, y: 40, w: 920, h: 920 }] },
 };
-const LAYOUT_IDS = Object.keys(LAYOUTS);
 const FRAMES = [
   { id: "classic", name: "復古白條", bg: "#fbfaf6", pat: "#fbfaf6", pattern: "none", ink: "#222222", noStroke: true, hand: true, square: true },
   { id: "black",   name: "黑色條",   bg: "#151515", pat: "#151515", pattern: "none", ink: "#f2f0ea", noStroke: true, hand: true, square: true },
@@ -483,16 +500,16 @@ const FXS = [
   { id: "none", name: "無" }, { id: "sparkle", name: "閃亮" }, { id: "bubble", name: "泡泡" }, { id: "hearts", name: "愛心雨" },
 ];
 const BEAUTY = [
-  { key: "skin",   name: "美肌" },
+  { key: "skin",   name: "美肌", ai: true },
   { key: "eye",    name: "大眼", ai: true },
   { key: "slim",   name: "瘦臉", ai: true },
   { key: "makeup", name: "妝感", ai: true },
 ];
 const PRESETS = [
   { name: "素顏", v: { skin: 0, eye: 0, slim: 0, makeup: 0 } },
-  { name: "自然", v: { skin: 1, eye: 1, slim: 1, makeup: 1 } },
-  { name: "甜美", v: { skin: 2, eye: 2, slim: 2, makeup: 2 } },
-  { name: "機台級", v: { skin: 3, eye: 3, slim: 2, makeup: 2 } },
+  { name: "自然", v: { skin: 1, eye: 1, slim: 0, makeup: 0 } },
+  { name: "甜美", v: { skin: 2, eye: 1, slim: 1, makeup: 1 } },
+  { name: "機台級", v: { skin: 3, eye: 2, slim: 2, makeup: 2 } },
 ];
 const LEVEL_NAMES = ["關", "輕", "中", "強"];
 const POSES = ["比個愛心 ♡", "嘟嘴裝可愛", "雙手捧臉", "歪頭比 YA", "一起大笑", "做個鬼臉", "假裝很驚訝", "臉貼近一點", "眨一隻眼", "雙手比讚"];
@@ -506,7 +523,7 @@ const PEN_TYPES = [
 
 const S = {
   layout: "strip", timer: 3, facing: "user", shots: [], picks: [], filter: "milk", frame: "classic",
-  bg: "none", fx: "none", beauty: { skin: 2, eye: 1, slim: 1, makeup: 1 },
+  bg: "none", fx: "none", beauty: { skin: 1, eye: 1, slim: 0, makeup: 0 },
   items: [], selected: -1, tab: "beauty", pen: { color: "#ff3d8b", size: 12, type: "neon" },
   footText: "BESTIE DAY ♡", showDate: true, sound: true, light: true, color: true,
 };
@@ -617,28 +634,37 @@ $("exit").onclick = () => {
   stopCamera(); show("scr-lobby"); buildGallery();
 };
 
-// ---------- 1. 選版型 ----------
-function buildLayoutPick() {
-  const L = LAYOUTS[S.layout], el = $("layout-prev");
-  el.style.aspectRatio = `${L.W} / ${L.H}`;
-  el.style.height = L.H > L.W * 1.6 ? "220px" : "170px";
-  el.innerHTML = L.cells.map(c => `<i style="left:${c.x / L.W * 100}%;top:${c.y / L.H * 100}%;width:${c.w / L.W * 100}%;height:${c.h / L.H * 100}%"></i>`).join("");
-  $("layout-name").textContent = L.name;
-  $("timers").innerHTML = "";
-  for (const t of [3, 5, 10]) {
-    const b = document.createElement("button");
-    b.className = "chip sk"; b.textContent = `倒數 ${t} 秒`; b.setAttribute("aria-pressed", S.timer === t);
-    b.onclick = () => { S.timer = t; buildLayoutPick(); };
-    $("timers").append(b);
-  }
+// ---------- 1. 選相框 ----------
+// 箭頭切換的每一格都是「版型＋相框」的組合，螢幕上直接畫出實際樣子
+const CHOICES = [
+  ["strip", "classic"], ["strip", "black"], ["strip", "berry"], ["strip", "film"],
+  ["grid", "classic"], ["grid", "mint"], ["six", "night"], ["hero", "plaid"],
+  ["duo", "lilac"], ["single", "classic"],
+].map(([layout, frame]) => ({ layout, frame }));
+let choice = 0;
+function drawFramePreview() {
+  const { layout, frame } = CHOICES[choice], L = LAYOUTS[layout], F = FRAMES.find(f => f.id === frame);
+  const c = $("frame-prev"), cssH = L.H > L.W * 1.6 ? 220 : 170, k = cssH * 2 / L.H;
+  c.width = Math.round(L.W * k); c.height = Math.round(L.H * k); c.style.height = cssH + "px";
+  const ctx = c.getContext("2d"); ctx.scale(k, k);
+  drawPattern(ctx, L.W, L.H, F);
+  L.cells.forEach(cell => {
+    if (!F.square) { ctx.fillStyle = F.id === "film" ? "#000" : "#fff"; rr(ctx, cell.x - 8, cell.y - 8, cell.w + 16, cell.h + 16, 22); ctx.fill(); }
+    ctx.fillStyle = "#7a776f"; rr(ctx, cell.x, cell.y, cell.w, cell.h, F.square ? 2 : 16); ctx.fill();
+  });
+  const big = Math.min(L.foot.h * .4, L.W * .08);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = F.ink;
+  ctx.font = F.hand ? `${big}px "Gochi Hand", cursive` : `${big}px "Mochiy Pop One", sans-serif`;
+  ctx.fillText(S.footText, L.W / 2, L.foot.y + L.foot.h * .45);
+  $("layout-name").textContent = `${L.name} · ${F.name}`;
 }
-function cycleLayout(d) {
-  const i = LAYOUT_IDS.indexOf(S.layout);
-  S.layout = LAYOUT_IDS[(i + d + LAYOUT_IDS.length) % LAYOUT_IDS.length];
-  beep(660, .05); syncMachine();
+function cycleChoice(d) {
+  choice = (choice + d + CHOICES.length) % CHOICES.length;
+  S.layout = CHOICES[choice].layout; S.frame = CHOICES[choice].frame;
+  beep(660, .05); drawFramePreview(); syncMachine();
 }
-$("prev").onclick = () => cycleLayout(-1);
-$("next").onclick = () => cycleLayout(1);
+$("prev").onclick = () => cycleChoice(-1);
+$("next").onclick = () => cycleChoice(1);
 function syncColor() {
   $("color-toggle").setAttribute("aria-pressed", S.color);
   $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
@@ -646,36 +672,59 @@ function syncColor() {
 }
 $("color-toggle").onclick = () => {
   S.color = !S.color; S.filter = S.color ? "milk" : "bw";
-  if (!S.color && S.frame !== "black") S.frame = "classic";
   beep(400, .05); syncColor();
 };
+function buildTimers() {
+  $("timers").innerHTML = "";
+  for (const t of [3, 5, 10]) {
+    const b = document.createElement("button");
+    b.className = "chip sk"; b.textContent = `倒數 ${t} 秒`; b.setAttribute("aria-pressed", S.timer === t);
+    b.onclick = () => { S.timer = t; buildTimers(); };
+    $("timers").append(b);
+  }
+}
 
-// 機台狀態：choose 選版型 → shoot 拍照
+// 機台狀態：choose 選相框 → source 拍照或上傳 → shoot 拍照中
 function syncMachine() {
-  const choosing = M === "choose";
-  $("layout-pick").hidden = !choosing; $("vf").hidden = choosing;
+  const choosing = M === "choose", source = M === "source", shooting = M === "shoot";
+  $("layout-pick").hidden = !choosing; $("source-pick").hidden = !source; $("vf").hidden = !shooting;
   $("back-choose").hidden = choosing || busy;
   $("switches").hidden = !choosing;
-  $("thumbs").hidden = choosing;
-  $("file-actions").hidden = choosing || camOK;
-  $("price").innerHTML = `$0<br>=<br>${choosing ? cells() : S.shots.length || cells()} 張`;
-  const done = !choosing && S.shots.length && nextEmpty() === -1;
+  $("thumbs").hidden = !shooting;
+  $("file-actions").hidden = !shooting || camOK;
+  $("price").innerHTML = `$0<br>=<br>${shooting ? S.shots.length || cells() : cells()} 張`;
+  const done = shooting && S.shots.length && nextEmpty() === -1;
   const go = $("go");
-  go.disabled = busy ? false : (!choosing && !camOK && !done);
+  go.disabled = busy ? false : source || (shooting && !camOK && !done);
   go.classList.toggle("busy", busy);
+  go.classList.toggle("wait", source);
   go.classList.toggle("pulse", !busy && !go.disabled);
-  go.setAttribute("aria-label", choosing ? "選這個版型" : busy ? "暫停拍照" : done ? "下一步" : "開始拍照");
+  go.setAttribute("aria-label", choosing ? "選這個相框" : busy ? "暫停拍照" : done ? "下一步" : "開始拍照");
   [...$("howto").children].forEach((li, k) => li.classList.toggle("now", choosing ? k === 1 : k === 2));
-  if (choosing) { setMarquee("用箭頭選一個版型"); buildLayoutPick(); syncColor(); }
+  if (choosing) { setMarquee("用箭頭挑一個相框"); drawFramePreview(); syncColor(); }
+  else if (source) { setMarquee("要現場拍，還是上傳照片？"); buildTimers(); }
   else if (!busy) setMarquee(done ? (S.shots.length > cells() ? "拍好了！按綠色按鈕挑照片" : "拍好了！按綠色按鈕去裝飾")
     : camOK ? "坐好、看鏡頭，按綠色按鈕開始" : "用下面的按鈕加入照片");
   [1,2,3,4].forEach(i => $("st" + i).classList.toggle("on", i === (choosing ? 1 : 2)));
 }
 $("go").onclick = async () => {
   if (busy) { abort = true; return; }
-  if (M === "choose") return enterShoot();
+  if (M === "choose") { M = "source"; beep(520, .08); return syncMachine(); }
+  if (M !== "shoot") return;
   if (S.shots.length && nextEmpty() === -1) return goNext();
   if (camOK) runBooth();
+};
+$("src-cam").onclick = () => enterShoot();
+$("src-upload").onchange = async (e) => {
+  const files = [...e.target.files]; e.target.value = "";
+  if (!files.length) return;
+  stopCamera(); camOK = false; M = "shoot"; S.picks = [];
+  S.shots = new Array(cells()).fill(null);
+  buildShoot();
+  $("cam-off").hidden = false;
+  $("cam-off").firstElementChild.innerHTML = "照片會照順序放進格子，<br>不夠的話用下面的按鈕補上。";
+  await addFiles(files);
+  loadAI();
 };
 async function enterShoot() {
   M = "shoot"; S.shots = []; S.picks = [];
@@ -720,13 +769,14 @@ async function startCamera() {
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error("no camera api");
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: S.facing, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false,
+      video: { facingMode: S.facing, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false,
     });
     $("video").srcObject = stream;
     await $("video").play();
     camOK = true;
   } catch (e) {
     camOK = false;
+    $("cam-off").firstElementChild.innerHTML = "這個畫面無法直接開啟相機。<br>用下面的按鈕拍照或從相簿挑照片。";
   }
   $("cam-off").hidden = camOK;
 }
@@ -785,15 +835,18 @@ async function runBooth() {
 
 // 無法用即時相機時：用檔案（手機會開相機 App）
 async function fileToCanvas(file) {
-  const url = URL.createObjectURL(file);
+  let img, url = null;
+  try { img = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch (e) { url = URL.createObjectURL(file); img = new Image(); img.src = url; await img.decode(); }
   try {
-    const img = new Image(); img.src = url; await img.decode();
-    const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    const scale = Math.min(1, 2000 / Math.max(iw, ih));
     const cv = document.createElement("canvas");
-    cv.width = Math.round(img.naturalWidth * scale); cv.height = Math.round(img.naturalHeight * scale);
-    cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+    cv.width = Math.round(iw * scale); cv.height = Math.round(ih * scale);
+    const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
     return cv;
-  } finally { URL.revokeObjectURL(url); }
+  } finally { if (url) URL.revokeObjectURL(url); img.close?.(); }
 }
 async function addFiles(files) {
   for (const f of files) {
@@ -1014,7 +1067,7 @@ function bilinear(src, W, H, x, y, out, o) {
   for (let c = 0; c < 3; c++)
     out[o + c] = (src[i00 + c] * (1 - fx) + src[i10 + c] * fx) * (1 - fy) + (src[i01 + c] * (1 - fx) + src[i11 + c] * fx) * fy;
 }
-// 局部放大（大眼）
+// 局部放大（大眼）：邊緣用平滑衰減，不會出現一圈變形
 function warpBulge(img, c, r, k) {
   const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
   const x0 = Math.max(0, Math.floor(c[0] - r)), x1 = Math.min(W - 1, Math.ceil(c[0] + r));
@@ -1022,7 +1075,7 @@ function warpBulge(img, c, r, k) {
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const dx = x - c[0], dy = y - c[1], d2 = dx * dx + dy * dy;
     if (d2 >= r2) continue;
-    const s = 1 - k * (1 - d2 / r2);
+    const t = 1 - d2 / r2, s = 1 - k * t * t;
     bilinear(src, W, H, c[0] + dx * s, c[1] + dy * s, data, (y * W + x) * 4);
   }
 }
@@ -1039,9 +1092,191 @@ function warpShift(img, c, m, r) {
     bilinear(src, W, H, x - t * mx, y - t * my, data, (y * W + x) * 4);
   }
 }
+
+// 瘦臉：下顎兩側往臉的中線水平收，整張只算一次平滑位移；下巴以下淡出，不動到脖子和衣領
+function slimFace(img, P, amt, fw) {
+  const { width: W, height: H, data } = img, src = new Uint8ClampedArray(data);
+  const mid = lm(P, 1)[0], chinY = lm(P, 152)[1], r = fw * .26, r2 = r * r, fade = fw * .1;
+  const pts = [...JAW_L, ...JAW_R].map(i => { const c = lm(P, i); return [c[0], c[1], Math.sign(mid - c[0]) * amt]; });
+  const x0 = Math.max(0, Math.floor(Math.min(...pts.map(p => p[0])) - r)), x1 = Math.min(W - 1, Math.ceil(Math.max(...pts.map(p => p[0])) + r));
+  const y0 = Math.max(0, Math.floor(Math.min(...pts.map(p => p[1])) - r)), y1 = Math.min(H - 1, Math.ceil(chinY + fade));
+  for (let y = y0; y <= y1; y++) {
+    const below = y > chinY ? Math.max(0, 1 - (y - chinY) / fade) : 1;
+    for (let x = x0; x <= x1; x++) {
+      let sw = 0, sd = 0;
+      for (const [px, py, s] of pts) {
+        const d2 = (x - px) * (x - px) + (y - py) * (y - py);
+        if (d2 < r2) { const t = 1 - d2 / r2, w = t * t; sw += w; sd += w * s; }
+      }
+      if (!sw) continue;
+      const dx = sd / sw * Math.min(1, sw) * below;
+      if (Math.abs(dx) < .05) continue;
+      bilinear(src, W, H, x - dx, y, data, (y * W + x) * 4);
+    }
+  }
+}
+// 方框模糊（兩次一維累加，O(n)）
+function boxBlur(src, w, h, r) {
+  const tmp = new Float32Array(w * h), out = new Float32Array(w * h), k = 1 / (2 * r + 1);
+  for (let y = 0; y < h; y++) {
+    const o = y * w; let s = 0;
+    for (let x = -r; x <= r; x++) s += src[o + Math.min(w - 1, Math.max(0, x))];
+    for (let x = 0; x < w; x++) { tmp[o + x] = s * k; s += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)]; }
+  }
+  for (let x = 0; x < w; x++) {
+    let s = 0;
+    for (let y = -r; y <= r; y++) s += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+    for (let y = 0; y < h; y++) { out[y * w + x] = s * k; s += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; }
+  }
+  return out;
+}
+// 導向濾波：平滑但保留邊緣（毛孔、斑點變淡，五官輪廓不糊）
+function guided(I, p, w, h, r, eps) {
+  const n = w * h, Ip = new Float32Array(n), II = I === p ? null : new Float32Array(n);
+  for (let i = 0; i < n; i++) { Ip[i] = I[i] * p[i]; if (II) II[i] = I[i] * I[i]; }
+  const mI = boxBlur(I, w, h, r), mp = I === p ? mI : boxBlur(p, w, h, r);
+  const mIp = boxBlur(Ip, w, h, r), mII = II ? boxBlur(II, w, h, r) : mIp;
+  const a = new Float32Array(n), b = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const v = mII[i] - mI[i] * mI[i];
+    a[i] = (mIp[i] - mI[i] * mp[i]) / (v + eps); b[i] = mp[i] - a[i] * mI[i];
+  }
+  const ma = boxBlur(a, w, h, r), mb = boxBlur(b, w, h, r), q = new Float32Array(n);
+  for (let i = 0; i < n; i++) q[i] = ma[i] * I[i] + mb[i];
+  return q;
+}
+
+const FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+const EYE_L = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246];
+const EYE_R = [362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398];
+const BROW_L = [70,63,105,66,107,55,65,52,53,46], BROW_R = [300,293,334,296,336,285,295,282,283,276];
 const LIPS_OUT = [61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
 const LIPS_IN = [78,191,80,81,82,13,312,311,310,415,308,324,318,402,317,14,87,178,88,95];
 const JAW_L = [132,58,172,136,150], JAW_R = [361,288,397,365,379];
+
+function polyPath(ctx, P, ids, grow = 1) {
+  let cx = 0, cy = 0; ids.forEach(i => { cx += lm(P, i)[0]; cy += lm(P, i)[1]; }); cx /= ids.length; cy /= ids.length;
+  ctx.beginPath();
+  ids.forEach((i, k) => { const [x, y] = lm(P, i); ctx[k ? "lineTo" : "moveTo"](cx + (x - cx) * grow, cy + (y - cy) * grow); });
+  ctx.closePath();
+}
+// 皮膚遮罩：臉的輪廓，挖掉眼睛、眉毛、嘴巴，邊緣羽化
+function skinMask(faces, w, h) {
+  const s = 4, c = document.createElement("canvas"); c.width = Math.ceil(w / s); c.height = Math.ceil(h / s);
+  const x = c.getContext("2d"); x.scale(1 / s, 1 / s);
+  faces.forEach(P => {
+    x.fillStyle = "#fff"; polyPath(x, P, FACE_OVAL, .97); x.fill();
+    x.fillStyle = "#000";
+    [[EYE_L, 1.5], [EYE_R, 1.5], [BROW_L, 1.25], [BROW_R, 1.25], [LIPS_OUT, 1.15]].forEach(([ids, g]) => { polyPath(x, P, ids, g); x.fill(); });
+  });
+  const m = new Float32Array(c.width * c.height), d = x.getImageData(0, 0, c.width, c.height).data;
+  for (let i = 0; i < m.length; i++) m[i] = d[i * 4] / 255;
+  const fw = faces.length ? dist(lm(faces[0], 234), lm(faces[0], 454)) / s : 20;
+  const soft = boxBlur(boxBlur(m, c.width, c.height, Math.max(1, Math.round(fw * .04))), c.width, c.height, Math.max(1, Math.round(fw * .04)));
+  // 放回原尺寸
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
+    const gx = Math.min(c.width - 1.001, xx / s), gy = Math.min(c.height - 1.001, y / s), x0 = gx | 0, y0 = gy | 0, fx = gx - x0, fy = gy - y0, i = y0 * c.width + x0;
+    out[y * w + xx] = (soft[i] * (1 - fx) + soft[i + 1] * fx) * (1 - fy) + (soft[i + c.width] * (1 - fx) + soft[i + c.width + 1] * fx) * fy;
+  }
+  return out;
+}
+function smoothSkin(img, faces, mask, level) {
+  const { width: W, height: H, data } = img;
+  let x0 = W, x1 = 0, y0 = H, y1 = 0;
+  faces.forEach(P => FACE_OVAL.forEach(i => { const [x, y] = lm(P, i); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }));
+  const pad = (x1 - x0) * .08;
+  x0 = Math.max(0, Math.floor(x0 - pad)); y0 = Math.max(0, Math.floor(y0 - pad)); x1 = Math.min(W, Math.ceil(x1 + pad)); y1 = Math.min(H, Math.ceil(y1 + pad));
+  const w = x1 - x0, h = y1 - y0; if (w < 8 || h < 8) return;
+  const fw = dist(lm(faces[0], 234), lm(faces[0], 454));
+  const r = Math.max(2, Math.round(fw * .02)), eps = [0, .0012, .0022, .0038][level];
+  const amt = [0, .45, .62, .78][level], lift = [0, .04, .07, .1][level];
+  for (let c = 0; c < 3; c++) {
+    const p = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) p[y * w + x] = data[((y + y0) * W + x + x0) * 4 + c] / 255;
+    const q = guided(p, p, w, h, r, eps);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const gi = (y + y0) * W + x + x0, m = mask[gi]; if (m < .01) continue;
+      let v = p[y * w + x]; v += (q[y * w + x] - v) * amt * m;
+      v += lift * m * v * (1 - v) * 2;
+      data[gi * 4 + c] = v * 255;
+    }
+  }
+}
+// 銳利化：只加在皮膚以外（眼睛、頭髮、衣服），讓照片清楚
+function sharpen(img, mask, amount) {
+  const { width: W, height: H, data } = img, n = W * H;
+  for (let c = 0; c < 3; c++) {
+    const p = new Float32Array(n);
+    for (let i = 0; i < n; i++) p[i] = data[i * 4 + c];
+    const b = boxBlur(p, W, H, 1);
+    for (let i = 0; i < n; i++) {
+      const k = amount * (mask ? 1 - mask[i] * .85 : 1);
+      data[i * 4 + c] = p[i] + (p[i] - b[i]) * k;
+    }
+  }
+}
+function feathered(draw, w, h, soften) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"));
+  const s = document.createElement("canvas"); s.width = Math.max(1, Math.round(w / soften)); s.height = Math.max(1, Math.round(h / soften));
+  const sx = s.getContext("2d"); sx.imageSmoothingQuality = "high"; sx.drawImage(c, 0, 0, s.width, s.height);
+  return s;
+}
+function applyMakeup(ctx, faces, lv, w, h) {
+  if (!lv || !faces.length) return;
+  const a = [0, .14, .22, .3][lv];
+  // 腮紅：柔光疊加，看起來像氣色而不是色塊
+  ctx.save(); ctx.globalCompositeOperation = "soft-light";
+  faces.forEach(P => {
+    const fw = dist(lm(P, 234), lm(P, 454));
+    [[50, 1], [280, -1]].forEach(([i, dir]) => {
+      const c = lm(P, i), cx = c[0] - dir * fw * .02, r = fw * .15;
+      const g = ctx.createRadialGradient(cx, c[1], 0, cx, c[1], r);
+      g.addColorStop(0, `rgba(255,90,130,${a * 2.2})`); g.addColorStop(1, "rgba(255,90,130,0)");
+      ctx.fillStyle = g; ctx.fillRect(cx - r, c[1] - r, r * 2, r * 2);
+    });
+  });
+  ctx.restore();
+  // 唇色：羽化邊緣，柔光疊加
+  const lips = feathered(x => {
+    x.fillStyle = "rgb(230,40,90)";
+    faces.forEach(P => {
+      x.beginPath();
+      LIPS_OUT.forEach((i, k) => x[k ? "lineTo" : "moveTo"](...lm(P, i))); x.closePath();
+      LIPS_IN.forEach((i, k) => x[k ? "lineTo" : "moveTo"](...lm(P, i))); x.closePath();
+      x.fill("evenodd");
+    });
+  }, w, h, 1.6);
+  ctx.save(); ctx.imageSmoothingQuality = "high";
+  ctx.globalCompositeOperation = "soft-light"; ctx.globalAlpha = Math.min(1, a * 2.4); ctx.drawImage(lips, 0, 0, w, h);
+  ctx.restore();
+}
+// 色調：只做柔和的曲線調整，不整張洗白
+function tone(img, f) {
+  if (f === "none") return;
+  const d = img.data, grain = f === "bw" || f === "retro";
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    const l = .299 * r + .587 * g + .114 * b;
+    if (f === "milk" || f === "pink") {
+      const lift = (v) => .025 + .975 * (v + .1 * v * (1 - v));
+      r = lift(r); g = lift(g); b = lift(b);
+      const L = .299 * r + .587 * g + .114 * b; r = L + (r - L) * .93; g = L + (g - L) * .93; b = L + (b - L) * .93;
+      if (f === "pink") { r += .035 * l; b += .025 * l; g -= .01 * l; } else { r += .01; b -= .005; }
+    } else if (f === "retro") {
+      const sr = .393 * r + .769 * g + .189 * b, sg = .349 * r + .686 * g + .168 * b, sb = .272 * r + .534 * g + .131 * b;
+      r = r * .7 + sr * .3; g = g * .7 + sg * .3; b = b * .7 + sb * .3;
+      r = .07 + r * .86; g = .06 + g * .86; b = .05 + b * .82;
+    } else if (f === "bw") {
+      const s = l < .5 ? 2 * l * l : 1 - 2 * (1 - l) * (1 - l);
+      r = g = b = .035 + .955 * (l * .45 + s * .55);
+    } else if (f === "cool") {
+      r = r * .97; g = g * 1.0 + .01; b = b * 1.03 + .02;
+    }
+    if (grain) { const n = (Math.random() - .5) * .045; r += n; g += n; b += n; }
+    d[i] = r * 255; d[i + 1] = g * 255; d[i + 2] = b * 255;
+  }
+}
 
 function processCell(shot, w, h, opt) {
   const key = [w, h, opt.filter, opt.bg, opt.skin, opt.eye, opt.slim, opt.makeup, opt.fx, opt.seed].join("|");
@@ -1050,6 +1285,7 @@ function processCell(shot, w, h, opt) {
   const src = shot.cv, ai = shot.ai;
   const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
   const ctx = cv.getContext("2d");
+  ctx.imageSmoothingQuality = "high";
   const s = Math.max(w / src.width, h / src.height), sw = w / s, sh = h / s;
   let sx = (src.width - sw) / 2, sy = (src.height - sh) / 2;
   // 有偵測到臉就把臉放在格子中間偏上
@@ -1061,82 +1297,52 @@ function processCell(shot, w, h, opt) {
     sy = Math.min(Math.max(fy - sh * .45, 0), src.height - sh);
   }
   ctx.drawImage(src, sx, sy, sw, sh, 0, 0, w, h);
+  const small = w * h < 40000; // 縮圖預覽不做重運算
 
-  // 去背換背景
+  // 去背換背景：用照片本身修整遮罩邊緣（頭髮比較自然）
   if (opt.bg !== "none" && ai?.mask) {
+    const mk = ai.mask, kx = mk.width / src.width, ky = mk.height / src.height;
+    const mc = document.createElement("canvas"); mc.width = w; mc.height = h;
+    const mx = mc.getContext("2d"); mx.imageSmoothingQuality = "high";
+    mx.drawImage(mk, sx * kx, sy * ky, sw * kx, sh * ky, 0, 0, w, h);
+    if (!small) {
+      const md = mx.getImageData(0, 0, w, h), px = ctx.getImageData(0, 0, w, h).data, n = w * h;
+      const p = new Float32Array(n), I = new Float32Array(n);
+      for (let i = 0; i < n; i++) { p[i] = md.data[i * 4 + 3] / 255; I[i] = (.299 * px[i * 4] + .587 * px[i * 4 + 1] + .114 * px[i * 4 + 2]) / 255; }
+      const q = guided(I, p, w, h, Math.max(2, Math.round(w / 90)), .0008);
+      for (let i = 0; i < n; i++) { const v = q[i]; md.data[i * 4 + 3] = (v < 0 ? 0 : v > 1 ? 1 : v) * 255; }
+      mx.putImageData(md, 0, 0);
+    }
     const person = document.createElement("canvas"); person.width = w; person.height = h;
     const pc = person.getContext("2d");
-    pc.drawImage(cv, 0, 0);
-    pc.globalCompositeOperation = "destination-in";
-    const mk = ai.mask, kx = mk.width / src.width, ky = mk.height / src.height;
-    pc.drawImage(mk, sx * kx, sy * ky, sw * kx, sh * ky, 0, 0, w, h);
+    pc.drawImage(cv, 0, 0); pc.globalCompositeOperation = "destination-in"; pc.drawImage(mc, 0, 0);
     ctx.clearRect(0, 0, w, h); drawBg(ctx, w, h, opt.bg); ctx.drawImage(person, 0, 0);
   }
 
   const faces = (ai?.faces || []).map(f => f.map(p => [(p.x * src.width - sx) * w / sw, (p.y * src.height - sy) * h / sh]));
-
-  // 妝感：腮紅 + 唇彩
-  if (opt.makeup > 0) faces.forEach(P => {
-    const fw = dist(lm(P, 234), lm(P, 454)), a = [0, .22, .34, .46][opt.makeup];
-    [50, 280].forEach(i => {
-      const c = lm(P, i), r = fw * .17, g = ctx.createRadialGradient(c[0], c[1], 0, c[0], c[1], r);
-      g.addColorStop(0, `rgba(255,105,150,${a})`); g.addColorStop(1, "rgba(255,105,150,0)");
-      ctx.fillStyle = g; ctx.fillRect(c[0] - r, c[1] - r, r * 2, r * 2);
-    });
-    ctx.save(); ctx.beginPath();
-    LIPS_OUT.forEach((i, k) => ctx[k ? "lineTo" : "moveTo"](...lm(P, i))); ctx.closePath();
-    LIPS_IN.forEach((i, k) => ctx[k ? "lineTo" : "moveTo"](...lm(P, i))); ctx.closePath();
-    ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = `rgba(255,70,120,${a * 1.2})`; ctx.fill("evenodd");
-    ctx.restore();
-  });
-
   const img = ctx.getImageData(0, 0, w, h);
-  // 大眼、瘦臉
+  // 大眼：以眼睛中心輕微放大
   faces.forEach(P => {
     const fw = dist(lm(P, 234), lm(P, 454));
     if (opt.eye > 0) {
-      const k = [0, .12, .19, .26][opt.eye];
-      [[468, 33, 133], [473, 362, 263]].forEach(([iris, a, b]) => {
-        const c = P[iris] || [(lm(P, a)[0] + lm(P, b)[0]) / 2, (lm(P, a)[1] + lm(P, b)[1]) / 2];
-        warpBulge(img, c, dist(lm(P, a), lm(P, b)) * 1.15, k);
+      const k = [0, .07, .11, .15][opt.eye];
+      [[33, 133, 159, 145], [362, 263, 386, 374]].forEach(([a, b, t, u]) => {
+        const c = [(lm(P, a)[0] + lm(P, b)[0]) / 2, (lm(P, t)[1] + lm(P, u)[1]) / 2];
+        warpBulge(img, c, dist(lm(P, a), lm(P, b)) * .95, k);
       });
     }
-    if (opt.slim > 0) {
-      const amt = [0, .035, .06, .085][opt.slim], target = lm(P, 4);
-      [...JAW_L, ...JAW_R].forEach(i => {
-        const c = lm(P, i);
-        warpShift(img, c, [c[0] + (target[0] - c[0]) * amt, c[1] + (target[1] - c[1]) * amt * .5], fw * .3);
-      });
-    }
+    if (opt.slim > 0) slimFace(img, P, [0, .022, .036, .05][opt.slim] * fw, fw);
   });
+  const mask = faces.length && !small ? skinMask(faces, w, h) : null;
+  if (mask && opt.skin > 0) smoothSkin(img, faces, mask, opt.skin);
+  if (!small) sharpen(img, mask, .55);
   ctx.putImageData(img, 0, 0);
+  applyMakeup(ctx, faces, opt.makeup, w, h);
 
-  // 美肌：柔焦 + 提亮
-  if (opt.skin > 0) {
-    const sm = document.createElement("canvas"); sm.width = Math.ceil(w / 7); sm.height = Math.ceil(h / 7);
-    sm.getContext("2d").drawImage(cv, 0, 0, sm.width, sm.height);
-    ctx.globalAlpha = [0, .22, .34, .46][opt.skin]; ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(sm, 0, 0, w, h); ctx.globalAlpha = 1;
-  }
-  const lift = [0, 8, 16, 24][opt.skin];
-  if (opt.filter !== "none" || lift) {
-    const im = ctx.getImageData(0, 0, w, h), d = im.data, f = opt.filter;
-    for (let i = 0; i < d.length; i += 4) {
-      let r = d[i] + lift, g = d[i + 1] + lift * .85, b = d[i + 2] + lift * .9;
-      if (f === "milk") { r = r * 1.04 + 10; g = g * 1.03 + 8; b = b * 1.04 + 12; }
-      else if (f === "pink") { r = r * 1.04 + 22; g = g * .98 + 6; b = b * 1.02 + 18; }
-      else if (f === "retro") {
-        const tr = .393 * r + .769 * g + .189 * b, tg = .349 * r + .686 * g + .168 * b, tb = .272 * r + .534 * g + .131 * b;
-        r = (r * .35 + tr * .65) * .9 + 20; g = (g * .35 + tg * .65) * .9 + 16; b = (b * .35 + tb * .65) * .85 + 10;
-      } else if (f === "bw") { const l = (.299 * r + .587 * g + .114 * b - 128) * 1.18 + 132; r = g = b = l; }
-      else if (f === "cool") { r = r * .95 + 4; g = g * 1.02 + 10; b = b * 1.08 + 22; }
-      d[i] = r; d[i + 1] = g; d[i + 2] = b;
-    }
-    ctx.putImageData(im, 0, 0);
-  }
+  if (opt.filter !== "none") { const im = ctx.getImageData(0, 0, w, h); tone(im, opt.filter); ctx.putImageData(im, 0, 0); }
   if (opt.filter === "retro" || opt.filter === "bw") {
-    const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .35, w / 2, h / 2, Math.max(w, h) * .75);
-    gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, opt.filter === "bw" ? "rgba(0,0,0,.3)" : "rgba(40,20,0,.45)");
+    const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .4, w / 2, h / 2, Math.max(w, h) * .78);
+    gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, opt.filter === "bw" ? "rgba(0,0,0,.22)" : "rgba(40,20,0,.3)");
     ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
   }
   drawFx(ctx, w, h, opt.fx, opt.seed);
@@ -1176,18 +1382,20 @@ function drawFx(ctx, w, h, fx, seed) {
 }
 
 let base = null;
+const Q = 2; // 輸出解析度倍率：版型座標 × Q = 實際像素
 function invalidate() { base = null; }
 function cellOpt(k) { return { filter: S.filter, bg: S.bg, fx: S.fx, seed: k, ...S.beauty }; }
 function buildBase() {
   const L = LAYOUTS[S.layout], F = FRAMES.find(f => f.id === S.frame);
-  base = document.createElement("canvas"); base.width = L.W; base.height = L.H;
+  base = document.createElement("canvas"); base.width = L.W * Q; base.height = L.H * Q;
   const ctx = base.getContext("2d");
+  ctx.scale(Q, Q); ctx.imageSmoothingQuality = "high";
   drawPattern(ctx, L.W, L.H, F);
   L.cells.forEach((c, k) => {
     const shot = S.shots[S.picks[k]];
     if (!F.square) { ctx.fillStyle = F.id === "film" ? "#000" : "#ffffff"; rr(ctx, c.x - 8, c.y - 8, c.w + 16, c.h + 16, 22); ctx.fill(); }
     ctx.save(); rr(ctx, c.x, c.y, c.w, c.h, F.square ? 2 : 16); ctx.clip();
-    if (shot) ctx.drawImage(processCell(shot, c.w, c.h, cellOpt(k)), c.x, c.y);
+    if (shot) ctx.drawImage(processCell(shot, c.w * Q, c.h * Q, cellOpt(k)), c.x, c.y, c.w, c.h);
     ctx.restore();
   });
   const fy = L.foot.y, fh = L.foot.h, cx = L.W / 2;
@@ -1293,13 +1501,13 @@ function render() {
   if (cv.width !== base.width || cv.height !== base.height) { cv.width = base.width; cv.height = base.height; }
   cx2.clearRect(0, 0, cv.width, cv.height);
   cx2.drawImage(base, 0, 0);
-  drawItems(cx2, true);
+  cx2.save(); cx2.scale(Q, Q); drawItems(cx2, true); cx2.restore();
 }
 function renderSoon() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
 function exportCanvas() {
   if (!base) buildBase();
   const out = document.createElement("canvas"); out.width = base.width; out.height = base.height;
-  const ctx = out.getContext("2d"); ctx.drawImage(base, 0, 0); drawItems(ctx, false);
+  const ctx = out.getContext("2d"); ctx.drawImage(base, 0, 0); ctx.scale(Q, Q); drawItems(ctx, false);
   return out;
 }
 
@@ -1432,13 +1640,14 @@ $("show-date").onclick = (e) => { S.showDate = !S.showDate; e.target.setAttribut
 // 畫布上的觸控：貼圖拖曳 / 塗鴉
 function toCanvas(e) {
   const r = cv.getBoundingClientRect();
-  return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height];
+  const L = LAYOUTS[S.layout];
+  return [(e.clientX - r.left) * L.W / r.width, (e.clientY - r.top) * L.H / r.height];
 }
 let drag = null;
 cv.addEventListener("pointerdown", (e) => {
   const [x, y] = toCanvas(e);
   if (S.tab === "pen") {
-    const scale = cv.width / cv.getBoundingClientRect().width;
+    const scale = LAYOUTS[S.layout].W / cv.getBoundingClientRect().width;
     S.items.push({ type: "stroke", pen: S.pen.type, color: S.pen.color, size: S.pen.size * scale, seed: Math.floor(Math.random() * 1e6), pts: [[x, y]] });
     drag = { stroke: S.items[S.items.length - 1] };
   } else {
@@ -1484,7 +1693,7 @@ function showResult(url, animate) {
 $("save").onclick = async () => {
   S.selected = -1; syncSel(); render();
   const out = exportCanvas();
-  lastBlob = await new Promise(r => out.toBlob(r, "image/png"));
+  lastBlob = await new Promise(r => out.toBlob(r, "image/jpeg", .93));
   saveToGallery(out);
   showResult(URL.createObjectURL(lastBlob), true);
   say("列印中，請稍等"); whirr();
