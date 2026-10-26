@@ -109,7 +109,7 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
 .arrow { position: absolute; top: 42%; transform: translateY(-50%); background: none; border: 0; font-size: 30px; font-family: var(--hand); cursor: pointer; color: var(--ink); width: 40px; height: 48px; z-index: 3; }
 .arrow.prev { left: -6px; } .arrow.next { right: -6px; }
 #frame-pick { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
-.frame-prev { display: block; height: 220px; width: auto; max-width: 72%; box-shadow: 0 6px 12px rgba(0,0,0,.18); }
+.frame-prev { display: block; max-width: 72%; box-shadow: 0 6px 12px rgba(0,0,0,.18); }
 .frame-name { text-align: center; font-weight: 700; margin: 0; font-size: 16px; }
 #source-pick { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; padding: 10px 0; }
 #source-pick .btn { width: min(100%, 200px); padding: 12px 16px; }
@@ -140,7 +140,7 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
 .chip[aria-checked="true"] i { border-color: var(--paper); }
 .films-label { font-size: 14px; color: var(--muted); }
 .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.thumb { aspect-ratio: 4 / 3; max-width: 100%; background: var(--panel); border: 2px dashed var(--faint); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-family: var(--hand); font-size: 18px; padding: 0; font-weight: 400; }
+.thumb { aspect-ratio: var(--ar, 4 / 3); max-width: 100%; background: var(--panel); border: 2px dashed var(--faint); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-family: var(--hand); font-size: 18px; padding: 0; font-weight: 400; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb.filled { border: 2px solid var(--ink); }
 .console { display: grid; grid-template-columns: 1fr 84px; margin-top: 8px; gap: 12px; align-items: stretch; }
@@ -298,10 +298,14 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
           </div>
         </div>
       </div>
-      <div class="price sk round" aria-label="免費，一次 4 張">$0<br>=<br>4 張</div>
+      <div class="price sk round" id="price" aria-label="免費，一次 4 張">$0<br>=<br>4 張</div>
     </div>
     <button class="link back-link" id="back" hidden>← 換相框</button>
     <div class="settings" id="color-switch">
+      <span class="films-label" id="count-label">張數</span>
+      <div class="films" id="counts" role="radiogroup" aria-labelledby="count-label"></div>
+      <span class="films-label" id="layout-label">排版</span>
+      <div class="films" id="layouts" role="radiogroup" aria-labelledby="layout-label"></div>
       <div class="switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
       <span class="films-label" id="films-label">底片</span>
       <div class="films" id="films" role="radiogroup" aria-labelledby="films-label"></div>
@@ -379,9 +383,24 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // ---------- 拍貼條規格：固定 4 格直條 ----------
-const STRIP = { W: 600, H: 1800, foot: { y: 1672, h: 128 },
-  cells: [0, 1, 2, 3].map(i => ({ x: 40, y: 40 + i * 414, w: 520, h: 390 })) };
-const ASPECT = 520 / 390;
+// 版型：張數 × 排版。座標是版型單位，輸出時 × Q。同一個版型裡每格比例相同（裁切用）
+function grid(cols, rows, cw, ch, foot = 128, m = 40, gap = 24) {
+  const cells = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push({ x: m + c * (cw + gap), y: m + r * (ch + gap), w: cw, h: ch });
+  const W = 2 * m + cols * cw + (cols - 1) * gap, top = m + rows * ch + (rows - 1) * gap;
+  return { W, H: top + 4 + foot, foot: { y: top + 4, h: foot }, cells };
+}
+const LAYOUTS = {
+  1: [{ id: "instant", name: "拍立得", ...grid(1, 1, 800, 800, 240, 50) }, { id: "solo", name: "大張", ...grid(1, 1, 920, 690, 150) }],
+  2: [{ id: "strip2", name: "直條", ...grid(1, 2, 520, 390) }, { id: "side2", name: "左右並排", ...grid(2, 1, 520, 390, 110) }],
+  3: [{ id: "strip3", name: "直條", ...grid(1, 3, 520, 390) }, { id: "row3", name: "橫條", ...grid(3, 1, 520, 390, 110) }],
+  4: [{ id: "strip4", name: "直條", ...grid(1, 4, 520, 390) }, { id: "grid4", name: "四宮格", ...grid(2, 2, 520, 390) }, { id: "row4", name: "橫條", ...grid(4, 1, 520, 390, 110) }],
+  6: [{ id: "double6", name: "雙排直條", ...grid(2, 3, 520, 390) }, { id: "grid6", name: "六宮格", ...grid(3, 2, 520, 390, 120) }],
+};
+const COUNTS = [1, 2, 3, 4, 6];
+function layout() { return LAYOUTS[S.count].find(l => l.id === S.layout) || LAYOUTS[S.count][0]; }
+function cellAspect() { const c = layout().cells[0]; return c.w / c.h; }
+function emptyShots() { return new Array(S.count).fill(null); }
 const Q = 2; // 輸出 1200 × 3600
 const FRAMES = [
   { id: "white",     name: "白框" },
@@ -404,7 +423,7 @@ const FILMS = [
   { id: "instant",  name: "拍立得",        sw: "#e8dcc6", css: "contrast(.84) brightness(1.07) saturate(.82) sepia(.1)" },
   { id: "expired",  name: "過期底片",      sw: "#c7795f", css: "sepia(.28) hue-rotate(-14deg) saturate(1.18) contrast(.9)" },
 ];
-const S = { color: true, film: "plain", smooth: true, frame: 0, shots: [null, null, null, null], mode: "choose" };
+const S = { color: true, film: "plain", smooth: true, frame: 0, count: 4, layout: "strip4", shots: [null, null, null, null], mode: "choose" };
 let stream = null, busy = false;
 
 function toast(msg) {
@@ -487,7 +506,7 @@ const INFO = {
   privacy: ["隱私權政策", `
     <p>口袋拍貼機的照片全部在你的手機或電腦上處理，不會上傳到任何伺服器。</p>
     <ul>
-      <li>相機畫面只用來拍你按下綠色按鈕後的 4 張照片。</li>
+      <li>相機畫面只用來拍你按下綠色按鈕後的那幾張照片。</li>
       <li>拍好的拍貼只有在你按「下載」或「分享」時才會離開這台裝置。</li>
       <li>展示窗裡的最近 4 張拍貼存在這個瀏覽器的本機儲存空間，清除網站資料就會刪掉。</li>
       <li>網頁會從 Google Fonts 載入字型。</li>
@@ -500,9 +519,9 @@ const INFO = {
     <h3>照片怎麼存起來？</h3>
     <p>拿到照片後點一下就會下載；手機上也可以長按照片存進相簿。</p>
     <h3>要錢嗎？</h3>
-    <p>不用，一次 4 張，免費。</p>`],
+    <p>不用，1 到 6 張都免費，排版也可以自己選。</p>`],
   about: ["關於", `
-    <p>口袋拍貼機是一台畫在網頁上的拍貼機：拉開布簾、選相框、拍 4 張，等它從出紙口印出來。</p>
+    <p>口袋拍貼機是一台畫在網頁上的拍貼機：拉開布簾、選張數、排版和相框，拍完等它從出紙口印出來。</p>
     <p>不用下載 App，手機打開網頁就能拍。</p>`],
 };
 document.querySelectorAll("[data-info]").forEach(b => b.onclick = () => {
@@ -535,14 +554,13 @@ function sparkle(ctx, x, y, r) {
   ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
 }
 // 在相框邊緣（不擋到照片中央）挑位置
-function marginSpots(n, seed) {
-  const rnd = seeded(seed), out = [];
-  for (let k = 0; out.length < n && k < n * 20; k++) {
-    const side = rnd();
-    let x, y = 20 + rnd() * (STRIP.H - 40);
-    if (side < .4) x = 6 + rnd() * 44; else if (side < .8) x = STRIP.W - 6 - rnd() * 44;
-    else { x = 40 + rnd() * 520; const c = STRIP.cells[Math.floor(rnd() * 4)]; y = c.y + c.h + 4 + rnd() * 18; }
-    out.push([x, y, rnd()]);
+// n 是 4 格直條時的數量，其他版型依面積等比例增減
+function marginSpots(n, seed, L) {
+  const rnd = seeded(seed), out = [], total = Math.max(6, Math.round(n * (L.W * L.H) / (600 * 1800)));
+  const inside = (x, y) => L.cells.some(c => x > c.x + 10 && x < c.x + c.w - 10 && y > c.y + 10 && y < c.y + c.h - 10);
+  for (let k = 0; out.length < total && k < total * 40; k++) {
+    const x = 6 + rnd() * (L.W - 12), y = 6 + rnd() * (L.H - 12);
+    if (!inside(x, y)) out.push([x, y, rnd()]);
   }
   return out;
 }
@@ -557,45 +575,48 @@ const FRAME_STYLE = {
   valentine: { bg: "#ffe4ea", text: "HAPPY VALENTINE'S DAY", ink: "#c81e4a" },
   newyear:   { bg: "#121212", text: "HAPPY NEW YEAR 2026", ink: "#f2c94c" },
 };
-function drawFrameBack(ctx, id) {
-  ctx.fillStyle = FRAME_STYLE[id].bg; ctx.fillRect(0, 0, STRIP.W, STRIP.H);
+function drawFrameBack(ctx, id, L) {
+  ctx.fillStyle = FRAME_STYLE[id].bg; ctx.fillRect(0, 0, L.W, L.H);
 }
-function drawFrameFront(ctx, id) {
+function drawFrameFront(ctx, id, L) {
   const st = FRAME_STYLE[id];
   ctx.save();
   if (id === "doodle") {
     ctx.strokeStyle = "#222"; ctx.lineWidth = 3.2; ctx.lineCap = "round"; ctx.lineJoin = "round";
-    marginSpots(26, 4).forEach(([x, y, t], k) => {
+    marginSpots(26, 4, L).forEach(([x, y, t], k) => {
       ctx.beginPath();
       if (k % 4 === 0) { for (let a = 0; a < 12; a += .3) ctx.lineTo(x + Math.cos(a) * a * 1.3, y + Math.sin(a) * a * 1.3); ctx.stroke(); }
       else if (k % 4 === 1) { starPath(ctx, x, y, 13, t); ctx.stroke(); }
       else if (k % 4 === 2) { ctx.moveTo(x - 16, y); for (let i = 0; i <= 8; i++) ctx.lineTo(x - 16 + i * 4, y + (i % 2 ? -6 : 6)); ctx.stroke(); }
       else { heartPath(ctx, x, y - 10, 22); ctx.stroke(); }
     });
-    ctx.beginPath(); ctx.arc(300, 1736, 26, .2, Math.PI - .2); ctx.stroke();
-    ctx.fillStyle = "#222"; ctx.beginPath(); ctx.arc(288, 1716, 4, 0, 7); ctx.arc(312, 1716, 4, 0, 7); ctx.fill();
+    if (L.foot.h >= 100) {
+      const fx = L.W / 2, fy = L.foot.y + L.foot.h * .5;
+      ctx.beginPath(); ctx.arc(fx, fy + 8, 26, .2, Math.PI - .2); ctx.stroke();
+      ctx.fillStyle = "#222"; ctx.beginPath(); ctx.arc(fx - 12, fy - 12, 4, 0, 7); ctx.arc(fx + 12, fy - 12, 4, 0, 7); ctx.fill();
+    }
   } else if (id === "stars") {
-    marginSpots(34, 9).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#ffe066" : "#fff6c4"; starPath(ctx, x, y, 7 + t * 9, t * 2); ctx.fill(); });
+    marginSpots(34, 9, L).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#ffe066" : "#fff6c4"; starPath(ctx, x, y, 7 + t * 9, t * 2); ctx.fill(); });
   } else if (id === "hearts" || id === "valentine") {
-    marginSpots(30, id === "hearts" ? 6 : 12).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#e8335f" : "#ff7aa0"; heartPath(ctx, x, y - 9, 16 + t * 10); ctx.fill(); });
+    marginSpots(30, id === "hearts" ? 6 : 12, L).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#e8335f" : "#ff7aa0"; heartPath(ctx, x, y - 9, 16 + t * 10); ctx.fill(); });
   } else if (id === "heartcut") {
-    marginSpots(26, 3).forEach(([x, y, t]) => { ctx.fillStyle = "#fff"; heartPath(ctx, x, y - 7, 12 + t * 8); ctx.fill(); });
+    marginSpots(26, 3, L).forEach(([x, y, t]) => { ctx.fillStyle = "#fff"; heartPath(ctx, x, y - 7, 12 + t * 8); ctx.fill(); });
   } else if (id === "birthday") {
     const rnd = seeded(8), cols = ["#e2457a", "#2fa5e0", "#f2c94c", "#5cc58a", "#9b6bff"];
-    marginSpots(46, 8).forEach(([x, y]) => {
+    marginSpots(46, 8, L).forEach(([x, y]) => {
       ctx.fillStyle = cols[Math.floor(rnd() * cols.length)];
       ctx.save(); ctx.translate(x, y); ctx.rotate(rnd() * 6);
       if (rnd() < .5) ctx.fillRect(-6, -3, 12, 6); else { ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill(); }
       ctx.restore();
     });
   } else if (id === "newyear") {
-    marginSpots(36, 15).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#f2c94c" : "#fff2c2"; sparkle(ctx, x, y, 6 + t * 12); });
+    marginSpots(36, 15, L).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#f2c94c" : "#fff2c2"; sparkle(ctx, x, y, 6 + t * 12); });
   }
   if (st.text) {
     ctx.fillStyle = st.ink; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    let size = 52; ctx.font = `${size}px "Gochi Hand", cursive`;
-    while (ctx.measureText(st.text).width > 520 && size > 24) { size -= 2; ctx.font = `${size}px "Gochi Hand", cursive`; }
-    ctx.fillText(st.text, STRIP.W / 2, STRIP.foot.y + STRIP.foot.h / 2);
+    let size = Math.min(52, L.foot.h * .55); ctx.font = `${size}px "Gochi Hand", cursive`;
+    while (ctx.measureText(st.text).width > L.W - 80 && size > 20) { size -= 2; ctx.font = `${size}px "Gochi Hand", cursive`; }
+    ctx.fillText(st.text, L.W / 2, L.foot.y + L.foot.h / 2);
   }
   ctx.restore();
 }
@@ -727,29 +748,45 @@ function processPhoto(src, w, h, seed) {
   return c;
 }
 function buildStrip() {
-  const id = FRAMES[S.frame].id, out = document.createElement("canvas");
-  out.width = STRIP.W * Q; out.height = STRIP.H * Q;
+  const id = FRAMES[S.frame].id, L = layout(), out = document.createElement("canvas");
+  out.width = L.W * Q; out.height = L.H * Q;
   const ctx = out.getContext("2d"); ctx.scale(Q, Q); ctx.imageSmoothingQuality = "high";
-  drawFrameBack(ctx, id);
-  STRIP.cells.forEach((c, k) => {
+  drawFrameBack(ctx, id, L);
+  L.cells.forEach((c, k) => {
     const photo = processPhoto(S.shots[k], c.w * Q, c.h * Q, k + 1);
     ctx.save(); cellClip(ctx, id, c); ctx.clip(); ctx.drawImage(photo, c.x, c.y, c.w, c.h); ctx.restore();
   });
-  drawFrameFront(ctx, id);
+  drawFrameFront(ctx, id, L);
   return out;
 }
 function drawFramePreview() {
-  const id = FRAMES[S.frame].id, c = $("frame-prev"), k = 220 * 2 / STRIP.H;
-  c.width = Math.round(STRIP.W * k); c.height = Math.round(STRIP.H * k);
+  const id = FRAMES[S.frame].id, L = layout(), c = $("frame-prev");
+  const css = Math.min(220 / L.H, 240 / L.W), k = css * 2; // 2 倍像素讓預覽清楚
+  c.width = Math.round(L.W * k); c.height = Math.round(L.H * k);
+  c.style.width = Math.round(L.W * css) + "px"; c.style.height = Math.round(L.H * css) + "px";
   const ctx = c.getContext("2d"); ctx.scale(k, k);
-  drawFrameBack(ctx, id);
+  drawFrameBack(ctx, id, L);
   ctx.fillStyle = "#7a776f";
-  STRIP.cells.forEach(cell => { ctx.save(); cellClip(ctx, id, cell); ctx.fill(); ctx.restore(); });
-  drawFrameFront(ctx, id);
+  L.cells.forEach(cell => { ctx.save(); cellClip(ctx, id, cell); ctx.fill(); ctx.restore(); });
+  drawFrameFront(ctx, id, L);
   $("frame-name").textContent = FRAMES[S.frame].name;
 }
 
 // ---------- 機台狀態 ----------
+function chipGroup(el, items, current, pick) {
+  el.innerHTML = "";
+  items.forEach(([value, label]) => {
+    const b = document.createElement("button");
+    b.className = "chip sk"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", value === current);
+    b.textContent = label; b.onclick = () => { beep(600, .04); pick(value); };
+    el.append(b);
+  });
+}
+function syncLayout() {
+  chipGroup($("counts"), COUNTS.map(n => [n, `${n} 張`]), S.count, (n) => { S.count = n; S.layout = LAYOUTS[n][0].id; S.shots = emptyShots(); syncLayout(); });
+  chipGroup($("layouts"), LAYOUTS[S.count].map(l => [l.id, l.name]), layout().id, (id) => { S.layout = id; syncLayout(); });
+  drawFramePreview(); buildThumbs();
+}
 function syncColor() {
   $("color-toggle").setAttribute("aria-pressed", S.color);
   $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
@@ -784,16 +821,23 @@ function setMode(mode) {
   $("back").hidden = m === "choose" || busy;
   const go = $("go");
   go.classList.toggle("red", m === "source" || busy);
-  go.disabled = !busy && (m === "source" || (m === "upload" && filled() < 4));
+  go.disabled = !busy && (m === "source" || (m === "upload" && filled() < S.count));
   go.classList.toggle("pulse", !go.disabled && !busy);
   go.setAttribute("aria-label", { choose: "選這個相框", source: "先選拍照或上傳", shoot: "開始拍照", upload: "印出拍貼" }[m]);
   [...$("howto").children].forEach((li, k) => li.classList.toggle("now", m === "choose" ? k === 1 : k === 2));
-  if (m === "choose") { setMarquee("用箭頭挑一個相框"); drawFramePreview(); syncColor(); }
+  if (m === "choose") { setMarquee("用箭頭挑一個相框"); syncLayout(); syncColor(); }
   if (m === "source") setMarquee("要拍照，還是上傳照片？");
-  if (m === "upload") { setMarquee(filled() < 4 ? `上傳第 ${filled() + 1} 張照片` : "照片齊了！按綠色按鈕印出來"); syncUploadLabel(); }
+  if (m === "upload") { setMarquee(filled() < S.count ? `上傳第 ${filled() + 1} 張照片` : "照片齊了！按綠色按鈕印出來"); syncUploadLabel(); }
   buildThumbs();
 }
 function buildThumbs() {
+  $("thumbs").style.gridTemplateColumns = `repeat(${Math.min(S.count, 6)}, 1fr)`;
+  $("thumbs").style.width = `min(100%, ${Math.min(S.count, 6) * 110}px)`;
+  $("thumbs").style.alignSelf = "center";
+  $("thumbs").style.setProperty("--ar", cellAspect());
+  $("vf").style.aspectRatio = cellAspect();
+  $("price").innerHTML = `$0<br>=<br>${S.count} 張`;
+  $("price").setAttribute("aria-label", `免費，一次 ${S.count} 張`);
   $("thumbs").innerHTML = S.shots.map((s, i) =>
     s ? `<div class="thumb filled"><img alt="第 ${i + 1} 張" src="${s.toDataURL("image/jpeg", .6)}"></div>` : `<div class="thumb">${i + 1}</div>`).join("");
 }
@@ -801,17 +845,17 @@ $("go").onclick = () => {
   if (busy) return;
   if (S.mode === "choose") { beep(520, .08); setMode("source"); }
   else if (S.mode === "shoot") runShoot();
-  else if (S.mode === "upload" && filled() === 4) makeStrip();
+  else if (S.mode === "upload" && filled() === S.count) makeStrip();
 };
-$("back").onclick = () => { stopCamera(); S.shots = [null, null, null, null]; setMode("choose"); };
+$("back").onclick = () => { stopCamera(); S.shots = emptyShots(); setMode("choose"); };
 $("src-cam").onclick = async () => {
-  S.shots = [null, null, null, null]; setMode("shoot");
+  S.shots = emptyShots(); setMode("shoot");
   setMarquee("相機準備中…");
   const ok = await startCamera();
-  setMarquee(ok ? "看鏡頭，按綠色按鈕開始拍 4 張" : "相機無法使用，可以改用上傳照片");
+  setMarquee(ok ? `看鏡頭，按綠色按鈕開始拍 ${S.count} 張` : "相機無法使用，可以改用上傳照片");
   $("go").disabled = !ok; $("go").classList.toggle("pulse", ok);
 };
-$("src-upload").onclick = () => { S.shots = [null, null, null, null]; setMode("upload"); };
+$("src-upload").onclick = () => { S.shots = emptyShots(); setMode("upload"); };
 
 // ---------- 拍照 ----------
 const CAM_ERRORS = {
@@ -823,7 +867,7 @@ const CAM_ERRORS = {
 };
 async function startCamera() {
   stopCamera();
-  const msg = $("cam-msg"); msg.hidden = true; $("shot-badge").textContent = "1 / 4";
+  const msg = $("cam-msg"); msg.hidden = true; $("shot-badge").textContent = `1 / ${S.count}`;
   try {
     if (!navigator.mediaDevices?.getUserMedia) throw Object.assign(new Error(), { name: "NotFoundError" });
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
@@ -848,8 +892,8 @@ async function runShoot() {
   if (!stream) return;
   busy = true; setMode("shoot");
   try { await navigator.wakeLock?.request("screen"); } catch (e) {}
-  for (let i = 0; i < 4; i++) {
-    setMarquee(`第 ${i + 1} 張`); $("shot-badge").textContent = `${i + 1} / 4`;
+  for (let i = 0; i < S.count; i++) {
+    setMarquee(`第 ${i + 1} 張`); $("shot-badge").textContent = `${i + 1} / ${S.count}`;
     await wait(i ? 700 : 300);
     const c = $("count");
     for (let n = 3; n > 0; n--) { c.textContent = n; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop"); beep(880, .12); await wait(1000); }
@@ -865,7 +909,7 @@ async function runShoot() {
 // ---------- 上傳與裁切 ----------
 function syncUploadLabel() {
   const n = filled();
-  $("upload-label").firstChild.textContent = n < 4 ? `選第 ${n + 1} 張照片` : "重新選照片";
+  $("upload-label").firstChild.textContent = n < S.count ? `選第 ${n + 1} 張照片` : "重新選照片";
 }
 const MAX_FILE_MB = 25;
 async function fileToCanvas(file) {
@@ -886,12 +930,12 @@ $("upload-file").onchange = async (e) => {
   const f = e.target.files[0]; e.target.value = "";
   if (!f) return;
   if (f.size > MAX_FILE_MB * 1024 * 1024) return toast(`檔案太大了，請選 ${MAX_FILE_MB} MB 以下的照片。`);
-  if (filled() === 4) { S.shots = [null, null, null, null]; }
+  if (filled() === S.count) { S.shots = emptyShots(); }
   try { openCrop(await fileToCanvas(f)); }
   catch (err) { toast("這張照片讀不出來，請換一張試試。"); }
 };
 const crop = { src: null, x: 0, y: 0, w: 0, h: 0, k: 1 };
-function cropMax() { return Math.min(crop.src.width, crop.src.height * ASPECT); }
+function cropMax() { return Math.min(crop.src.width, crop.src.height * cellAspect()); }
 function clampCrop() {
   crop.x = Math.min(Math.max(crop.x, 0), crop.src.width - crop.w);
   crop.y = Math.min(Math.max(crop.y, 0), crop.src.height - crop.h);
@@ -905,7 +949,7 @@ function drawCrop() {
 }
 function resizeCrop(pct) {
   const cx = crop.x + crop.w / 2, cy = crop.y + crop.h / 2;
-  crop.w = cropMax() * pct / 100; crop.h = crop.w / ASPECT;
+  crop.w = cropMax() * pct / 100; crop.h = crop.w / cellAspect();
   crop.x = cx - crop.w / 2; crop.y = cy - crop.h / 2; clampCrop(); drawCrop();
 }
 function openCrop(src) {
@@ -913,7 +957,7 @@ function openCrop(src) {
   const cv = $("crop-cv"), maxW = Math.min(460, window.innerWidth - 60), maxH = window.innerHeight * .55;
   crop.k = Math.min(maxW / src.width, maxH / src.height);
   cv.width = Math.round(src.width * crop.k); cv.height = Math.round(src.height * crop.k);
-  $("crop-size").value = 100; crop.w = cropMax(); crop.h = crop.w / ASPECT;
+  $("crop-size").value = 100; crop.w = cropMax(); crop.h = crop.w / cellAspect();
   crop.x = (src.width - crop.w) / 2; crop.y = (src.height - crop.h) / 2;
   drawCrop(); $("crop").hidden = false; cv.focus();
 }
@@ -1014,7 +1058,7 @@ $("share").onclick = async () => {
   try { await navigator.share({ files: [new File([lastBlob], fileName(), { type: lastBlob.type })], text: "來看我的拍貼！" }); }
   catch (e) { if (e?.name !== "AbortError") toast("這台裝置不支援分享，請先下載再傳給朋友"); }
 };
-$("again").onclick = () => { $("result").hidden = true; S.shots = [null, null, null, null]; setMode("choose"); };
+$("again").onclick = () => { $("result").hidden = true; S.shots = emptyShots(); setMode("choose"); };
 $("leave").onclick = leaveMachine;
 
 buildGallery();
