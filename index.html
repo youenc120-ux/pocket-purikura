@@ -310,7 +310,7 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
       <span class="films-label" id="layout-label">排版</span>
       <div class="films" id="layouts" role="radiogroup" aria-labelledby="layout-label"></div>
       <div class="switch"><span id="lbl-bw">黑白</span><button class="toggle sk" id="color-toggle" aria-pressed="true" aria-label="切換黑白或彩色"><i></i></button><span id="lbl-color" class="on">彩色</span></div>
-      <span class="films-label" id="films-label">底片</span>
+      <span class="films-label" id="films-label">色彩風格</span>
       <div class="films" id="films" role="radiogroup" aria-labelledby="films-label"></div>
       <div class="switch"><span>輕微磨皮</span><button class="toggle sk" id="smooth-toggle" aria-pressed="true" aria-label="輕微磨皮"><i></i></button></div>
     </div>
@@ -435,13 +435,27 @@ const FRAMES = [
 // 底片風格：都是自己調的色調，名稱只是形容那種感覺。
 // css 是拍照時預覽畫面的近似效果，真正的處理在 filmTone()。
 const FILMS = [
-  { id: "plain",    name: "原色",          sw: "#d9d6cf", css: "none" },
-  { id: "warm",     name: "暖陽・柯達風",  sw: "#e9b25a", css: "sepia(.16) saturate(1.12) contrast(.96) brightness(1.04)" },
-  { id: "fresh",    name: "清新・富士風",  sw: "#7fbf9e", css: "saturate(1.06) hue-rotate(-8deg) contrast(1.04) brightness(1.02)" },
-  { id: "instant",  name: "拍立得",        sw: "#e8dcc6", css: "contrast(.84) brightness(1.07) saturate(.82) sepia(.1)" },
-  { id: "expired",  name: "過期底片",      sw: "#c7795f", css: "sepia(.28) hue-rotate(-14deg) saturate(1.18) contrast(.9)" },
+  { id: "plain",      name: "原色",          sw: "#d9d6cf" },
+  { id: "warm",       name: "暖陽・柯達風",  sw: "#e9b25a" },
+  { id: "fresh",      name: "清新・富士風",  sw: "#7fbf9e" },
+  { id: "airy",       name: "日系透亮",      sw: "#cfe6ef" },
+  { id: "milktea",    name: "奶茶褪色",      sw: "#c9ab8c" },
+  { id: "pinkdream",  name: "粉紅夢幻",      sw: "#f3b7cc" },
+  { id: "coolblue",   name: "冷調藍",        sw: "#8fb3d9" },
+  { id: "vivid",      name: "濃郁鮮豔",      sw: "#e8423c" },
+  { id: "tealorange", name: "電影青橙",      sw: "#3f8f8f" },
+  { id: "hknight",    name: "港風夜色",      sw: "#2c6e6a" },
+  { id: "sepia",      name: "復古棕調",      sw: "#9a6b3f" },
+  { id: "instant",    name: "拍立得",        sw: "#e8dcc6" },
+  { id: "expired",    name: "過期底片",      sw: "#c7795f" },
 ];
-const S = { color: true, film: "plain", smooth: true, frame: 0, count: 4, layout: "strip4", shots: [null, null, null, null], mode: "choose" };
+const BW_FILMS = [
+  { id: "bw",     name: "經典黑白",  sw: "#7a7a7a" },
+  { id: "bwhard", name: "高反差",    sw: "#111111" },
+  { id: "bwsoft", name: "柔和灰階",  sw: "#bdbdbd" },
+];
+function currentFilm() { return S.color ? S.film : S.bwFilm; }
+const S = { color: true, film: "plain", bwFilm: "bw", smooth: true, frame: 0, count: 4, layout: "strip4", shots: [null, null, null, null], mode: "choose" };
 let stream = null, busy = false;
 
 function toast(msg) {
@@ -817,7 +831,27 @@ const FILM_TONE = {
   // 過期底片：洋紅黃偏移、顆粒粗、一側有暖色漏光
   expired: { curve: .02, lift: .06, sat: 1.1, mul: [1.06, .95, .86], add: [.03, 0, .02], shadow: [.03, -.01, .02], grain: .05, vignette: .22, leak: true },
   // 黑白：中等對比、暗部微浮、細顆粒
-  bw:      { bw: true, curve: .14, lift: .035, grain: .035, vignette: .2 },
+  // 日系透亮：曝光偏亮、對比低、略帶青藍、飽和度降一點
+  airy:       { curve: -.08, lift: .06, sat: .86, mul: [.98, 1.01, 1.03], add: [.03, .035, .045], shadow: [0, .01, .02], grain: .012 },
+  // 奶茶褪色：暖棕、低飽和、暗部浮起，像放久的相片
+  milktea:    { curve: -.1, lift: .08, sat: .74, mul: [1.04, 1.0, .9], add: [.03, .02, 0], shadow: [0, 0, 0], hi: [.02, .01, -.01], grain: .024, vignette: .12 },
+  // 粉紅夢幻：柔和、偏粉、亮部帶一點紫
+  pinkdream:  { curve: -.06, lift: .05, sat: .95, mul: [1.03, .97, 1.0], add: [.04, 0, .03], shadow: [.01, -.01, .02], hi: [.03, -.01, .02], grain: .014 },
+  // 冷調藍：整體偏藍、乾淨、略降飽和
+  coolblue:   { curve: .06, lift: .03, sat: .9, mul: [.93, .99, 1.06], add: [0, .01, .04], shadow: [-.02, 0, .04], grain: .02 },
+  // 濃郁鮮豔：飽和高、對比強，顏色很跳
+  vivid:      { curve: .16, lift: 0, sat: 1.3, mul: [1, 1, 1], add: [0, 0, 0], shadow: [0, 0, 0], grain: .012 },
+  // 電影青橙：暗部青綠、亮部橘暖，膚色突出
+  tealorange: { curve: .1, lift: .02, sat: 1.08, mul: [1, 1, 1], add: [0, 0, 0], shadow: [-.04, .02, .06], hi: [.06, .02, -.05], grain: .02, vignette: .18 },
+  // 港風夜色：對比高、暗部偏青、紅色濃，暗角重
+  hknight:    { curve: .14, lift: .02, sat: 1.12, mul: [1.03, .98, .95], add: [0, 0, 0], shadow: [-.03, .02, .05], hi: [.05, .02, -.03], grain: .035, vignette: .28 },
+  // 復古棕調：先轉灰階再染成棕色
+  sepia:      { bw: true, tint: [1.08, .94, .76], curve: .06, lift: .05, grain: .03, vignette: .22 },
+  bw:         { bw: true, curve: .14, lift: .035, grain: .035, vignette: .2 },
+  // 高反差黑白：黑更黑、白更白、顆粒粗
+  bwhard:     { bw: true, curve: .32, lift: 0, grain: .045, vignette: .3 },
+  // 柔和灰階：對比低、暗部浮起、顆粒細
+  bwsoft:     { bw: true, curve: -.06, lift: .07, grain: .018, vignette: .08 },
 };
 function filmTone(img, id, seed) {
   const t = FILM_TONE[id]; if (!t) return;
@@ -831,11 +865,12 @@ function filmTone(img, id, seed) {
     const l0 = .299 * r + .587 * g + .114 * b;
     if (t.bw) { r = g = b = l0; }
     r = sCurve(r, t.curve); g = sCurve(g, t.curve); b = sCurve(b, t.curve);
+    if (t.tint) { r *= t.tint[0]; g *= t.tint[1]; b *= t.tint[2]; }
     if (!t.bw) {
-      const sh = (1 - l0) * (1 - l0);
-      r = r * t.mul[0] + t.add[0] + t.shadow[0] * sh;
-      g = g * t.mul[1] + t.add[1] + t.shadow[1] * sh;
-      b = b * t.mul[2] + t.add[2] + t.shadow[2] * sh;
+      const sh = (1 - l0) * (1 - l0), hl = l0 * l0, hi = t.hi || [0, 0, 0];
+      r = r * t.mul[0] + t.add[0] + t.shadow[0] * sh + hi[0] * hl;
+      g = g * t.mul[1] + t.add[1] + t.shadow[1] * sh + hi[1] * hl;
+      b = b * t.mul[2] + t.add[2] + t.shadow[2] * sh + hi[2] * hl;
       const L = .299 * r + .587 * g + .114 * b;
       r = L + (r - L) * t.sat; g = L + (g - L) * t.sat; b = L + (b - L) * t.sat;
     }
@@ -851,7 +886,7 @@ function processPhoto(src, w, h, seed) {
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const ctx = c.getContext("2d"); ctx.imageSmoothingQuality = "high";
   drawPhoto(ctx, src, { x: 0, y: 0, w, h });
-  const film = S.color ? S.film : "bw";
+  const film = currentFilm();
   if (!S.smooth && film === "plain") return c;
   const img = ctx.getImageData(0, 0, w, h);
   if (S.smooth) smoothLight(img);
@@ -900,14 +935,15 @@ function syncColor() {
   $("color-toggle").setAttribute("aria-pressed", S.color);
   $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
   $("vf").classList.toggle("bw", !S.color);
-  $("films").hidden = $("films-label").hidden = !S.color;
+  $("films-label").textContent = S.color ? "色彩風格" : "黑白風格";
   $("smooth-toggle").setAttribute("aria-pressed", S.smooth);
   $("films").innerHTML = "";
-  FILMS.forEach(f => {
+  const list = S.color ? FILMS : BW_FILMS, cur = currentFilm();
+  list.forEach(f => {
     const b = document.createElement("button");
-    b.className = "chip sk"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", S.film === f.id);
+    b.className = "chip sk"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", cur === f.id);
     b.style.setProperty("--sw", f.sw); b.innerHTML = `<i></i>${f.name}`;
-    b.onclick = () => { S.film = f.id; beep(600, .04); syncColor(); };
+    b.onclick = () => { if (S.color) S.film = f.id; else S.bwFilm = f.id; beep(600, .04); syncColor(); };
     $("films").append(b);
   });
 }
@@ -979,7 +1015,7 @@ function liveLoop(t) {
   ctx.save(); ctx.translate(w, 0); ctx.scale(-1, 1);
   ctx.drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sh) / 2, sw, sh, 0, 0, w, h);
   ctx.restore();
-  const film = S.color ? S.film : "bw";
+  const film = currentFilm();
   if (film !== "plain") { const img = ctx.getImageData(0, 0, w, h); filmTone(img, film, (t | 0) + 1); ctx.putImageData(img, 0, 0); }
   if (!$("thumbs").hidden) renderStripPreview(c);
 }
