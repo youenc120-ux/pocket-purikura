@@ -119,6 +119,8 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
 .viewfinder { position: relative; width: 100%; max-width: 100%; overflow: hidden; background: #111; aspect-ratio: 4 / 3; }
 .viewfinder video { width: 100%; height: 100%; object-fit: cover; display: block; transform: scaleX(-1); }
 .viewfinder.bw video, .viewfinder.bw .freeze { filter: grayscale(1) contrast(1.15); }
+.live { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#thumbs canvas { display: block; margin: 0 auto; max-width: 100%; box-shadow: 0 6px 14px rgba(0,0,0,.2); }
 .freeze { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .count { position: absolute; inset: 0; display: grid; place-items: center; font-family: "Gochi Hand", cursive; font-size: 140px; color: #fff; text-shadow: 0 4px 18px rgba(0,0,0,.55); pointer-events: none; }
 .count.pop { animation: pop .9s cubic-bezier(.16, 1, .3, 1); }
@@ -139,7 +141,7 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
 .chip[aria-checked="true"] { background: var(--ink); color: var(--paper); }
 .chip[aria-checked="true"] i { border-color: var(--paper); }
 .films-label { font-size: 14px; color: var(--muted); }
-.thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.thumbs { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .thumb { aspect-ratio: var(--ar, 4 / 3); max-width: 100%; background: var(--panel); border: 2px dashed var(--faint); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-family: var(--hand); font-size: 18px; padding: 0; font-weight: 400; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb.filled { border: 2px solid var(--ink); }
@@ -287,6 +289,7 @@ button:focus-visible, label.btn:focus-within, input:focus-visible, canvas:focus-
           </div>
           <div class="viewfinder" id="vf" hidden>
             <video id="video" playsinline muted autoplay></video>
+            <canvas class="live" id="live" aria-hidden="true"></canvas>
             <img class="freeze" id="freeze" alt="" hidden>
             <div class="cam-msg" id="cam-msg" hidden></div>
             <div class="badge" id="shot-badge">1 / 4</div>
@@ -382,20 +385,26 @@ const $ = (id) => document.getElementById(id);
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// ---------- 拍貼條規格：固定 4 格直條 ----------
 // 版型：張數 × 排版。座標是版型單位，輸出時 × Q。同一個版型裡每格比例相同（裁切用）
 function grid(cols, rows, cw, ch, foot = 128, m = 40, gap = 24) {
   const cells = [];
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push({ x: m + c * (cw + gap), y: m + r * (ch + gap), w: cw, h: ch });
   const W = 2 * m + cols * cw + (cols - 1) * gap, top = m + rows * ch + (rows - 1) * gap;
-  return { W, H: top + 4 + foot, foot: { y: top + 4, h: foot }, cells };
+  return { W, H: top + 4 + foot, foot: { x: 0, y: top + 4, w: W, h: foot }, cells };
 }
+// 自由擺放的版型：cells 可以帶 rot（角度），foot 是底部文字或裝飾的區域
+const free = (W, H, foot, cells) => ({ W, H, foot, cells: cells.map(([x, y, rot = 0]) => ({ x, y, w: 520, h: 390, rot })) });
 const LAYOUTS = {
   1: [{ id: "instant", name: "拍立得", ...grid(1, 1, 800, 800, 240, 50) }, { id: "solo", name: "大張", ...grid(1, 1, 920, 690, 150) }],
-  2: [{ id: "strip2", name: "直條", ...grid(1, 2, 520, 390) }, { id: "side2", name: "左右並排", ...grid(2, 1, 520, 390, 110) }],
-  3: [{ id: "strip3", name: "直條", ...grid(1, 3, 520, 390) }, { id: "row3", name: "橫條", ...grid(3, 1, 520, 390, 110) }],
-  4: [{ id: "strip4", name: "直條", ...grid(1, 4, 520, 390) }, { id: "grid4", name: "四宮格", ...grid(2, 2, 520, 390) }, { id: "row4", name: "橫條", ...grid(4, 1, 520, 390, 110) }],
-  6: [{ id: "double6", name: "雙排直條", ...grid(2, 3, 520, 390) }, { id: "grid6", name: "六宮格", ...grid(3, 2, 520, 390, 120) }],
+  2: [{ id: "strip2", name: "直條", ...grid(1, 2, 520, 390) }, { id: "side2", name: "左右並排", ...grid(2, 1, 520, 390, 110) },
+      { id: "diag2", name: "對角", ...free(1000, 1000, { x: 40, y: 500, w: 340, h: 460 }, [[40, 40], [440, 540]]) }],
+  3: [{ id: "strip3", name: "直條", ...grid(1, 3, 520, 390) }, { id: "row3", name: "橫條", ...grid(3, 1, 520, 390, 110) },
+      { id: "tilt3", name: "斜排", ...free(900, 1470, { x: 0, y: 1370, w: 900, h: 100 }, [[70, 50, -5], [320, 500, 4], [80, 950, -3]]) }],
+  4: [{ id: "strip4", name: "直條", ...grid(1, 4, 520, 390) }, { id: "grid4", name: "四宮格", ...grid(2, 2, 520, 390) }, { id: "row4", name: "橫條", ...grid(4, 1, 520, 390, 110) },
+      { id: "stagger4", name: "錯位", ...free(1140, 1112, { x: 40, y: 880, w: 520, h: 200 }, [[40, 40], [580, 250], [40, 472], [580, 682]]) },
+      { id: "collage4", name: "拼貼", ...free(1100, 1250, { x: 0, y: 1110, w: 1100, h: 120 }, [[50, 50, -6], [530, 90, 5], [70, 560, 4], [510, 640, -5]]) }],
+  6: [{ id: "double6", name: "雙排直條", ...grid(2, 3, 520, 390) }, { id: "grid6", name: "六宮格", ...grid(3, 2, 520, 390, 120) },
+      { id: "collage6", name: "拼貼", ...free(1680, 1130, { x: 0, y: 990, w: 1680, h: 130 }, [[50, 50, -4], [590, 80, 3], [1110, 40, -2], [70, 540, 3], [600, 560, -5], [1120, 520, 4]]) }],
 };
 const COUNTS = [1, 2, 3, 4, 6];
 function layout() { return LAYOUTS[S.count].find(l => l.id === S.layout) || LAYOUTS[S.count][0]; }
@@ -412,6 +421,15 @@ const FRAMES = [
   { id: "birthday",  name: "生日快樂" },
   { id: "valentine", name: "情人節" },
   { id: "newyear",   name: "新年快樂" },
+  { id: "kraft",     name: "牛皮紙" },
+  { id: "polka",     name: "波點" },
+  { id: "gingham",   name: "紅白格紋" },
+  { id: "filmroll",  name: "底片膠卷" },
+  { id: "stamp",     name: "郵票" },
+  { id: "clouds",    name: "藍天白雲" },
+  { id: "flowers",   name: "小碎花" },
+  { id: "neon",      name: "霓虹燈" },
+  { id: "xmas",      name: "聖誕快樂" },
 ];
 
 // 底片風格：都是自己調的色調，名稱只是形容那種感覺。
@@ -574,9 +592,44 @@ const FRAME_STYLE = {
   birthday:  { bg: "#fff4cf", text: "HAPPY BIRTHDAY", ink: "#e2457a" },
   valentine: { bg: "#ffe4ea", text: "HAPPY VALENTINE'S DAY", ink: "#c81e4a" },
   newyear:   { bg: "#121212", text: "HAPPY NEW YEAR 2026", ink: "#f2c94c" },
+  kraft:     { bg: "#c9a878" },
+  polka:     { bg: "#ffe39a" },
+  gingham:   { bg: "#ffffff" },
+  filmroll:  { bg: "#1b1b1b" },
+  stamp:     { bg: "#fffdf7", text: "口袋郵局 ・ $0", ink: "#b0413e" },
+  clouds:    { bg: "#cfe9ff" },
+  flowers:   { bg: "#fff8ef" },
+  neon:      { bg: "#0e0b1d" },
+  xmas:      { bg: "#1f4d36", text: "MERRY CHRISTMAS", ink: "#ffffff" },
 };
 function drawFrameBack(ctx, id, L) {
   ctx.fillStyle = FRAME_STYLE[id].bg; ctx.fillRect(0, 0, L.W, L.H);
+  ctx.save();
+  if (id === "kraft") {
+    const rnd = seeded(21);
+    ctx.lineWidth = 1.4; ctx.lineCap = "round";
+    for (let k = 0; k < L.W * L.H / 900; k++) {
+      const x = rnd() * L.W, y = rnd() * L.H, a = rnd() * 6, len = 6 + rnd() * 16;
+      ctx.strokeStyle = rnd() < .5 ? "rgba(120,85,40,.35)" : "rgba(240,220,180,.4)";
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len); ctx.stroke();
+    }
+  } else if (id === "polka") {
+    ctx.fillStyle = "#ffffff";
+    for (let y = 0, r = 0; y < L.H + 40; y += 44, r++) for (let x = (r % 2) * 22; x < L.W + 40; x += 44) { ctx.beginPath(); ctx.arc(x, y, 9, 0, 7); ctx.fill(); }
+  } else if (id === "gingham") {
+    ctx.fillStyle = "rgba(214,55,64,.38)";
+    for (let x = 0; x < L.W; x += 48) ctx.fillRect(x, 0, 24, L.H);
+    for (let y = 0; y < L.H; y += 48) ctx.fillRect(0, y, L.W, 24);
+  } else if (id === "clouds") {
+    const g = ctx.createLinearGradient(0, 0, 0, L.H); g.addColorStop(0, "#9fd3ff"); g.addColorStop(1, "#eef8ff");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, L.W, L.H);
+    ctx.fillStyle = "rgba(255,255,255,.95)";
+    marginSpots(14, 31, L).forEach(([x, y, t]) => {
+      const r = 18 + t * 22;
+      [[0, 0, 1], [r * .9, r * .15, .75], [-r * .9, r * .2, .7], [r * .3, -r * .5, .8]].forEach(([dx, dy, k]) => { ctx.beginPath(); ctx.arc(x + dx, y + dy, r * k, 0, 7); ctx.fill(); });
+    });
+  }
+  ctx.restore();
 }
 function drawFrameFront(ctx, id, L) {
   const st = FRAME_STYLE[id];
@@ -591,7 +644,7 @@ function drawFrameFront(ctx, id, L) {
       else { heartPath(ctx, x, y - 10, 22); ctx.stroke(); }
     });
     if (L.foot.h >= 100) {
-      const fx = L.W / 2, fy = L.foot.y + L.foot.h * .5;
+      const fx = L.foot.x + L.foot.w / 2, fy = L.foot.y + L.foot.h * .5;
       ctx.beginPath(); ctx.arc(fx, fy + 8, 26, .2, Math.PI - .2); ctx.stroke();
       ctx.fillStyle = "#222"; ctx.beginPath(); ctx.arc(fx - 12, fy - 12, 4, 0, 7); ctx.arc(fx + 12, fy - 12, 4, 0, 7); ctx.fill();
     }
@@ -611,12 +664,51 @@ function drawFrameFront(ctx, id, L) {
     });
   } else if (id === "newyear") {
     marginSpots(36, 15, L).forEach(([x, y, t]) => { ctx.fillStyle = t < .5 ? "#f2c94c" : "#fff2c2"; sparkle(ctx, x, y, 6 + t * 12); });
+  } else if (id === "filmroll") {
+    // 沿著長邊打齒孔，邊上印自己編的片號
+    const vertical = L.H >= L.W;
+    ctx.fillStyle = "#f2efe8";
+    if (vertical) for (let y = 14; y < L.H - 20; y += 42) { ctx.fillRect(9, y, 16, 24); ctx.fillRect(L.W - 25, y, 16, 24); }
+    else for (let x = 14; x < L.W - 20; x += 42) { ctx.fillRect(x, 6, 24, 16); ctx.fillRect(x, L.H - 22, 24, 16); }
+    ctx.fillStyle = "#e8a33d"; ctx.font = '15px "Gochi Hand", monospace'; ctx.textBaseline = "middle";
+    L.cells.forEach((c, k) => {
+      ctx.save();
+      if (vertical) { ctx.translate(L.W - 32, c.y + c.h / 2); ctx.rotate(Math.PI / 2); ctx.textAlign = "center"; ctx.fillText(`PKT 400  ▸ ${k + 1}A`, 0, 0); }
+      else { ctx.textAlign = "center"; ctx.fillText(`PKT 400  ▸ ${k + 1}A`, c.x + c.w / 2, L.H - 32); }
+      ctx.restore();
+    });
+  } else if (id === "stamp") {
+    // 鋸齒邊：沿著四邊挖半圓，內側一圈細線
+    ctx.fillStyle = "#e4e0d6";
+    for (let x = 0; x <= L.W; x += 26) { ctx.beginPath(); ctx.arc(x, 0, 9, 0, 7); ctx.arc(x, L.H, 9, 0, 7); ctx.fill(); }
+    for (let y = 0; y <= L.H; y += 26) { ctx.beginPath(); ctx.arc(0, y, 9, 0, 7); ctx.arc(L.W, y, 9, 0, 7); ctx.fill(); }
+    ctx.strokeStyle = "#b0413e"; ctx.lineWidth = 2; ctx.strokeRect(20, 20, L.W - 40, L.H - 40);
+  } else if (id === "flowers") {
+    const cols = ["#f6a5c0", "#ffd36e", "#a9d8f5", "#c9b6f2"];
+    marginSpots(30, 41, L).forEach(([x, y, t], k) => {
+      const r = 8 + t * 8; ctx.fillStyle = cols[k % cols.length];
+      for (let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5 + t; ctx.beginPath(); ctx.arc(x + Math.cos(a) * r * .9, y + Math.sin(a) * r * .9, r * .62, 0, 7); ctx.fill(); }
+      ctx.fillStyle = "#f2b33d"; ctx.beginPath(); ctx.arc(x, y, r * .45, 0, 7); ctx.fill();
+    });
+  } else if (id === "neon") {
+    // 每格照片外圍一圈發光的線
+    const cols = ["#ff4fb1", "#38e1ff", "#b388ff"];
+    L.cells.forEach((c, k) => withCell(ctx, c, lc => {
+      ctx.strokeStyle = cols[k % 3]; ctx.shadowColor = cols[k % 3]; ctx.lineWidth = 5;
+      for (const blur of [26, 12]) { ctx.shadowBlur = blur; ctx.strokeRect(lc.x - 10, lc.y - 10, lc.w + 20, lc.h + 20); }
+    }));
+  } else if (id === "xmas") {
+    ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 2.4; ctx.lineCap = "round";
+    marginSpots(34, 51, L).forEach(([x, y, t]) => {
+      const r = 6 + t * 9;
+      for (let i = 0; i < 3; i++) { const a = i * Math.PI / 3; ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * r, y - Math.sin(a) * r); ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); ctx.stroke(); }
+    });
   }
   if (st.text) {
     ctx.fillStyle = st.ink; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     let size = Math.min(52, L.foot.h * .55); ctx.font = `${size}px "Gochi Hand", cursive`;
-    while (ctx.measureText(st.text).width > L.W - 80 && size > 20) { size -= 2; ctx.font = `${size}px "Gochi Hand", cursive`; }
-    ctx.fillText(st.text, L.W / 2, L.foot.y + L.foot.h / 2);
+    while (ctx.measureText(st.text).width > L.foot.w - 60 && size > 18) { size -= 2; ctx.font = `${size}px "Gochi Hand", cursive`; }
+    ctx.fillText(st.text, L.foot.x + L.foot.w / 2, L.foot.y + L.foot.h / 2);
   }
   ctx.restore();
 }
@@ -624,6 +716,26 @@ function drawFrameFront(ctx, id, L) {
 function cellClip(ctx, id, c) {
   if (id === "heartcut") { const s = c.h * 1.02; heartPath(ctx, c.x + c.w / 2, c.y + (c.h - s) / 2 + 4, s); }
   else { ctx.beginPath(); ctx.rect(c.x, c.y, c.w, c.h); }
+}
+// 在格子的座標系裡畫（有角度的格子會先轉過去）
+function withCell(ctx, c, fn) {
+  ctx.save();
+  if (c.rot) { ctx.translate(c.x + c.w / 2, c.y + c.h / 2); ctx.rotate(c.rot * Math.PI / 180); fn({ x: -c.w / 2, y: -c.h / 2, w: c.w, h: c.h }); }
+  else fn(c);
+  ctx.restore();
+}
+// 畫所有格子：有角度的格子先墊一張帶陰影的白邊；photo(k) 沒照片時畫灰色占位
+function drawCells(ctx, id, L, photo) {
+  L.cells.forEach((c, k) => withCell(ctx, c, lc => {
+    if (c.rot) {
+      ctx.save(); ctx.shadowColor = "rgba(0,0,0,.28)"; ctx.shadowBlur = 16; ctx.shadowOffsetY = 6;
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(lc.x - 14, lc.y - 14, lc.w + 28, lc.h + 28); ctx.restore();
+    }
+    ctx.save(); cellClip(ctx, id, lc); ctx.clip();
+    const img = photo(k);
+    if (img) ctx.drawImage(img, lc.x, lc.y, lc.w, lc.h); else { ctx.fillStyle = "#7a776f"; ctx.fill(); }
+    ctx.restore();
+  }));
 }
 function drawPhoto(ctx, src, c) {
   const s = Math.max(c.w / src.width, c.h / src.height), sw = c.w / s, sh = c.h / s;
@@ -752,10 +864,8 @@ function buildStrip() {
   out.width = L.W * Q; out.height = L.H * Q;
   const ctx = out.getContext("2d"); ctx.scale(Q, Q); ctx.imageSmoothingQuality = "high";
   drawFrameBack(ctx, id, L);
-  L.cells.forEach((c, k) => {
-    const photo = processPhoto(S.shots[k], c.w * Q, c.h * Q, k + 1);
-    ctx.save(); cellClip(ctx, id, c); ctx.clip(); ctx.drawImage(photo, c.x, c.y, c.w, c.h); ctx.restore();
-  });
+  const photos = L.cells.map((c, k) => processPhoto(S.shots[k], c.w * Q, c.h * Q, k + 1));
+  drawCells(ctx, id, L, k => photos[k]);
   drawFrameFront(ctx, id, L);
   return out;
 }
@@ -766,10 +876,9 @@ function drawFramePreview() {
   c.style.width = Math.round(L.W * css) + "px"; c.style.height = Math.round(L.H * css) + "px";
   const ctx = c.getContext("2d"); ctx.scale(k, k);
   drawFrameBack(ctx, id, L);
-  ctx.fillStyle = "#7a776f";
-  L.cells.forEach(cell => { ctx.save(); cellClip(ctx, id, cell); ctx.fill(); ctx.restore(); });
+  drawCells(ctx, id, L, () => null);
   drawFrameFront(ctx, id, L);
-  $("frame-name").textContent = FRAMES[S.frame].name;
+  $("frame-name").textContent = `${FRAMES[S.frame].name}（${S.frame + 1} / ${FRAMES.length}）`;
 }
 
 // ---------- 機台狀態 ----------
@@ -792,7 +901,6 @@ function syncColor() {
   $("lbl-color").classList.toggle("on", S.color); $("lbl-bw").classList.toggle("on", !S.color);
   $("vf").classList.toggle("bw", !S.color);
   $("films").hidden = $("films-label").hidden = !S.color;
-  $("video").style.filter = S.color ? FILMS.find(f => f.id === S.film).css : "";
   $("smooth-toggle").setAttribute("aria-pressed", S.smooth);
   $("films").innerHTML = "";
   FILMS.forEach(f => {
@@ -830,16 +938,58 @@ function setMode(mode) {
   if (m === "upload") { setMarquee(filled() < S.count ? `上傳第 ${filled() + 1} 張照片` : "照片齊了！按綠色按鈕印出來"); syncUploadLabel(); }
   buildThumbs();
 }
+// 拍貼預覽：已完成的格子放處理後的照片，下一格放即時相機畫面
+const PREV = { key: "", back: null, front: null, k: 1, shots: [] };
+function prevScale(L) { return Math.min(260 / L.H, 330 / L.W); }
+function previewOf(k) {
+  const L = layout(), c = L.cells[k], k2 = prevScale(L) * 2;
+  return processPhoto(S.shots[k], Math.round(c.w * k2), Math.round(c.h * k2), k + 1);
+}
+function renderStripPreview(live) {
+  const L = layout(), id = FRAMES[S.frame].id, css = prevScale(L), k = css * 2;
+  let cv = $("thumbs").querySelector("canvas");
+  if (!cv) { cv = document.createElement("canvas"); $("thumbs").append(cv); }
+  const key = [L.id, id, S.count].join("|");
+  if (PREV.key !== key) {
+    PREV.key = key; PREV.k = k;
+    const mk = (draw) => { const c = document.createElement("canvas"); c.width = Math.round(L.W * k); c.height = Math.round(L.H * k); const x = c.getContext("2d"); x.scale(k, k); draw(x); return c; };
+    PREV.back = mk(x => drawFrameBack(x, id, L));
+    PREV.front = mk(x => drawFrameFront(x, id, L));
+    cv.width = PREV.back.width; cv.height = PREV.back.height;
+    cv.style.width = Math.round(L.W * css) + "px"; cv.style.height = Math.round(L.H * css) + "px";
+  }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(PREV.back, 0, 0);
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  const next = S.shots.findIndex(x => !x);
+  drawCells(ctx, id, L, i => (S.shots[i] ? PREV.shots[i] : i === next ? live : null));
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(PREV.front, 0, 0);
+}
+// 相機畫面：每一幀都套上目前選的底片色調（磨皮太重，只在成品做）
+let liveRaf = 0, liveLast = 0;
+function liveLoop(t) {
+  liveRaf = requestAnimationFrame(liveLoop);
+  if (t - liveLast < 40) return;
+  liveLast = t;
+  const v = $("video"); if (!stream || v.readyState < 2 || !v.videoWidth) return;
+  const c = $("live"), w = 480, h = Math.round(480 / cellAspect());
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  const sc = Math.max(w / v.videoWidth, h / v.videoHeight), sw = w / sc, sh = h / sc;
+  ctx.save(); ctx.translate(w, 0); ctx.scale(-1, 1);
+  ctx.drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sh) / 2, sw, sh, 0, 0, w, h);
+  ctx.restore();
+  const film = S.color ? S.film : "bw";
+  if (film !== "plain") { const img = ctx.getImageData(0, 0, w, h); filmTone(img, film, (t | 0) + 1); ctx.putImageData(img, 0, 0); }
+  if (!$("thumbs").hidden) renderStripPreview(c);
+}
+function startLive() { cancelAnimationFrame(liveRaf); liveRaf = requestAnimationFrame(liveLoop); }
+function stopLive() { cancelAnimationFrame(liveRaf); liveRaf = 0; }
 function buildThumbs() {
-  $("thumbs").style.gridTemplateColumns = `repeat(${Math.min(S.count, 6)}, 1fr)`;
-  $("thumbs").style.width = `min(100%, ${Math.min(S.count, 6) * 110}px)`;
-  $("thumbs").style.alignSelf = "center";
-  $("thumbs").style.setProperty("--ar", cellAspect());
   $("vf").style.aspectRatio = cellAspect();
   $("price").innerHTML = `$0<br>=<br>${S.count} 張`;
   $("price").setAttribute("aria-label", `免費，一次 ${S.count} 張`);
-  $("thumbs").innerHTML = S.shots.map((s, i) =>
-    s ? `<div class="thumb filled"><img alt="第 ${i + 1} 張" src="${s.toDataURL("image/jpeg", .6)}"></div>` : `<div class="thumb">${i + 1}</div>`).join("");
+  if (!$("thumbs").hidden) renderStripPreview(null);
 }
 $("go").onclick = () => {
   if (busy) return;
@@ -872,6 +1022,7 @@ async function startCamera() {
     if (!navigator.mediaDevices?.getUserMedia) throw Object.assign(new Error(), { name: "NotFoundError" });
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
     $("video").srcObject = stream; await $("video").play();
+    startLive();
     return true;
   } catch (e) {
     msg.textContent = (CAM_ERRORS[e.name] || "無法開啟相機。") + " 也可以按「← 換相框」回去改用上傳照片。";
@@ -879,7 +1030,7 @@ async function startCamera() {
     return false;
   }
 }
-function stopCamera() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+function stopCamera() { stopLive(); if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
 function grabFrame() {
   const v = $("video"), cv = document.createElement("canvas");
   cv.width = v.videoWidth; cv.height = v.videoHeight;
@@ -898,8 +1049,8 @@ async function runShoot() {
     const c = $("count");
     for (let n = 3; n > 0; n--) { c.textContent = n; c.classList.remove("pop"); void c.offsetWidth; c.classList.add("pop"); beep(880, .12); await wait(1000); }
     c.textContent = "";
-    S.shots[i] = grabFrame(); buildThumbs();
-    $("freeze").src = S.shots[i].toDataURL("image/jpeg", .7); $("freeze").hidden = false;
+    S.shots[i] = grabFrame(); PREV.shots[i] = previewOf(i);
+    $("freeze").src = $("live").toDataURL("image/jpeg", .8); $("freeze").hidden = false;
     await wait(900); $("freeze").hidden = true;
   }
   stopCamera(); busy = false;
@@ -985,7 +1136,8 @@ $("crop-ok").onclick = () => {
   out.width = Math.round(crop.w); out.height = Math.round(crop.h);
   const ctx = out.getContext("2d"); ctx.imageSmoothingQuality = "high";
   ctx.drawImage(crop.src, crop.x, crop.y, crop.w, crop.h, 0, 0, out.width, out.height);
-  S.shots[S.shots.findIndex(s => !s)] = out;
+  const k = S.shots.findIndex(s => !s);
+  S.shots[k] = out; PREV.shots[k] = previewOf(k);
   $("crop").hidden = true; setMode("upload");
 };
 
