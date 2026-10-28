@@ -533,6 +533,20 @@ function leaveMachine() {
 }
 $("exit").onclick = () => { if (!busy) leaveMachine(); };
 
+// ---------- 匿名使用統計（GoatCounter；只送事件名稱，不送照片） ----------
+const GC_SITE = "photobooth"; // GoatCounter 網站代碼，例如 "pocket-purikura"；空字串就不統計
+const GC_ON = !!GC_SITE && location.hostname.endsWith("github.io");
+if (GC_ON) {
+  const s = document.createElement("script");
+  s.async = true; s.dataset.goatcounter = `https://${GC_SITE}.goatcounter.com/count`;
+  s.src = "https://gc.zgo.at/count.js";
+  document.head.append(s);
+}
+function count(path) {
+  if (!GC_ON) return;
+  try { window.goatcounter?.count?.({ path, title: path, event: true }); } catch {}
+}
+
 // ---------- 說明頁 ----------
 const INFO = {
   privacy: ["隱私權政策", `
@@ -541,7 +555,8 @@ const INFO = {
       <li>相機畫面只用來拍你按下綠色按鈕後的那幾張照片。</li>
       <li>拍好的拍貼只有在你按「下載」或「分享」時才會離開這台裝置。</li>
       <li>展示窗裡的最近 4 張拍貼存在這個瀏覽器的本機儲存空間，清除網站資料就會刪掉。</li>
-      <li>網頁會從 Google Fonts 載入字型。</li>
+      <li>網頁會從 Google Fonts 載入字型。</li>${GC_ON ? `
+      <li>網站用 GoatCounter 做匿名使用統計：記錄頁面瀏覽次數，以及做了幾張拍貼、選了哪個相框、色彩風格和排版。不用 cookie，不記錄你是誰，照片不會被送出。</li>` : ""}
     </ul>`],
   faq: ["常見問題", `
     <h3>按了拍照沒有畫面？</h3>
@@ -1029,7 +1044,7 @@ function buildThumbs() {
 }
 $("go").onclick = () => {
   if (busy) return;
-  if (S.mode === "choose") { beep(520, .08); setMode("source"); }
+  if (S.mode === "choose") { beep(520, .08); count("start"); setMode("source"); }
   else if (S.mode === "shoot") runShoot();
   else if (S.mode === "upload" && filled() === S.count) makeStrip();
 };
@@ -1194,6 +1209,11 @@ async function makeStrip() {
     const out = buildStrip();
     lastBlob = await new Promise((res, rej) => out.toBlob(b => (b ? res(b) : rej(new Error("empty"))), "image/jpeg", .93));
     saveToGallery(out);
+    count("strip");
+    count(`source/${S.mode === "upload" ? "upload" : "camera"}`);
+    count(`frame/${FRAMES[S.frame].id}`);
+    count(`film/${currentFilm()}`);
+    count(`layout/${S.layout}`);
     showResult(URL.createObjectURL(lastBlob), true);
     whirr();
   } catch (e) {
@@ -1231,6 +1251,7 @@ function fileName() {
 }
 async function download() {
   if (!lastBlob) return;
+  count("download");
   const dl = window.claude?.use ? await window.claude.use("downloads").catch(() => null) : null;
   if (dl) {
     try { await dl.save({ filename: fileName(), data: lastBlob }); toast("已存好拍貼"); }
